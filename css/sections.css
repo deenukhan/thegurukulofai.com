@@ -385,25 +385,14 @@
   pointer-events: none;
 }
 
-.founder-photo-placeholder {
+.founder-photo-img {
+  display: block;
+  width: 100%;
   aspect-ratio: 4 / 5;
-  background-color: var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: cover;
+  object-position: center top;
   position: relative;
-  overflow: hidden;
   z-index: 1;
-}
-
-.founder-monogram {
-  font-family: var(--font-serif);
-  font-size: clamp(100px, 15vw, 180px);
-  font-weight: 700;
-  color: var(--ink);
-  opacity: 0.06;
-  user-select: none;
-  pointer-events: none;
 }
 
 .founder-photo-overlay {
