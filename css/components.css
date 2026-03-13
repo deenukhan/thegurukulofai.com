@@ -1,0 +1,438 @@
+/* ==========================================================================
+   COMPONENTS — Logo, Buttons, Cards, Pills, Tags
+   ========================================================================== */
+
+/* ==========================================================================
+   LOGO
+   ========================================================================== */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-bar {
+  display: block;
+  width: 3px;
+  height: 44px;
+  background-color: var(--clay);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.logo-the {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  color: var(--clay);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.logo-gurukul {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.logo-ofai {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--slate);
+  line-height: 1.2;
+}
+
+/* Dark variant (used on dark nav backgrounds) */
+.logo--dark .logo-gurukul { color: var(--white); }
+.logo--dark .logo-ofai    { color: rgba(247, 244, 239, 0.55); }
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  padding: 14px 28px;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ease-base),
+    color var(--ease-base),
+    transform var(--ease-fast);
+  text-decoration: none;
+  line-height: 1;
+}
+
+.btn svg {
+  flex-shrink: 0;
+  transition: transform var(--ease-fast);
+}
+
+/* Primary — Ink bg, warm-white text */
+.btn-primary {
+  background-color: var(--ink);
+  color: var(--warm-white);
+  padding: 16px 36px;
+}
+.btn-primary:hover {
+  background-color: var(--forest);
+  transform: translateY(-1px);
+}
+.btn-primary:hover svg {
+  transform: translateX(4px);
+}
+
+/* Nav CTA */
+.btn-nav {
+  background-color: var(--ink);
+  color: var(--warm-white);
+  padding: 10px 22px;
+  font-size: 13px;
+}
+.btn-nav:hover {
+  background-color: var(--forest);
+}
+
+/* CTA Banner button — Clay bg, ink text */
+.btn-cta {
+  background-color: var(--clay);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 20px 44px;
+  white-space: nowrap;
+}
+.btn-cta:hover {
+  background-color: var(--clay-light);
+  transform: translateY(-2px);
+}
+.btn-cta:hover svg {
+  transform: translateX(4px);
+}
+
+/* Text link button — underlined */
+.btn-text {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 2px solid var(--clay);
+  padding-bottom: 2px;
+  transition: color var(--ease-fast);
+}
+.btn-text:hover {
+  color: var(--slate);
+}
+
+/* View All text link */
+.view-all {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--slate);
+  border-bottom: 1px solid var(--clay);
+  padding-bottom: 2px;
+  white-space: nowrap;
+  transition: color var(--ease-fast);
+  align-self: flex-end;
+}
+.view-all:hover {
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   STAT CARDS (Hero)
+   ========================================================================== */
+.stat-card {
+  background-color: var(--white);
+  border: 1px solid var(--mist);
+  border-left-width: 3px;
+  padding: 32px 36px;
+  transition:
+    border-color var(--ease-base),
+    transform var(--ease-base);
+}
+.stat-card:hover {
+  border-color: var(--clay);
+  transform: translateX(-4px);
+}
+
+.stat-card--clay   { border-left-color: var(--clay); }
+.stat-card--ink    { border-left-color: var(--ink); }
+.stat-card--forest { border-left-color: var(--forest); }
+
+.stat-number {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-number span { color: var(--clay); }
+
+.stat-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.stat-desc {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--slate);
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   TOOL PILLS (Tools Strip)
+   ========================================================================== */
+.tools-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  border-top: 1px solid var(--mist);
+  border-left: 1px solid var(--mist);
+}
+
+.tool-pill {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+  padding: 12px 22px;
+  border-right: 1px solid var(--mist);
+  border-bottom: 1px solid var(--mist);
+  cursor: default;
+  transition:
+    background-color var(--ease-fast),
+    color var(--ease-fast);
+  position: relative;
+}
+.tool-pill:hover {
+  background-color: var(--ink);
+  color: var(--clay);
+  z-index: 1;
+}
+
+/* ==========================================================================
+   TOOL TAGS (Learn section cards)
+   ========================================================================== */
+.tool-tag {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clay);
+  border: 1px solid rgba(196, 168, 130, 0.3);
+  padding: 4px 10px;
+}
+
+/* ==========================================================================
+   COURSE CARDS
+   ========================================================================== */
+.course-card {
+  background-color: var(--white);
+  border: 1px solid var(--mist);
+  overflow: hidden;
+  transition:
+    transform var(--ease-base),
+    box-shadow var(--ease-base);
+}
+.course-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(26, 26, 26, 0.10);
+}
+
+/* Thumbnail */
+.course-thumb {
+  position: relative;
+  padding: 36px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.course-thumb--ink    { background-color: var(--ink); }
+.course-thumb--forest { background-color: var(--forest); }
+.course-thumb--dark   { background-color: #2A1F18; }
+
+.thumb-ghost {
+  position: absolute;
+  bottom: -24px;
+  right: -8px;
+  font-family: var(--font-serif);
+  font-size: 110px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.06);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.04em;
+}
+
+.course-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(247, 244, 239, 0.5);
+}
+
+.course-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background-color: var(--clay);
+  color: var(--ink);
+  padding: 4px 10px;
+  align-self: flex-start;
+}
+
+/* Course body */
+.course-body {
+  padding: 32px 36px;
+}
+.course-body h3 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.course-body p {
+  font-size: 15px;
+  color: var(--slate);
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+.course-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.course-price {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.course-cta {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--forest);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: border-color var(--ease-fast);
+}
+.course-cta:hover {
+  border-color: var(--forest);
+}
+
+/* ==========================================================================
+   TESTIMONIAL CARDS
+   ========================================================================== */
+.testimonial-card {
+  background-color: var(--white);
+  border: 1px solid var(--mist);
+  padding: 36px 32px;
+  transition: border-color var(--ease-base);
+}
+.testimonial-card:hover {
+  border-color: var(--clay);
+}
+
+.quote-mark {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 72px;
+  color: var(--clay);
+  opacity: 0.4;
+  line-height: 0.8;
+  margin-bottom: 16px;
+  user-select: none;
+}
+
+.testimonial-card blockquote p {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--slate);
+  line-height: 1.75;
+  margin-bottom: 28px;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--clay);
+  flex-shrink: 0;
+}
+
+.author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.author-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.author-role {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.2;
+}

@@ -1,0 +1,184 @@
+/* ==========================================================================
+   RESPONSIVE — All breakpoints in one place
+   ========================================================================== */
+
+/* ==========================================================================
+   TABLET & MOBILE  (max-width: 900px)
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  :root {
+    --section-pad-v: 80px;
+    --section-pad-h: 24px;
+  }
+
+  /* ----- Nav ----- */
+  .nav-links {
+    display: none;
+  }
+
+  .nav-inner {
+    padding: 16px 24px;
+  }
+
+  /* ----- Hero ----- */
+  .hero-inner {
+    grid-template-columns: 1fr;
+    padding: 60px 24px 60px;
+    gap: 0;
+  }
+
+  .hero-right {
+    display: none; /* stat cards hidden on mobile per spec */
+  }
+
+  .hero-h1 {
+    font-size: clamp(38px, 9vw, 56px);
+  }
+
+  .hero-line {
+    left: 24px;
+  }
+
+  .hero-ghost {
+    font-size: min(320px, 80vw);
+    right: -20px;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  /* ----- Tools Strip ----- */
+  .tools-list {
+    justify-content: flex-start;
+  }
+
+  /* ----- What You Learn ----- */
+  .learn-header {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .learn-intro {
+    padding-top: 0;
+  }
+
+  .learn-grid {
+    grid-template-columns: 1fr;
+    gap: 1px;
+  }
+
+  .learn-card {
+    padding: 36px 28px;
+  }
+
+  /* ----- Courses ----- */
+  .courses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* ----- Founder ----- */
+  .founder-inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  /* Clay offset corner hides nicely on mobile */
+  .founder-photo-wrap::after {
+    right: -12px;
+    bottom: -12px;
+  }
+
+  /* ----- Testimonials ----- */
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* ----- CTA Banner ----- */
+  .cta-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .cta-ghost {
+    font-size: min(280px, 70vw);
+  }
+
+  /* ----- Footer ----- */
+  .footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   SMALL MOBILE  (max-width: 480px)
+   ========================================================================== */
+@media (max-width: 480px) {
+
+  /* Footer columns to single column */
+  .footer-top {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ticker items slightly smaller */
+  .ticker-item {
+    font-size: 12px;
+  }
+
+  /* Course cards full padding */
+  .course-body {
+    padding: 24px;
+  }
+
+  /* Testimonial cards */
+  .testimonial-card {
+    padding: 28px 24px;
+  }
+
+  /* Founder credentials spacing */
+  .founder-credentials li {
+    font-size: 14px;
+  }
+
+  /* Footer social stacks on small screens */
+  .footer-social {
+    gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   LARGE SCREENS  (min-width: 1400px)
+   ========================================================================== */
+@media (min-width: 1400px) {
+  :root {
+    --section-pad-h: 80px;
+  }
+
+  .hero-inner {
+    padding-top: 100px;
+    padding-bottom: 100px;
+  }
+}

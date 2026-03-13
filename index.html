@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Gurukul of AI — Practical AI Education for Indian Creators</title>
+  <meta name="description" content="Learn the exact tools, prompts, and workflows used to create high-end AI content for real brands. Courses by Deenu Khan, ML Engineer & AI creator with 300K+ followers.">
+  <meta name="author" content="Deenu Khan">
+
+  <!-- Open Graph (fill before launch) -->
+  <meta property="og:title" content="The Gurukul of AI">
+  <meta property="og:description" content="Practical AI education for Indian creators, brand builders, and entrepreneurs.">
+  <meta property="og:type" content="website">
+  <!-- <meta property="og:image" content="assets/og-image.jpg"> -->
+  <!-- <link rel="icon" href="assets/favicon.png"> -->
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/sections.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+
+  <!-- ===================== NAVIGATION ===================== -->
+  <nav class="nav" id="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="/" class="logo" aria-label="The Gurukul of AI — Home">
+        <span class="logo-bar"></span>
+        <span class="logo-text">
+          <span class="logo-the">THE</span>
+          <span class="logo-gurukul">GURUKUL</span>
+          <span class="logo-ofai">of AI</span>
+        </span>
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="#courses">Courses</a></li>
+        <li><a href="#learn">What You Learn</a></li>
+        <li><a href="#founder">About</a></li>
+        <li><a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a></li>
+      </ul>
+      <a href="#courses" class="btn btn-nav">Start Learning</a>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" id="home" aria-labelledby="hero-heading">
+    <div class="hero-line" aria-hidden="true"></div>
+    <div class="hero-ghost" aria-hidden="true">G</div>
+
+    <div class="hero-inner">
+      <!-- Left Column -->
+      <div class="hero-left">
+        <span class="eyebrow animate-eyebrow">AI Education for Indian Creators</span>
+        <h1 class="hero-h1 animate-h1" id="hero-heading">
+          Build AI content<br>
+          that looks<br>
+          <em>genuinely premium.</em>
+        </h1>
+        <div class="clay-rule animate-rule" aria-hidden="true"></div>
+        <p class="hero-body animate-body">
+          Learn the exact tools, prompts, and workflows used to
+          create high-end images and videos for real brands.
+          No studio. No team. Just a clear system.
+        </p>
+        <div class="hero-cta animate-cta">
+          <a href="#courses" class="btn btn-primary">
+            Explore Courses
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#founder" class="btn-text">Who teaches this?</a>
+        </div>
+      </div>
+
+      <!-- Right Column — Stat Cards -->
+      <div class="hero-right animate-right" aria-label="Key statistics">
+        <div class="stat-card stat-card--clay">
+          <div class="stat-number">300<span>K</span></div>
+          <div class="stat-label">Instagram Followers</div>
+          <p class="stat-desc">Creators and brand builders learning AI daily at @neuraltech.ai</p>
+        </div>
+        <div class="stat-card stat-card--ink">
+          <div class="stat-number">7<span>+</span></div>
+          <div class="stat-label">Years in the Field</div>
+          <p class="stat-desc">Machine Learning engineering experience behind every lesson</p>
+        </div>
+        <div class="stat-card stat-card--forest">
+          <div class="stat-number">100<span>%</span></div>
+          <div class="stat-label">Practical Curriculum</div>
+          <p class="stat-desc">Every lesson is a workflow you can use the same day</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticker Bar -->
+    <div class="ticker-wrap" aria-hidden="true">
+      <div class="ticker-track">
+        <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Creation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Prompt Engineering <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Virtual Try-Ons <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Product Shoots <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Brand Campaigns <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">HeyGen Avatars <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Kling AI <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Runway <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Luma <span class="ticker-dot">·</span></span>
+        <!-- Duplicate for seamless loop -->
+        <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Creation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Prompt Engineering <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Virtual Try-Ons <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Product Shoots <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Brand Campaigns <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">HeyGen Avatars <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Kling AI <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Runway <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Luma <span class="ticker-dot">·</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TOOLS STRIP ===================== -->
+  <section class="tools-strip" aria-label="Tools you will master">
+    <div class="tools-inner">
+      <span class="eyebrow tools-eyebrow">Tools you will master</span>
+      <div class="tools-list" role="list">
+        <span class="tool-pill" role="listitem">Freepik / Nano Banana</span>
+        <span class="tool-pill" role="listitem">Kling AI</span>
+        <span class="tool-pill" role="listitem">HeyGen</span>
+        <span class="tool-pill" role="listitem">Runway</span>
+        <span class="tool-pill" role="listitem">Luma AI</span>
+        <span class="tool-pill" role="listitem">Midjourney</span>
+        <span class="tool-pill" role="listitem">CapCut</span>
+        <span class="tool-pill" role="listitem">Higgsfield</span>
+        <span class="tool-pill" role="listitem">ElevenLabs</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== WHAT YOU LEARN ===================== -->
+  <section class="learn" id="learn" aria-labelledby="learn-heading">
+    <div class="learn-inner">
+      <div class="learn-header">
+        <div class="learn-header-left reveal">
+          <span class="eyebrow eyebrow--clay">What you learn</span>
+          <h2 class="learn-h2" id="learn-heading">
+            Real skills.<br>
+            <em>Real results.</em><br>
+            Same day.
+          </h2>
+        </div>
+        <div class="learn-header-right reveal reveal-delay-1">
+          <p class="learn-intro">Every module in The Gurukul of AI is built around one question: can you use this tomorrow? If the answer is no, it does not belong in the curriculum.</p>
+        </div>
+      </div>
+
+      <div class="learn-grid">
+        <article class="learn-card reveal">
+          <span class="card-num" aria-hidden="true">01</span>
+          <h3>AI Product &amp; Fashion Shoots</h3>
+          <p>Generate studio-quality product images and model shots without a camera or photographer. Virtual try-ons, outfit swaps, jewelry photography.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">Freepik</span>
+            <span class="tool-tag">Nano Banana</span>
+            <span class="tool-tag">Midjourney</span>
+          </div>
+        </article>
+
+        <article class="learn-card reveal reveal-delay-1">
+          <span class="card-num" aria-hidden="true">02</span>
+          <h3>AI Video Production</h3>
+          <p>Build full brand video campaigns using AI. Model swaps, voiceovers, product placements, and editing workflows that produce high-end output.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">Kling AI</span>
+            <span class="tool-tag">Runway</span>
+            <span class="tool-tag">Luma</span>
+            <span class="tool-tag">CapCut</span>
+          </div>
+        </article>
+
+        <article class="learn-card reveal reveal-delay-2">
+          <span class="card-num" aria-hidden="true">03</span>
+          <h3>AI Avatars &amp; Presenters</h3>
+          <p>Replace on-camera presence with a professional AI avatar. Script-to-video in minutes. Scale content without recording.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">HeyGen</span>
+            <span class="tool-tag">ElevenLabs</span>
+          </div>
+        </article>
+
+        <article class="learn-card reveal">
+          <span class="card-num" aria-hidden="true">04</span>
+          <h3>Prompt Engineering Mastery</h3>
+          <p>The systematic approach to writing prompts that consistently produce premium results. Frameworks, templates, and real workflows.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">All Tools</span>
+            <span class="tool-tag">TCR-EI Framework</span>
+          </div>
+        </article>
+
+        <article class="learn-card reveal reveal-delay-1">
+          <span class="card-num" aria-hidden="true">05</span>
+          <h3>Brand Content at Scale</h3>
+          <p>Build content systems for D2C brands and businesses. Campaigns, social assets, and ad creatives — all produced with AI.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">Workflow Design</span>
+            <span class="tool-tag">Brand Strategy</span>
+          </div>
+        </article>
+
+        <article class="learn-card reveal reveal-delay-2">
+          <span class="card-num" aria-hidden="true">06</span>
+          <h3>Green Screens &amp; Compositing</h3>
+          <p>Create professional video backgrounds, composite AI environments, and build cinematic Instagram reels without a production team.</p>
+          <div class="card-tools" aria-label="Tools used">
+            <span class="tool-tag">Midjourney</span>
+            <span class="tool-tag">CapCut</span>
+            <span class="tool-tag">Higgsfield</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COURSES ===================== -->
+  <section class="courses" id="courses" aria-labelledby="courses-heading">
+    <div class="courses-inner">
+      <div class="courses-header">
+        <div class="reveal">
+          <span class="eyebrow">The curriculum</span>
+          <h2 class="courses-h2" id="courses-heading">
+            Choose your<br>
+            <em>starting point.</em>
+          </h2>
+        </div>
+        <a href="#courses" class="view-all reveal">View all courses <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="courses-grid">
+        <!-- Course 1 -->
+        <article class="course-card reveal">
+          <div class="course-thumb course-thumb--ink">
+            <span class="thumb-ghost" aria-hidden="true">AI</span>
+            <span class="course-label">FLAGSHIP COURSE</span>
+            <span class="course-badge">BESTSELLER</span>
+          </div>
+          <div class="course-body">
+            <h3>AI Videos Mastery</h3>
+            <p>The complete system for creating professional AI videos. Kling, Runway, Luma, HeyGen, Higgsfield — every tool, every workflow.</p>
+            <div class="course-footer">
+              <span class="course-price">₹4,999</span>
+              <a href="#" class="course-cta">Enroll now →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Course 2 -->
+        <article class="course-card reveal reveal-delay-1">
+          <div class="course-thumb course-thumb--forest">
+            <span class="thumb-ghost" aria-hidden="true">PEM</span>
+            <span class="course-label">FOUNDATION COURSE</span>
+          </div>
+          <div class="course-body">
+            <h3>Prompt Engineering Mastery</h3>
+            <p>9 modules. 4 hours. The systematic approach to writing prompts that work — every single time, across every tool.</p>
+            <div class="course-footer">
+              <span class="course-price">₹2,999</span>
+              <a href="#" class="course-cta">Enroll now →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Course 3 -->
+        <article class="course-card reveal reveal-delay-2">
+          <div class="course-thumb course-thumb--dark">
+            <span class="thumb-ghost" aria-hidden="true">IMG</span>
+            <span class="course-label">SPECIALIST COURSE</span>
+            <span class="course-badge">NEW</span>
+          </div>
+          <div class="course-body">
+            <h3>AI Image Mastery</h3>
+            <p>Product shoots, fashion campaigns, jewelry photography, virtual try-ons. The complete creative image workflow.</p>
+            <div class="course-footer">
+              <span class="course-price">₹3,499</span>
+              <a href="#" class="course-cta">Enroll now →</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOUNDER ===================== -->
+  <section class="founder" id="founder" aria-labelledby="founder-heading">
+    <div class="founder-inner">
+      <!-- Photo -->
+      <div class="founder-photo-wrap reveal">
+        <div class="founder-photo-placeholder" role="img" aria-label="Deenu Khan — Founder, The Gurukul of AI">
+          <span class="founder-monogram" aria-hidden="true">DK</span>
+        </div>
+        <div class="founder-photo-overlay" aria-hidden="true">
+          <div class="founder-photo-meta">
+            <span class="founder-photo-name">Deenu Khan</span>
+            <span class="founder-photo-role">Founder, The Gurukul of AI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Copy -->
+      <div class="founder-copy reveal reveal-delay-1">
+        <span class="eyebrow">Who teaches this</span>
+        <h2 class="founder-h2" id="founder-heading">
+          Built by someone<br>
+          <em>who actually does</em><br>
+          the work.
+        </h2>
+        <p class="founder-body">I am a Machine Learning Engineer with 7+ years of industry experience. I run NeuralTech.ai on Instagram with 300K+ followers, collaborate with brands like Meta, HeyGen, and KlingAI, and create every piece of content you see using the exact tools I teach.</p>
+        <p class="founder-body">The Gurukul of AI exists because I could not find a single place that taught creative AI the way it actually works in practice — for Indian creators, for real businesses, with real results.</p>
+        <ul class="founder-credentials" aria-label="Credentials">
+          <li>7+ years Machine Learning engineering experience</li>
+          <li>300K+ followers on @neuraltech.ai — India's leading AI creator account</li>
+          <li>Brand collaborations with Meta, HeyGen, KlingAI, Paytm and more</li>
+          <li>Corporate AI training delivered to Bajaj Auto, Pidilite and others</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TESTIMONIALS ===================== -->
+  <section class="testimonials" aria-labelledby="testimonials-heading">
+    <div class="testimonials-inner">
+      <div class="testimonials-header reveal">
+        <span class="eyebrow">Student results</span>
+        <h2 class="testimonials-h2" id="testimonials-heading">
+          What students<br>
+          <em>actually say.</em>
+        </h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <article class="testimonial-card reveal">
+          <span class="quote-mark" aria-hidden="true">"</span>
+          <blockquote>
+            <p>I used to spend ₹15,000 per shoot for product photography. Now I generate the same quality in 20 minutes. This course paid for itself in the first week.</p>
+          </blockquote>
+          <footer class="testimonial-author">
+            <div class="author-avatar" aria-hidden="true">R</div>
+            <div class="author-meta">
+              <span class="author-name">Rahul Sharma</span>
+              <span class="author-role">D2C Brand Founder, Jaipur</span>
+            </div>
+          </footer>
+        </article>
+
+        <article class="testimonial-card reveal reveal-delay-1">
+          <span class="quote-mark" aria-hidden="true">"</span>
+          <blockquote>
+            <p>Every other AI course I tried was just a list of tools. Gurukul of AI gave me actual workflows I could implement immediately for my clients.</p>
+          </blockquote>
+          <footer class="testimonial-author">
+            <div class="author-avatar" aria-hidden="true">P</div>
+            <div class="author-meta">
+              <span class="author-name">Priya Menon</span>
+              <span class="author-role">Freelance Content Creator, Bengaluru</span>
+            </div>
+          </footer>
+        </article>
+
+        <article class="testimonial-card reveal reveal-delay-2">
+          <span class="quote-mark" aria-hidden="true">"</span>
+          <blockquote>
+            <p>The prompt engineering module alone changed how I work. I went from spending hours on Midjourney to getting what I need in two or three tries.</p>
+          </blockquote>
+          <footer class="testimonial-author">
+            <div class="author-avatar" aria-hidden="true">A</div>
+            <div class="author-meta">
+              <span class="author-name">Arjun Nair</span>
+              <span class="author-role">Social Media Manager, Mumbai</span>
+            </div>
+          </footer>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA BANNER ===================== -->
+  <section class="cta-banner" aria-labelledby="cta-heading">
+    <div class="cta-ghost" aria-hidden="true">G</div>
+    <div class="cta-inner">
+      <div class="cta-copy reveal">
+        <h2 class="cta-h2" id="cta-heading">
+          Stop watching others<br>
+          create with AI.<br>
+          <em>Start building.</em>
+        </h2>
+        <p class="cta-sub">Join thousands of Indian creators and brand builders who are already using AI to produce premium content.</p>
+      </div>
+      <a href="#courses" class="btn btn-cta reveal reveal-delay-2">
+        Start Learning
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <span class="footer-logo-bar" aria-hidden="true"></span>
+            <div>
+              <span class="footer-logo-gurukul">GURUKUL</span>
+              <span class="footer-logo-ofai">of AI</span>
+            </div>
+          </div>
+          <p class="footer-tagline">Practical AI education for Indian creators, brand builders, and entrepreneurs.</p>
+        </div>
+
+        <!-- Courses -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Courses</h4>
+          <ul class="footer-links" role="list">
+            <li><a href="#">AI Videos Mastery</a></li>
+            <li><a href="#">Prompt Engineering</a></li>
+            <li><a href="#">AI Image Mastery</a></li>
+            <li><a href="#">All Courses</a></li>
+          </ul>
+        </div>
+
+        <!-- Brand -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Brand</h4>
+          <ul class="footer-links" role="list">
+            <li><a href="#founder">About Deenu</a></li>
+            <li><a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">NeuralTech.ai</a></li>
+            <li><a href="#">Corporate Training</a></li>
+            <li><a href="#">Brand Collabs</a></li>
+          </ul>
+        </div>
+
+        <!-- Connect -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Connect</h4>
+          <ul class="footer-links" role="list">
+            <li><a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a></li>
+            <li><a href="#" target="_blank" rel="noopener noreferrer">YouTube</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-divider" aria-hidden="true"></div>
+
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 The Gurukul of AI. All rights reserved.</span>
+        <nav class="footer-social" aria-label="Social links">
+          <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="#" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="#" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

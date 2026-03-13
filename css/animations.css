@@ -1,0 +1,151 @@
+/* ==========================================================================
+   ANIMATIONS — Keyframes, Hero entry, Scroll reveal, Cursor
+   ========================================================================== */
+
+/* ==========================================================================
+   KEYFRAMES
+   ========================================================================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ruleExpand {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ==========================================================================
+   HERO ENTRY ANIMATIONS (CSS-only, no JS required)
+   ========================================================================== */
+.animate-eyebrow {
+  opacity: 0;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+.animate-h1 {
+  opacity: 0;
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
+.animate-rule {
+  transform-origin: left center;
+  animation: ruleExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+}
+
+.animate-body {
+  opacity: 0;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
+}
+
+.animate-cta {
+  opacity: 0;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+}
+
+.animate-right {
+  opacity: 0;
+  animation: fadeRight 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+}
+
+/* ==========================================================================
+   SCROLL REVEAL (toggled by IntersectionObserver in main.js)
+   ========================================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered delay variants */
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-eyebrow,
+  .animate-h1,
+  .animate-rule,
+  .animate-body,
+  .animate-cta,
+  .animate-right {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   CUSTOM CURSOR
+   ========================================================================== */
+.cursor {
+  width: 8px;
+  height: 8px;
+  background-color: var(--clay);
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.25s ease,
+    height 0.25s ease,
+    opacity 0.25s ease;
+  mix-blend-mode: multiply;
+  will-change: left, top;
+}
+
+.cursor.hover {
+  width: 40px;
+  height: 40px;
+  opacity: 0.3;
+}
+
+/* Hide cursor on touch devices */
+@media (hover: none) {
+  .cursor { display: none; }
+}
