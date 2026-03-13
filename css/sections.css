@@ -156,7 +156,7 @@
 
 .hero-body {
   font-size: 16px;
-  color: rgba(247, 244, 239, 0.72);
+  color: var(--white);
   line-height: 1.8;
   max-width: 460px;
 }
@@ -167,6 +167,16 @@
   gap: 28px;
   flex-wrap: wrap;
   margin-top: 36px;
+}
+
+/* Hero button — white bg, clay on hover */
+.hero-card .btn-primary {
+  background-color: var(--white);
+  color: var(--ink);
+}
+.hero-card .btn-primary:hover {
+  background-color: var(--clay);
+  color: var(--ink);
 }
 
 /* Light btn-text variant for dark backgrounds */
