@@ -20,11 +20,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/sections.css">
-  <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/base.css?v=9">
+  <link rel="stylesheet" href="css/components.css?v=9">
+  <link rel="stylesheet" href="css/sections.css?v=9">
+  <link rel="stylesheet" href="css/animations.css?v=9">
+  <link rel="stylesheet" href="css/responsive.css?v=9">
 </head>
 <body>
 
@@ -54,13 +54,16 @@
 
   <!-- ===================== HERO ===================== -->
   <section class="hero" id="home" aria-labelledby="hero-heading">
-    <div class="hero-line" aria-hidden="true"></div>
-    <div class="hero-ghost" aria-hidden="true">G</div>
 
-    <div class="hero-inner">
-      <!-- Left Column -->
-      <div class="hero-left">
-        <span class="eyebrow animate-eyebrow">AI Education for Indian Creators</span>
+    <!-- Photo card — full-bleed photo inside a rounded card -->
+    <div class="hero-card" style="background-image: url('assets/images/founder/deenu-khan.webp')">
+
+      <!-- Corner badges -->
+      <div class="hero-badge hero-badge--tl animate-eyebrow">AI Education for Indian Creators</div>
+      <div class="hero-badge hero-badge--tr animate-eyebrow">&#9733;&#9733;&#9733;&#9733;&#9733; &nbsp;500+ Creators Trained</div>
+
+      <!-- Content overlaid on photo -->
+      <div class="hero-content">
         <h1 class="hero-h1 animate-h1" id="hero-heading">
           Build AI content<br>
           that looks<br>
@@ -79,31 +82,13 @@
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </a>
-          <a href="#founder" class="btn-text">Who teaches this?</a>
+          <a href="#founder" class="btn-text btn-text--light">Who teaches this?</a>
         </div>
       </div>
 
-      <!-- Right Column — Stat Cards -->
-      <div class="hero-right animate-right" aria-label="Key statistics">
-        <div class="stat-card stat-card--clay">
-          <div class="stat-number">300<span>K</span></div>
-          <div class="stat-label">Instagram Followers</div>
-          <p class="stat-desc">Creators and brand builders learning AI daily at @neuraltech.ai</p>
-        </div>
-        <div class="stat-card stat-card--ink">
-          <div class="stat-number">7<span>+</span></div>
-          <div class="stat-label">Years in the Field</div>
-          <p class="stat-desc">Machine Learning engineering experience behind every lesson</p>
-        </div>
-        <div class="stat-card stat-card--forest">
-          <div class="stat-number">100<span>%</span></div>
-          <div class="stat-label">Practical Curriculum</div>
-          <p class="stat-desc">Every lesson is a workflow you can use the same day</p>
-        </div>
-      </div>
     </div>
 
-    <!-- Ticker Bar -->
+    <!-- Ticker Bar — sits below the card, edge to edge -->
     <div class="ticker-wrap" aria-hidden="true">
       <div class="ticker-track">
         <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
@@ -131,18 +116,43 @@
     </div>
   </section>
 
+  <!-- ===================== STAT STRIP ===================== -->
+  <section class="stat-strip" aria-label="Key statistics">
+    <div class="stat-strip-inner">
+      <div class="stat-item">
+        <span class="stat-num">300<span class="stat-accent">K</span></span>
+        <span class="stat-lbl">Instagram Followers</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num">7<span class="stat-accent">+</span></span>
+        <span class="stat-lbl">Years in ML Engineering</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num">100<span class="stat-accent">%</span></span>
+        <span class="stat-lbl">Practical Curriculum</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num">500<span class="stat-accent">+</span></span>
+        <span class="stat-lbl">Creators Trained</span>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== TOOLS STRIP ===================== -->
   <section class="tools-strip" aria-label="Tools you will master">
     <div class="tools-inner">
       <span class="eyebrow tools-eyebrow">Tools you will master</span>
       <div class="tools-list" role="list">
-        <span class="tool-pill" role="listitem">Freepik / Nano Banana</span>
+        <span class="tool-pill" role="listitem">Nano Banana</span>
         <span class="tool-pill" role="listitem">Kling AI</span>
         <span class="tool-pill" role="listitem">HeyGen</span>
         <span class="tool-pill" role="listitem">Runway</span>
         <span class="tool-pill" role="listitem">Luma AI</span>
         <span class="tool-pill" role="listitem">Midjourney</span>
-        <span class="tool-pill" role="listitem">CapCut</span>
+        <span class="tool-pill" role="listitem">Freepik</span>
         <span class="tool-pill" role="listitem">Higgsfield</span>
         <span class="tool-pill" role="listitem">ElevenLabs</span>
       </div>
@@ -333,7 +343,7 @@
           Built by someone who<br>
           actually <em>uses</em> the tools.
         </h2>
-        <p class="founder-body">The Gurukul of AI exists because real AI creative education was nowhere to be found. No practitioner voice, no real workflows, no actual results. Seven years of machine learning engineering later, this is what that education looks like.</p>
+        <p class="founder-body">thegurukulofai exists because real AI creative education was nowhere to be found. No practitioner voice, no real workflows, no actual results. Seven years of machine learning engineering later, this is what that education looks like.</p>
 
         <div class="founder-divider"></div>
 
@@ -367,7 +377,8 @@
             <span class="founder-pill">Luma Labs</span>
             <span class="founder-pill">ElevenLabs</span>
             <span class="founder-pill">Runway</span>
-            <span class="founder-pill">Midjourney</span>
+            <span class="founder-pill">Hailuo AI</span>
+            <span class="founder-pill">Higgsfield</span>
           </div>
         </div>
       </div>

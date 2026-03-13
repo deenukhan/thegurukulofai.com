@@ -11,28 +11,39 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  transition:
-    border-color var(--ease-base),
-    background-color var(--ease-base),
-    backdrop-filter var(--ease-base);
-  border-bottom: 1px solid transparent;
+  /* Same horizontal padding as the hero card so they align */
+  padding: 16px 32px;
+  background: transparent;
+  transition: padding var(--ease-base);
 }
 
-.nav.scrolled {
-  border-bottom-color: var(--mist);
-  background-color: rgba(247, 244, 239, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
+/* Pill container — dark, aligns with hero card below */
 .nav-inner {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 20px var(--section-pad-h);
+  width: 100%;
+  padding: 10px 10px 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 40px;
+  gap: 32px;
+  /* White pill — lifts off the warm-white page */
+  background-color: #ffffff;
+  border: 1px solid var(--mist);
+  border-radius: 99px;
+  transition: box-shadow var(--ease-base);
+}
+
+.nav.scrolled .nav-inner {
+  box-shadow: 0 4px 20px rgba(26, 26, 26, 0.08);
+}
+
+/* Links — dark on light pill */
+.nav-inner .nav-links a {
+  color: var(--slate);
+}
+.nav-inner .nav-links a:hover {
+  color: var(--ink);
 }
 
 .nav-links {
@@ -58,83 +69,96 @@
 /* ==========================================================================
    HERO
    ========================================================================== */
+/* Page shell — warm-white shows around the card */
 .hero {
-  position: relative;
-  min-height: 100vh;
+  background-color: var(--warm-white);
+  padding: 92px 32px 0;
   display: flex;
   flex-direction: column;
-  padding-top: 80px;
-  background-color: var(--warm-white);
-  overflow: hidden;
+  min-height: 100vh;
 }
 
-/* Vertical clay line — far left accent */
-.hero-line {
-  position: absolute;
-  left: 60px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--clay) 20%,
-    var(--clay) 80%,
-    transparent 100%
-  );
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-/* Ghost "G" background texture */
-.hero-ghost {
-  position: absolute;
-  right: -60px;
-  top: 50%;
-  transform: translateY(-55%);
-  font-family: var(--font-serif);
-  font-size: clamp(380px, 50vw, 680px);
-  font-weight: 700;
-  color: var(--ink);
-  opacity: 0.025;
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
-
-.hero-inner {
+/* Photo card — same max-width as nav pill, perfectly aligned */
+.hero-card {
   flex: 1;
   max-width: var(--content-max);
   margin: 0 auto;
   width: 100%;
-  padding: 80px var(--section-pad-h) 80px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: center;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background-color: #1a1212;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  min-height: 560px;
+}
+
+/* Dark overlay for text readability */
+.hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(26,26,26,0.80) 0%,
+    rgba(26,26,26,0.48) 55%,
+    rgba(26,26,26,0.18) 100%
+  );
+}
+
+/* Corner badges — absolute inside .hero-card */
+.hero-badge {
+  position: absolute;
+  top: 28px;
+  z-index: 2;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background-color: var(--clay);
+  padding: 7px 16px;
+  border-radius: 4px;
+}
+.hero-badge--tl { left: 32px; }
+.hero-badge--tr { right: 32px; }
+
+/* Content — pushes to bottom-left of card */
+.hero-content {
+  flex: 1;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 80px 48px 56px;
+  max-width: 660px;
 }
 
 .hero-h1 {
   font-family: var(--font-serif);
-  font-size: clamp(48px, 5.5vw, 78px);
+  font-size: clamp(44px, 5vw, 72px);
   font-weight: 700;
-  color: var(--ink);
+  color: var(--white);
   line-height: 1.08;
   letter-spacing: -0.03em;
   margin-bottom: 0;
 }
 .hero-h1 em {
   font-style: italic;
-  color: var(--slate);
+  color: var(--clay);
 }
 
 .hero-body {
-  font-size: 17px;
-  color: var(--slate);
+  font-size: 16px;
+  color: rgba(247, 244, 239, 0.72);
   line-height: 1.8;
-  max-width: 480px;
+  max-width: 460px;
 }
 
 .hero-cta {
@@ -142,22 +166,27 @@
   align-items: center;
   gap: 28px;
   flex-wrap: wrap;
-  margin-top: 40px;
+  margin-top: 36px;
 }
 
-.hero-right {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* Light btn-text variant for dark backgrounds */
+.btn-text--light {
+  color: var(--warm-white);
+  border-bottom-color: var(--clay);
+}
+.btn-text--light:hover {
+  color: var(--clay);
 }
 
-/* Hero Ticker Bar */
+/* Ticker Bar — below the card, full-width */
 .ticker-wrap {
   width: 100%;
   height: 48px;
   background-color: var(--ink);
   overflow: hidden;
   flex-shrink: 0;
+  margin-top: 24px;
+  border-radius: 0 0 0 0;
 }
 
 .ticker-track {
@@ -180,6 +209,54 @@
 .ticker-dot {
   color: var(--clay);
   margin-left: 8px;
+}
+
+/* ==========================================================================
+   STAT STRIP
+   ========================================================================== */
+.stat-strip {
+  background-color: var(--ink);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 0 var(--section-pad-h);
+}
+
+.stat-strip-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 40px;
+  gap: 6px;
+}
+
+.stat-num {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+
+.stat-accent { color: var(--clay); }
+
+.stat-lbl {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(247,244,239,0.5);
+}
+
+.stat-divider {
+  width: 1px;
+  background-color: rgba(255,255,255,0.08);
+  align-self: stretch;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -487,7 +564,8 @@
 }
 
 .founder-stat {
-  background-color: rgba(26, 26, 26, 0.04);
+  background-color: var(--white);
+  border: 1px solid var(--mist);
   padding: 14px 16px;
 }
 
