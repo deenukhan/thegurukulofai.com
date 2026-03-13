@@ -94,6 +94,10 @@
     gap: 48px;
   }
 
+  .founder-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   /* Clay offset corner hides nicely on mobile */
   .founder-photo-wrap::after {
     right: -12px;
