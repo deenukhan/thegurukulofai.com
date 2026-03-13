@@ -89,7 +89,7 @@
   overflow: hidden;
   background-color: #1a1212;
   background-size: cover;
-  background-position: center top;
+  background-position: center center;
   background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
@@ -121,7 +121,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink);
-  background-color: var(--clay);
+  background-color: rgba(255, 255, 255, 0.92);
   padding: 7px 16px;
   border-radius: 4px;
 }
@@ -178,15 +178,16 @@
   color: var(--clay);
 }
 
-/* Ticker Bar — below the card, full-width */
+/* Ticker Bar — below the hero card, same width, rounded */
 .ticker-wrap {
+  max-width: var(--content-max);
+  margin: 12px auto 0;
   width: 100%;
   height: 48px;
   background-color: var(--ink);
   overflow: hidden;
   flex-shrink: 0;
-  margin-top: 24px;
-  border-radius: 0 0 0 0;
+  border-radius: 12px;
 }
 
 .ticker-track {
@@ -212,11 +213,28 @@
 }
 
 /* ==========================================================================
+   CARDS STACK — wraps all sections below the hero
+   ========================================================================== */
+.cards-stack {
+  padding: 12px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--warm-white);
+}
+
+/* Every section inside the stack is a rounded card */
+.cards-stack > section,
+.cards-stack > footer {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* ==========================================================================
    STAT STRIP
    ========================================================================== */
 .stat-strip {
   background-color: var(--ink);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 0 var(--section-pad-h);
 }
 
@@ -263,9 +281,7 @@
    TOOLS STRIP
    ========================================================================== */
 .tools-strip {
-  background-color: var(--warm-white);
-  border-top: 1px solid var(--mist);
-  border-bottom: 1px solid var(--mist);
+  background-color: var(--white);
   padding: 72px var(--section-pad-h);
 }
 
@@ -393,13 +409,14 @@
    COURSES
    ========================================================================== */
 .courses {
-  background-color: var(--warm-white);
+  background-color: var(--white);
   padding: var(--section-pad-v) var(--section-pad-h);
 }
 
 .courses-inner {
   max-width: var(--content-max);
   margin: 0 auto;
+  zoom: 0.92;
 }
 
 .courses-header {
@@ -630,7 +647,7 @@
    TESTIMONIALS
    ========================================================================== */
 .testimonials {
-  background-color: var(--warm-white);
+  background-color: var(--white);
   padding: var(--section-pad-v) var(--section-pad-h);
 }
 

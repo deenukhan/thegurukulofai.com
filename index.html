@@ -20,11 +20,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/base.css?v=9">
-  <link rel="stylesheet" href="css/components.css?v=9">
-  <link rel="stylesheet" href="css/sections.css?v=9">
-  <link rel="stylesheet" href="css/animations.css?v=9">
-  <link rel="stylesheet" href="css/responsive.css?v=9">
+  <link rel="stylesheet" href="css/base.css?v=21">
+  <link rel="stylesheet" href="css/components.css?v=21">
+  <link rel="stylesheet" href="css/sections.css?v=21">
+  <link rel="stylesheet" href="css/animations.css?v=21">
+  <link rel="stylesheet" href="css/responsive.css?v=21">
 </head>
 <body>
 
@@ -44,7 +44,6 @@
       </a>
       <ul class="nav-links" role="list">
         <li><a href="#courses">Courses</a></li>
-        <li><a href="#learn">What You Learn</a></li>
         <li><a href="#founder">About</a></li>
         <li><a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a></li>
       </ul>
@@ -56,11 +55,11 @@
   <section class="hero" id="home" aria-labelledby="hero-heading">
 
     <!-- Photo card — full-bleed photo inside a rounded card -->
-    <div class="hero-card" style="background-image: url('assets/images/founder/deenu-khan.webp')">
+    <div class="hero-card" style="background-image: url('assets/images/founder/hero-section.webp')">
 
       <!-- Corner badges -->
-      <div class="hero-badge hero-badge--tl animate-eyebrow">AI Education for Indian Creators</div>
-      <div class="hero-badge hero-badge--tr animate-eyebrow">&#9733;&#9733;&#9733;&#9733;&#9733; &nbsp;500+ Creators Trained</div>
+      <div class="hero-badge hero-badge--tl animate-eyebrow">Creative AI Education For Everyone</div>
+      <div class="hero-badge hero-badge--tr animate-eyebrow">&#9733;&#9733;&#9733;&#9733;&#9733; &nbsp;1500+ Students Trained</div>
 
       <!-- Content overlaid on photo -->
       <div class="hero-content">
@@ -92,51 +91,117 @@
     <div class="ticker-wrap" aria-hidden="true">
       <div class="ticker-track">
         <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">AI Video Creation <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Prompt Engineering <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Generation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Creatives Prompt Engineering <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Virtual Try-Ons <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Product Shoots <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Brand Campaigns <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">HeyGen Avatars <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Kling AI <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Runway <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Luma <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Freepik <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Higgsfield <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">ElevenLabs <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Ecommerce Product Images <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Shoots <span class="ticker-dot">·</span></span>
         <!-- Duplicate for seamless loop -->
         <span class="ticker-item">AI Image Generation <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">AI Video Creation <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Prompt Engineering <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Generation <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Creatives Prompt Engineering <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Virtual Try-Ons <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Product Shoots <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Brand Campaigns <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">HeyGen Avatars <span class="ticker-dot">·</span></span>
         <span class="ticker-item">Kling AI <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Runway <span class="ticker-dot">·</span></span>
-        <span class="ticker-item">Luma <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Freepik <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Higgsfield <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">ElevenLabs <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">Ecommerce Product Images <span class="ticker-dot">·</span></span>
+        <span class="ticker-item">AI Video Shoots <span class="ticker-dot">·</span></span>
       </div>
     </div>
   </section>
 
-  <!-- ===================== STAT STRIP ===================== -->
-  <section class="stat-strip" aria-label="Key statistics">
-    <div class="stat-strip-inner">
-      <div class="stat-item">
-        <span class="stat-num">300<span class="stat-accent">K</span></span>
-        <span class="stat-lbl">Instagram Followers</span>
+  <!-- ===================== CARDS STACK ===================== -->
+  <div class="cards-stack">
+
+  <!-- ===================== COURSES ===================== -->
+  <section class="courses" id="courses" aria-labelledby="courses-heading">
+    <div class="courses-inner">
+      <div class="courses-header">
+        <div class="reveal">
+          <span class="eyebrow">The curriculum</span>
+          <h2 class="courses-h2" id="courses-heading">
+            Choose your</br>
+            <em>starting point.</em>
+          </h2>
+        </div>
+        <a href="#courses" class="view-all reveal">View all courses <span aria-hidden="true">→</span></a>
       </div>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-num">7<span class="stat-accent">+</span></span>
-        <span class="stat-lbl">Years in ML Engineering</span>
-      </div>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-num">100<span class="stat-accent">%</span></span>
-        <span class="stat-lbl">Practical Curriculum</span>
-      </div>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-num">500<span class="stat-accent">+</span></span>
-        <span class="stat-lbl">Creators Trained</span>
+
+      <div class="courses-grid">
+        <!-- Course 1 — 100x GenAI Mastery -->
+        <article class="course-card reveal">
+          <div class="course-video">
+            <iframe
+              src="https://www.youtube.com/embed/VibTrCyHMYA?si=0ggxwsqGaFNQTWZK&amp;start=1"
+              title="100x GenAI Mastery — Course Preview"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="course-body">
+            <span class="course-label course-label--dark">FLAGSHIP COURSE</span>
+            <h3>100x GenAI Mastery</h3>
+            <p>The complete system for creating professional AI videos for your brands using tools like Nano Banana, Kling, Freepik, Elevenlabs, Higgsfield and many more, every tool, every workflow.</p>
+            <div class="course-footer">
+              <div class="course-price-wrap">
+                <span class="course-price-original">₹9,999</span>
+                <span class="course-price">₹1,999</span>
+              </div>
+              <a href="https://100xgenai.thegurukulofai.com/" target="_blank" rel="noopener noreferrer" class="course-cta">Enroll now →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Course 2 — AI Influencer Mastery (Coming Soon) -->
+        <article class="course-card course-card--soon reveal reveal-delay-1">
+          <div class="course-thumb course-thumb--forest">
+            <span class="thumb-ghost" aria-hidden="true">AIM</span>
+            <span class="course-label">COMING SOON</span>
+            <span class="course-soon-badge">Launching Soon</span>
+          </div>
+          <div class="course-body">
+            <span class="course-label course-label--dark">FLAGSHIP COURSE</span>
+            <h3>AI Influencer Mastery</h3>
+            <p>Build a full AI-powered personal brand. Create content, grow an audience, and monetise  without being on camera every day.</p>
+            <div class="course-footer">
+              <div class="course-price-wrap">
+                <span class="course-price course-price--muted">₹2,999</span>
+              </div>
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-oJiZVHaAeCCdRNKOP4IsUmmEeJROChpSolC_ccx8SbIaTw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" class="course-cta course-cta--soon">Join Waitlist →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Course 3 — AI UGC Mastery (Coming Soon) -->
+        <article class="course-card course-card--soon reveal reveal-delay-2">
+          <div class="course-thumb course-thumb--dark">
+            <span class="thumb-ghost" aria-hidden="true">UGC</span>
+            <span class="course-label">COMING SOON</span>
+            <span class="course-soon-badge">Launching Soon</span>
+          </div>
+          <div class="course-body">
+            <span class="course-label course-label--dark">FLAGSHIP COURSE</span>
+            <h3>AI UGC Mastery</h3>
+            <p>Produce studio-quality user-generated content at scale. AI actors, voiceovers, and brand-safe creatives, no shoot required.</p>
+            <div class="course-footer">
+              <div class="course-price-wrap">
+                <span class="course-price course-price--muted">₹2,999</span>
+              </div>
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-oJiZVHaAeCCdRNKOP4IsUmmEeJROChpSolC_ccx8SbIaTw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" class="course-cta course-cta--soon">Join Waitlist →</a>
+            </div>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -155,162 +220,11 @@
         <span class="tool-pill" role="listitem">Freepik</span>
         <span class="tool-pill" role="listitem">Higgsfield</span>
         <span class="tool-pill" role="listitem">ElevenLabs</span>
+        <span class="tool-pill" role="listitem">Many More...</span>
       </div>
     </div>
   </section>
 
-  <!-- ===================== WHAT YOU LEARN ===================== -->
-  <section class="learn" id="learn" aria-labelledby="learn-heading">
-    <div class="learn-inner">
-      <div class="learn-header">
-        <div class="learn-header-left reveal">
-          <span class="eyebrow eyebrow--clay">What you learn</span>
-          <h2 class="learn-h2" id="learn-heading">
-            Real skills.<br>
-            <em>Real results.</em><br>
-            Same day.
-          </h2>
-        </div>
-        <div class="learn-header-right reveal reveal-delay-1">
-          <p class="learn-intro">Every module in The Gurukul of AI is built around one question: can you use this tomorrow? If the answer is no, it does not belong in the curriculum.</p>
-        </div>
-      </div>
-
-      <div class="learn-grid">
-        <article class="learn-card reveal">
-          <span class="card-num" aria-hidden="true">01</span>
-          <h3>AI Product &amp; Fashion Shoots</h3>
-          <p>Generate studio-quality product images and model shots without a camera or photographer. Virtual try-ons, outfit swaps, jewelry photography.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">Freepik</span>
-            <span class="tool-tag">Nano Banana</span>
-            <span class="tool-tag">Midjourney</span>
-          </div>
-        </article>
-
-        <article class="learn-card reveal reveal-delay-1">
-          <span class="card-num" aria-hidden="true">02</span>
-          <h3>AI Video Production</h3>
-          <p>Build full brand video campaigns using AI. Model swaps, voiceovers, product placements, and editing workflows that produce high-end output.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">Kling AI</span>
-            <span class="tool-tag">Runway</span>
-            <span class="tool-tag">Luma</span>
-            <span class="tool-tag">CapCut</span>
-          </div>
-        </article>
-
-        <article class="learn-card reveal reveal-delay-2">
-          <span class="card-num" aria-hidden="true">03</span>
-          <h3>AI Avatars &amp; Presenters</h3>
-          <p>Replace on-camera presence with a professional AI avatar. Script-to-video in minutes. Scale content without recording.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">HeyGen</span>
-            <span class="tool-tag">ElevenLabs</span>
-          </div>
-        </article>
-
-        <article class="learn-card reveal">
-          <span class="card-num" aria-hidden="true">04</span>
-          <h3>Prompt Engineering Mastery</h3>
-          <p>The systematic approach to writing prompts that consistently produce premium results. Frameworks, templates, and real workflows.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">All Tools</span>
-            <span class="tool-tag">TCR-EI Framework</span>
-          </div>
-        </article>
-
-        <article class="learn-card reveal reveal-delay-1">
-          <span class="card-num" aria-hidden="true">05</span>
-          <h3>Brand Content at Scale</h3>
-          <p>Build content systems for D2C brands and businesses. Campaigns, social assets, and ad creatives — all produced with AI.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">Workflow Design</span>
-            <span class="tool-tag">Brand Strategy</span>
-          </div>
-        </article>
-
-        <article class="learn-card reveal reveal-delay-2">
-          <span class="card-num" aria-hidden="true">06</span>
-          <h3>Green Screens &amp; Compositing</h3>
-          <p>Create professional video backgrounds, composite AI environments, and build cinematic Instagram reels without a production team.</p>
-          <div class="card-tools" aria-label="Tools used">
-            <span class="tool-tag">Midjourney</span>
-            <span class="tool-tag">CapCut</span>
-            <span class="tool-tag">Higgsfield</span>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== COURSES ===================== -->
-  <section class="courses" id="courses" aria-labelledby="courses-heading">
-    <div class="courses-inner">
-      <div class="courses-header">
-        <div class="reveal">
-          <span class="eyebrow">The curriculum</span>
-          <h2 class="courses-h2" id="courses-heading">
-            Choose your<br>
-            <em>starting point.</em>
-          </h2>
-        </div>
-        <a href="#courses" class="view-all reveal">View all courses <span aria-hidden="true">→</span></a>
-      </div>
-
-      <div class="courses-grid">
-        <!-- Course 1 -->
-        <article class="course-card reveal">
-          <div class="course-thumb course-thumb--ink">
-            <span class="thumb-ghost" aria-hidden="true">AI</span>
-            <span class="course-label">FLAGSHIP COURSE</span>
-            <span class="course-badge">BESTSELLER</span>
-          </div>
-          <div class="course-body">
-            <h3>AI Videos Mastery</h3>
-            <p>The complete system for creating professional AI videos. Kling, Runway, Luma, HeyGen, Higgsfield — every tool, every workflow.</p>
-            <div class="course-footer">
-              <span class="course-price">₹4,999</span>
-              <a href="#" class="course-cta">Enroll now →</a>
-            </div>
-          </div>
-        </article>
-
-        <!-- Course 2 -->
-        <article class="course-card reveal reveal-delay-1">
-          <div class="course-thumb course-thumb--forest">
-            <span class="thumb-ghost" aria-hidden="true">PEM</span>
-            <span class="course-label">FOUNDATION COURSE</span>
-          </div>
-          <div class="course-body">
-            <h3>Prompt Engineering Mastery</h3>
-            <p>9 modules. 4 hours. The systematic approach to writing prompts that work — every single time, across every tool.</p>
-            <div class="course-footer">
-              <span class="course-price">₹2,999</span>
-              <a href="#" class="course-cta">Enroll now →</a>
-            </div>
-          </div>
-        </article>
-
-        <!-- Course 3 -->
-        <article class="course-card reveal reveal-delay-2">
-          <div class="course-thumb course-thumb--dark">
-            <span class="thumb-ghost" aria-hidden="true">IMG</span>
-            <span class="course-label">SPECIALIST COURSE</span>
-            <span class="course-badge">NEW</span>
-          </div>
-          <div class="course-body">
-            <h3>AI Image Mastery</h3>
-            <p>Product shoots, fashion campaigns, jewelry photography, virtual try-ons. The complete creative image workflow.</p>
-            <div class="course-footer">
-              <span class="course-price">₹3,499</span>
-              <a href="#" class="course-cta">Enroll now →</a>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
 
   <!-- ===================== FOUNDER ===================== -->
   <section class="founder" id="founder" aria-labelledby="founder-heading">
@@ -343,7 +257,9 @@
           Built by someone who<br>
           actually <em>uses</em> the tools.
         </h2>
-        <p class="founder-body">thegurukulofai exists because real AI creative education was nowhere to be found. No practitioner voice, no real workflows, no actual results. Seven years of machine learning engineering later, this is what that education looks like.</p>
+        <p class="founder-body"><p>Hi, My Name is Deenu Khan and I started thegurukulofai because I couldn't find what I was actually looking for and I am not talking about the courses of AI. There were plenty of those. I mean real education. The kind that shows you actual workflows, tools practitioners use, and results you can expect. Everything I found felt either too theoretical or too surface-level.</p>
+        
+        <p>So I built what I wished had existed, and the name is intentional. A gurukul isn't a classroom. It's where knowledge gets passed down directly, practically, without the noise.</p>
 
         <div class="founder-divider"></div>
 
@@ -379,6 +295,7 @@
             <span class="founder-pill">Runway</span>
             <span class="founder-pill">Hailuo AI</span>
             <span class="founder-pill">Higgsfield</span>
+            <span class="founder-pill">Many More...</span>
           </div>
         </div>
       </div>
@@ -525,6 +442,8 @@
       </div>
     </div>
   </footer>
+
+  </div><!-- /.cards-stack -->
 
   <script src="js/main.js"></script>
 </body>

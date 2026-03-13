@@ -26,6 +26,17 @@
     border-radius: 99px;
   }
 
+  /* ----- Cards stack ----- */
+  .cards-stack {
+    padding: 8px 16px 24px;
+    gap: 8px;
+  }
+
+  .cards-stack > section,
+  .cards-stack > footer {
+    border-radius: 16px;
+  }
+
   /* ----- Hero ----- */
   .hero {
     padding: 80px 16px 0;
