@@ -40,10 +40,12 @@
   /* ----- Hero ----- */
   .hero {
     padding: 80px 16px 0;
+    min-height: unset;
   }
 
   .hero-card {
     min-height: unset;
+    flex: unset;
   }
 
   .hero-content {
