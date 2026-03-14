@@ -426,7 +426,6 @@
 .courses-inner {
   max-width: var(--content-max);
   margin: 0 auto;
-  zoom: 0.92;
 }
 
 .courses-header {
