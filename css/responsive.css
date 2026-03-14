@@ -43,7 +43,7 @@
   }
 
   .hero-card {
-    min-height: 480px;
+    min-height: unset;
   }
 
   .hero-content {
