@@ -39,7 +39,7 @@
 
   /* ----- Hero ----- */
   .hero {
-    padding: 92px 16px 0;
+    padding: 112px 16px 0;
     min-height: unset;
   }
 
@@ -215,10 +215,6 @@
 @media (min-width: 1400px) {
   :root {
     --section-pad-h: 80px;
-  }
-
-  .hero {
-    padding: 112px 48px 0;
   }
 
   .hero-content {

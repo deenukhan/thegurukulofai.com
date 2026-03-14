@@ -72,7 +72,7 @@
 /* Page shell — warm-white shows around the card */
 .hero {
   background-color: var(--warm-white);
-  padding: 92px 32px 0;
+  padding: 112px 32px 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
