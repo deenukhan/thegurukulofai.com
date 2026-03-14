@@ -48,13 +48,17 @@
 
   .hero-content {
     justify-content: flex-start;
-    padding: 72px 28px 44px;
+    padding: 100px 28px 44px;
     max-width: 100%;
   }
 
   .hero-badge--tl {
     left: 20px;
     top: 20px;
+  }
+
+  .hero-badge--tr {
+    display: none;
   }
 
   .hero-h1 {
