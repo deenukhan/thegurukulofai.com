@@ -47,17 +47,14 @@
   }
 
   .hero-content {
-    padding: 64px 28px 44px;
+    justify-content: flex-start;
+    padding: 72px 28px 44px;
     max-width: 100%;
   }
 
   .hero-badge--tl {
     left: 20px;
     top: 20px;
-  }
-
-  .hero-badge--tr {
-    display: none; /* hide on mobile to avoid overlap */
   }
 
   .hero-h1 {
