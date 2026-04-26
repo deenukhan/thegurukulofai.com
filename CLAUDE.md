@@ -104,7 +104,7 @@ assets/
 - Facebook: `https://www.facebook.com/neuraltechai/`
 
 ## Course Links (Live)
-- 100x GenAI Mastery enroll: `https://100xgenai.thegurukulofai.com/`
+- 100x GenAI Mastery enroll: `https://learn.thegurukulofai.com/l/1ca4e7af03`
 - Waitlist (AI Influencer & UGC): Google Form link in index.html
 
 ---
