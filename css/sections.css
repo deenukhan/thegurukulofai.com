@@ -17,7 +17,7 @@
   transition: padding var(--ease-base);
 }
 
-/* Pill container — dark, aligns with hero card below */
+/* Pill container — frosted glass, aligns with hero card below */
 .nav-inner {
   max-width: var(--content-max);
   margin: 0 auto;
@@ -27,15 +27,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  /* White pill — lifts off the warm-white page */
-  background-color: #ffffff;
-  border: 1px solid var(--mist);
+  background-color: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 99px;
-  transition: box-shadow var(--ease-base);
+  transition: box-shadow var(--ease-base), background-color var(--ease-base);
 }
 
 .nav.scrolled .nav-inner {
-  box-shadow: 0 4px 20px rgba(26, 26, 26, 0.08);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 24px rgba(26, 26, 26, 0.10);
 }
 
 /* Links — dark on light pill */
@@ -104,10 +106,25 @@
   z-index: 0;
   background: linear-gradient(
     160deg,
-    rgba(26,26,26,0.80) 0%,
-    rgba(26,26,26,0.48) 55%,
+    rgba(26,26,26,0.82) 0%,
+    rgba(26,26,26,0.50) 55%,
     rgba(26,26,26,0.18) 100%
   );
+}
+
+/* Animated teal glow — breathes slowly over the photo */
+.hero-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at 72% 58%,
+    rgba(62, 207, 207, 0.18) 0%,
+    transparent 60%
+  );
+  animation: heroGlow 7s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
 /* Corner badges — absolute inside .hero-card */
@@ -141,17 +158,17 @@
 }
 
 .hero-h1 {
-  font-family: var(--font-serif);
-  font-size: clamp(44px, 5vw, 72px);
+  font-family: var(--font-sans);
+  font-size: clamp(44px, 5.5vw, 80px);
   font-weight: 700;
   color: var(--white);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
   margin-bottom: 0;
 }
 .hero-h1 em {
   font-style: italic;
-  color: var(--clay);
+  color: var(--teal);
 }
 
 .hero-body {
@@ -175,17 +192,17 @@
   color: var(--ink);
 }
 .hero-card .btn-primary:hover {
-  background-color: var(--clay);
+  background-color: var(--teal);
   color: var(--ink);
 }
 
 /* Light btn-text variant for dark backgrounds */
 .btn-text--light {
   color: var(--warm-white);
-  border-bottom-color: var(--clay);
+  border-bottom-color: var(--teal);
 }
 .btn-text--light:hover {
-  color: var(--clay);
+  color: var(--teal);
 }
 
 /* Ticker Bar — below the hero card, same width, rounded */
@@ -218,8 +235,9 @@
 }
 
 .ticker-dot {
-  color: var(--clay);
+  color: var(--teal);
   margin-left: 8px;
+  animation: tickerPulse 2s ease-in-out infinite;
 }
 
 /* ==========================================================================
@@ -264,14 +282,14 @@
 }
 
 .stat-num {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 40px;
   font-weight: 700;
   color: var(--white);
   line-height: 1;
 }
 
-.stat-accent { color: var(--clay); }
+.stat-accent { color: var(--teal); }
 
 .stat-lbl {
   font-family: var(--font-sans);
@@ -327,7 +345,7 @@
 }
 
 .learn-h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 54px);
   font-weight: 700;
   color: var(--white);
@@ -337,10 +355,10 @@
 }
 .learn-h2 em {
   font-style: italic;
-  color: var(--clay);
+  color: var(--teal);
 }
 
-.learn-header .eyebrow { color: var(--clay); }
+.learn-header .eyebrow { color: var(--teal); }
 
 .learn-intro {
   font-size: 16px;
@@ -371,7 +389,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background-color: var(--clay);
+  background-color: var(--teal);
   transition: width 0.4s var(--ease-spring);
 }
 .learn-card:hover {
@@ -386,14 +404,14 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2em;
-  color: var(--clay);
+  color: var(--teal);
   opacity: 0.6;
   display: block;
   margin-bottom: 20px;
 }
 
 .learn-card h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 700;
   color: var(--white);
@@ -437,7 +455,7 @@
 }
 
 .courses-h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 54px);
   font-weight: 700;
   color: var(--ink);
@@ -483,7 +501,7 @@
   bottom: -20px;
   width: 60%;
   height: 60%;
-  border: 2px solid var(--clay);
+  border: 2px solid var(--teal);
   z-index: 0;
   pointer-events: none;
 }
@@ -514,7 +532,7 @@
 }
 
 .founder-photo-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 24px;
   font-weight: 700;
   color: var(--white);
@@ -525,12 +543,12 @@
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
-  color: var(--clay);
+  color: var(--teal);
 }
 
 /* Copy */
 .founder-h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(32px, 3.5vw, 50px);
   font-weight: 700;
   color: var(--ink);
@@ -571,7 +589,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--clay);
+  background-color: var(--teal);
 }
 
 /* Divider */
@@ -597,7 +615,7 @@
 
 .founder-stat-num {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 22px;
   font-weight: 700;
   color: var(--ink);
@@ -648,7 +666,7 @@
 }
 
 .founder-pill:hover {
-  border-color: var(--clay);
+  border-color: var(--teal);
   color: var(--ink);
 }
 
@@ -670,7 +688,7 @@
 }
 
 .testimonials-h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 54px);
   font-weight: 700;
   color: var(--ink);
@@ -690,7 +708,7 @@
    CTA BANNER
    ========================================================================== */
 .cta-banner {
-  background-color: var(--forest);
+  background-color: var(--ink);
   padding: 100px var(--section-pad-h);
   position: relative;
   overflow: hidden;
@@ -700,7 +718,7 @@
   position: absolute;
   right: -80px;
   top: -80px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(280px, 35vw, 500px);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.03);
@@ -721,7 +739,7 @@
 }
 
 .cta-h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 56px);
   font-weight: 700;
   color: var(--white);
@@ -731,7 +749,7 @@
 }
 .cta-h2 em {
   font-style: italic;
-  color: var(--clay);
+  color: var(--teal);
 }
 
 .cta-sub {
@@ -762,7 +780,7 @@
 }
 
 .footer-brand {
-  /* takes the first 2fr column */
+  grid-column: 1;
 }
 
 .footer-logo {
@@ -772,18 +790,25 @@
   margin-bottom: 20px;
 }
 
+.footer-logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+
 .footer-logo-bar {
   display: block;
   width: 3px;
   height: 48px;
-  background-color: var(--clay);
+  background-color: var(--teal);
   flex-shrink: 0;
   margin-top: 3px;
 }
 
 .footer-logo-gurukul {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 700;
   color: var(--white);
@@ -797,7 +822,7 @@
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--clay);
+  color: var(--teal);
   margin-top: 3px;
 }
 
@@ -829,7 +854,7 @@
   color: rgba(247, 244, 239, 0.55);
   transition: color var(--ease-fast);
 }
-.footer-links a:hover { color: var(--clay); }
+.footer-links a:hover { color: var(--teal); }
 
 .footer-divider {
   height: 1px;
@@ -863,4 +888,4 @@
   color: rgba(247, 244, 239, 0.4);
   transition: color var(--ease-fast);
 }
-.footer-social a:hover { color: var(--clay); }
+.footer-social a:hover { color: var(--teal); }
