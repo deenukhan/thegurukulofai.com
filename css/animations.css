@@ -37,6 +37,16 @@
   to   { transform: translateX(-50%); }
 }
 
+@keyframes heroGlow {
+  from { opacity: 0.3; transform: scale(1) translate(0, 0); }
+  to   { opacity: 0.9; transform: scale(1.12) translate(-2%, 2%); }
+}
+
+@keyframes tickerPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
 /* ==========================================================================
    HERO ENTRY ANIMATIONS (CSS-only, no JS required)
    ========================================================================== */
@@ -123,7 +133,7 @@
 .cursor {
   width: 8px;
   height: 8px;
-  background-color: var(--clay);
+  background-color: var(--teal);
   border-radius: 50%;
   position: fixed;
   top: 0;

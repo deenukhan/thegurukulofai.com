@@ -13,11 +13,17 @@
   flex-shrink: 0;
 }
 
+.logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+
 .logo-bar {
   display: block;
   width: 3px;
   height: 36px;
-  background-color: var(--clay);
+  background-color: var(--teal);
   flex-shrink: 0;
 }
 
@@ -32,13 +38,13 @@
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.35em;
-  color: var(--clay);
+  color: var(--teal);
   text-transform: uppercase;
   line-height: 1.3;
 }
 
 .logo-gurukul {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 17px;
   font-weight: 700;
   color: var(--ink);
@@ -57,7 +63,7 @@
 }
 
 /* Dark variant (used on dark nav backgrounds) */
-.logo--dark .logo-the     { color: var(--clay); }
+.logo--dark .logo-the     { color: var(--teal); }
 .logo--dark .logo-gurukul { color: var(--white); }
 .logo--dark .logo-ofai    { color: rgba(247, 244, 239, 0.5); }
 
@@ -90,13 +96,14 @@
 
 /* Primary — Clay bg, ink text */
 .btn-primary {
-  background-color: var(--clay);
+  background-color: var(--teal);
   color: var(--ink);
   padding: 16px 36px;
 }
 .btn-primary:hover {
-  background-color: var(--clay-light);
-  transform: translateY(-1px);
+  background-color: var(--teal-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(62, 207, 207, 0.45);
 }
 .btn-primary:hover svg {
   transform: translateX(4px);
@@ -104,20 +111,21 @@
 
 /* Nav CTA — ink on white pill */
 .btn-nav {
-  background-color: var(--ink);
-  color: var(--warm-white);
+  background-color: var(--teal);
+  color: var(--ink);
   padding: 10px 22px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 99px;
 }
 .btn-nav:hover {
-  background-color: var(--forest);
+  background-color: var(--teal-light);
+  box-shadow: 0 4px 18px rgba(62, 207, 207, 0.5);
 }
 
 /* CTA Banner button — Clay bg, ink text */
 .btn-cta {
-  background-color: var(--clay);
+  background-color: var(--teal);
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
@@ -127,8 +135,9 @@
   white-space: nowrap;
 }
 .btn-cta:hover {
-  background-color: var(--clay-light);
+  background-color: var(--teal-light);
   transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(62, 207, 207, 0.45);
 }
 .btn-cta:hover svg {
   transform: translateX(4px);
@@ -141,7 +150,7 @@
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 2px solid var(--clay);
+  border-bottom: 2px solid var(--teal);
   padding-bottom: 2px;
   transition: color var(--ease-fast);
 }
@@ -155,7 +164,7 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--slate);
-  border-bottom: 1px solid var(--clay);
+  border-bottom: 1px solid var(--teal);
   padding-bottom: 2px;
   white-space: nowrap;
   transition: color var(--ease-fast);
@@ -178,23 +187,23 @@
     transform var(--ease-base);
 }
 .stat-card:hover {
-  border-color: var(--clay);
+  border-color: var(--teal);
   transform: translateX(-4px);
 }
 
-.stat-card--clay   { border-left-color: var(--clay); }
+.stat-card--clay   { border-left-color: var(--teal); }
 .stat-card--ink    { border-left-color: var(--ink); }
 .stat-card--forest { border-left-color: var(--forest); }
 
 .stat-number {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 48px;
   font-weight: 700;
   color: var(--ink);
   line-height: 1;
   margin-bottom: 8px;
 }
-.stat-number span { color: var(--clay); }
+.stat-number span { color: var(--teal); }
 
 .stat-label {
   font-family: var(--font-sans);
@@ -240,7 +249,7 @@
 }
 .tool-pill:hover {
   background-color: var(--ink);
-  color: var(--clay);
+  color: var(--teal);
   z-index: 1;
 }
 
@@ -254,8 +263,8 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--clay);
-  border: 1px solid rgba(196, 168, 130, 0.3);
+  color: var(--teal);
+  border: 1px solid rgba(62, 207, 207, 0.25);
   padding: 4px 10px;
 }
 
@@ -273,8 +282,8 @@
     box-shadow var(--ease-base);
 }
 .course-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 17px 34px rgba(26, 26, 26, 0.10);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(26, 26, 26, 0.12), 0 0 0 1px rgba(62, 207, 207, 0.2), 0 0 24px rgba(62, 207, 207, 0.08);
 }
 
 /* Thumbnail */
@@ -295,7 +304,7 @@
   position: absolute;
   bottom: -24px;
   right: -8px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 110px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.06);
@@ -321,7 +330,7 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  background-color: var(--clay);
+  background-color: var(--teal);
   color: var(--ink);
   padding: 4px 10px;
   align-self: flex-start;
@@ -394,11 +403,11 @@
 
 /* Waitlist CTA */
 .course-cta--soon {
-  color: var(--clay);
+  color: var(--teal);
   border-bottom-color: transparent;
 }
 .course-cta--soon:hover {
-  border-color: var(--clay);
+  border-color: var(--teal);
 }
 
 /* Course body */
@@ -409,7 +418,7 @@
   flex-direction: column;
 }
 .course-body h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 700;
   color: var(--ink);
@@ -430,7 +439,7 @@
   justify-content: space-between;
 }
 .course-price {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 24px;
   font-weight: 700;
   color: var(--ink);
@@ -439,13 +448,13 @@
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--teal);
   border-bottom: 1px solid transparent;
   padding-bottom: 1px;
   transition: border-color var(--ease-fast);
 }
 .course-cta:hover {
-  border-color: var(--forest);
+  border-color: var(--teal);
 }
 
 /* ==========================================================================
@@ -455,17 +464,19 @@
   background-color: var(--white);
   border: 1px solid var(--mist);
   padding: 36px 32px;
-  transition: border-color var(--ease-base);
+  transition: border-color var(--ease-base), box-shadow var(--ease-base), transform var(--ease-base);
 }
 .testimonial-card:hover {
-  border-color: var(--clay);
+  border-color: var(--teal);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(62, 207, 207, 0.12);
 }
 
 .quote-mark {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 72px;
-  color: var(--clay);
+  color: var(--teal);
   opacity: 0.4;
   line-height: 0.8;
   margin-bottom: 16px;
@@ -494,10 +505,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
-  color: var(--clay);
+  color: var(--teal);
   flex-shrink: 0;
 }
 
