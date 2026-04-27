@@ -85,6 +85,50 @@
   }
 
   // =========================================================================
+  // STAT COUNTER ANIMATION
+  // Counts up founder stat numbers when they scroll into view.
+  // Parses the suffix (e.g. "K+", "+") and animates the numeric part.
+  // =========================================================================
+  const statNums = document.querySelectorAll('.founder-stat-num');
+
+  function animateCounter(el) {
+    const original = el.textContent.trim();
+    const match = original.match(/^(\d+)(.*)/);
+    if (!match) return;
+
+    const target   = parseInt(match[1], 10);
+    const suffix   = match[2];
+    const duration = 1600;
+    const start    = performance.now();
+
+    el.textContent = '0' + suffix;
+
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      el.textContent = Math.round(eased * target) + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  if ('IntersectionObserver' in window && statNums.length > 0) {
+    const counterObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            animateCounter(entry.target);
+            counterObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+    statNums.forEach((el) => counterObserver.observe(el));
+  }
+
+  // =========================================================================
   // SMOOTH ANCHOR SCROLL
   // Accounts for fixed nav height so sections aren't hidden behind the nav.
   // =========================================================================
