@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Resources - The Gurukul of AI</title>
+  <meta name="description" content="Free practical AI resources from The Gurukul of AI.">
+  <meta name="author" content="Deenu Khan">
+
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css?v=37">
+  <link rel="stylesheet" href="css/components.css?v=37">
+  <style>
+    body {
+      background: var(--warm-white);
+    }
+
+    .resources-shell {
+      min-height: 100vh;
+      padding: 24px 32px 32px;
+    }
+
+    .resources-nav {
+      max-width: var(--content-max);
+      margin: 0 auto 12px;
+      padding: 10px 10px 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      background-color: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(2, 60, 68, 0.10);
+      border-radius: 99px;
+      box-shadow: 0 4px 24px rgba(2, 60, 68, 0.08);
+    }
+
+    .resources-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate);
+    }
+
+    .resources-nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .resources-page {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .resources-header {
+      padding: clamp(48px, 8vw, 96px) var(--section-pad-h) 48px;
+      border-bottom: 1px solid var(--mist);
+      background:
+        radial-gradient(circle at 86% 20%, rgba(255, 210, 166, 0.62) 0%, rgba(255, 210, 166, 0) 24%),
+        linear-gradient(135deg, var(--white) 0%, var(--paper-blue) 100%);
+    }
+
+    .resources-h1 {
+      max-width: 760px;
+      font-family: var(--font-sans);
+      font-size: clamp(42px, 6vw, 76px);
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.06;
+      letter-spacing: -0.035em;
+      margin-bottom: 20px;
+    }
+
+    .resources-h1 em {
+      color: var(--teal);
+      font-style: italic;
+    }
+
+    .resources-intro {
+      max-width: 620px;
+      color: var(--slate);
+      font-size: 17px;
+      line-height: 1.8;
+    }
+
+    .resources-content {
+      padding: 56px var(--section-pad-h) 72px;
+    }
+
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .resource-card {
+      background-color: var(--white);
+      border: 1px solid var(--mist);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      transition: transform var(--ease-base), box-shadow var(--ease-base), border-color var(--ease-base);
+    }
+
+    .resource-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--teal);
+      box-shadow: 0 20px 40px rgba(2, 60, 68, 0.10);
+    }
+
+    .resource-thumb {
+      position: relative;
+      min-height: 190px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      background: #A3DADF;
+      color: var(--forest);
+    }
+
+    .resource-thumb--pdf {
+      background: var(--peach);
+    }
+
+    .resource-thumb--video {
+      background: var(--paper-blue);
+    }
+
+    .resource-type {
+      position: relative;
+      z-index: 1;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    .resource-ghost {
+      position: absolute;
+      right: -10px;
+      bottom: -18px;
+      color: rgba(2, 60, 68, 0.12);
+      font-size: 92px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .resource-thumb-title {
+      position: relative;
+      z-index: 1;
+      max-width: 260px;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+    }
+
+    .resource-body {
+      padding: 30px 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .resource-label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--forest);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+
+    .resource-body h2 {
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    .resource-body p {
+      color: var(--slate);
+      font-size: 15px;
+      line-height: 1.75;
+      margin-bottom: 26px;
+      flex: 1;
+    }
+
+    .resource-link {
+      width: max-content;
+      color: var(--teal);
+      font-size: 14px;
+      font-weight: 600;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 1px;
+      transition: border-color var(--ease-fast);
+    }
+
+    .resource-link:hover {
+      border-color: var(--teal);
+    }
+
+    .resource-link--disabled {
+      color: var(--slate);
+      border-bottom-color: var(--mist);
+      cursor: default;
+      opacity: 0.72;
+    }
+
+    .resources-note {
+      margin-top: 32px;
+      padding: 22px 24px;
+      background: var(--warm-white);
+      border: 1px solid var(--mist);
+      color: var(--slate);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .resources-footer {
+      max-width: var(--content-max);
+      margin: 12px auto 0;
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--slate);
+      background: var(--white);
+      border-radius: 20px;
+      border: 1px solid var(--mist);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .resources-shell {
+        padding: 12px 16px 24px;
+      }
+
+      .resources-nav {
+        padding: 10px 16px;
+      }
+
+      .resources-nav-links {
+        display: none;
+      }
+
+      .resources-header,
+      .resources-content {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      .resources-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .resources-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="resources-shell">
+    <nav class="resources-nav" aria-label="Free Resources navigation">
+      <a href="index.html" class="logo" aria-label="The Gurukul of AI - Home">
+        <img src="assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
+      </a>
+      <div class="resources-nav-links">
+        <a href="index.html#courses">Courses</a>
+        <a href="index.html#founder">About</a>
+        <a href="free-guides.html">Free Guides</a>
+        <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <a href="http://learn.thegurukulofai.com/" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Login</a>
+    </nav>
+
+    <main class="resources-page">
+      <header class="resources-header">
+        <span class="eyebrow">Free Resources</span>
+        <h1 class="resources-h1">Simple resources you can use <em>right away.</em></h1>
+        <p class="resources-intro">
+          Guides, PDFs, videos, and templates from The Gurukul of AI. This page is intentionally simple so new free resources can be added as cards.
+        </p>
+      </header>
+
+      <section class="resources-content" aria-labelledby="resources-heading">
+        <h2 id="resources-heading" class="eyebrow">Resource library</h2>
+        <div class="resources-grid">
+          <article class="resource-card">
+            <div class="resource-thumb">
+              <span class="resource-type">Notion Guide</span>
+              <span class="resource-thumb-title">Free Notion Guides</span>
+              <span class="resource-ghost" aria-hidden="true">01</span>
+            </div>
+            <div class="resource-body">
+              <span class="resource-label">Available now</span>
+              <h2>Free Notion Guides</h2>
+              <p>Templates, systems, and practical Notion guides for creators, students, and builders who want cleaner workflows.</p>
+              <a class="resource-link" href="https://efficient-ranunculus-e93.notion.site/Free-Notion-Guides-Neuraltech-ai-4c041f48f59f404e9b11ffbafbf7589e?pvs=73" target="_blank" rel="noopener noreferrer">Open resource →</a>
+            </div>
+          </article>
+
+          <article class="resource-card">
+            <div class="resource-thumb resource-thumb--pdf">
+              <span class="resource-type">PDF</span>
+              <span class="resource-thumb-title">Prompt Cheat Sheet</span>
+              <span class="resource-ghost" aria-hidden="true">02</span>
+            </div>
+            <div class="resource-body">
+              <span class="resource-label">Coming soon</span>
+              <h2>AI Prompt Cheat Sheet</h2>
+              <p>A downloadable PDF card can live here later. Replace the link with your PDF file when it is ready.</p>
+              <span class="resource-link resource-link--disabled">Coming soon</span>
+            </div>
+          </article>
+
+          <article class="resource-card">
+            <div class="resource-thumb resource-thumb--video">
+              <span class="resource-type">Video</span>
+              <span class="resource-thumb-title">Mini Training</span>
+              <span class="resource-ghost" aria-hidden="true">03</span>
+            </div>
+            <div class="resource-body">
+              <span class="resource-label">Coming soon</span>
+              <h2>Free AI Mini Training</h2>
+              <p>A YouTube video, course preview, or short training can be added here as the next free resource.</p>
+              <span class="resource-link resource-link--disabled">Coming soon</span>
+            </div>
+          </article>
+        </div>
+
+      </section>
+    </main>
+
+    <footer class="resources-footer">
+      <span>© 2026 The Gurukul of AI. Free resources for AI creators and builders.</span>
+      <a href="index.html">Back to homepage</a>
+    </footer>
+  </div>
+</body>
+</html>

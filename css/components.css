@@ -279,13 +279,18 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition:
-    transform var(--ease-base),
-    box-shadow var(--ease-base);
+  position: relative;
+  transition: transform var(--ease-base), box-shadow var(--ease-base), border-color var(--ease-base);
 }
 .course-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(2, 60, 68, 0.10), 0 0 0 1px rgba(53, 189, 200, 0.18), 0 0 24px rgba(53, 189, 200, 0.08);
+  border-color: var(--teal);
+  box-shadow: 0 20px 40px rgba(2, 60, 68, 0.10);
+}
+
+.course-card.reveal.visible:hover,
+.course-card.reveal.visible:focus-within {
+  transform: translateY(-6px);
 }
 
 /* Thumbnail */
@@ -300,7 +305,7 @@
 }
 .course-thumb--ink    { background-color: var(--paper-blue); }
 .course-thumb--forest { background-color: #A3DADF; }
-.course-thumb--dark   { background-color: var(--peach); }
+.course-thumb--dark   { background-color: #A3DADF; }
 
 .thumb-ghost {
   position: absolute;
