@@ -5,15 +5,17 @@
 /* ---------- Design Tokens ---------- */
 :root {
   /* Brand Colors */
-  --ink:        #1A1A1A;
-  --teal:       #3ECFCF;
-  --teal-light: #65DADA;
-  --warm-white: #F5F5F7;
+  --ink:        #091717;
+  --teal:       #35BDC8;
+  --teal-light: #DEF7F9;
+  --warm-white: #FBFBF7;
   --white:      #FFFFFF;
-  --slate:      #4A4A4A;
-  --mist:       #E8E4DE;
-  --forest:     #2D4A3E;
-  --forest-mid: #3D6454;
+  --slate:      #315F64;
+  --mist:       #DCEFF1;
+  --forest:     #023C44;
+  --forest-mid: #1A6872;
+  --peach:      #FFD2A6;
+  --paper-blue: #DEF7F9;
 
   /* Typography */
   --font-serif: 'Lora', Georgia, serif;

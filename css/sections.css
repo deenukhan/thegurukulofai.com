@@ -27,17 +27,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  background-color: rgba(255, 255, 255, 0.80);
+  background-color: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(2, 60, 68, 0.10);
   border-radius: 99px;
   transition: box-shadow var(--ease-base), background-color var(--ease-base);
 }
 
 .nav.scrolled .nav-inner {
-  background-color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 4px 24px rgba(26, 26, 26, 0.10);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 24px rgba(2, 60, 68, 0.10);
 }
 
 /* Links — dark on light pill */
@@ -120,7 +120,7 @@
   z-index: 0;
   background: radial-gradient(
     ellipse at 72% 58%,
-    rgba(62, 207, 207, 0.18) 0%,
+    rgba(53, 189, 200, 0.18) 0%,
     transparent 60%
   );
   animation: heroGlow 7s ease-in-out infinite alternate;
@@ -137,8 +137,8 @@
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink);
-  background-color: rgba(255, 255, 255, 0.92);
+  color: var(--forest);
+  background-color: rgba(255, 255, 255, 0.88);
   padding: 7px 16px;
   border-radius: 4px;
 }
@@ -211,7 +211,7 @@
   margin: 12px auto 0;
   width: 100%;
   height: 48px;
-  background-color: var(--ink);
+  background-color: var(--forest);
   overflow: hidden;
   flex-shrink: 0;
   border-radius: 12px;
@@ -262,7 +262,7 @@
    STAT STRIP
    ========================================================================== */
 .stat-strip {
-  background-color: var(--ink);
+  background-color: var(--white);
   padding: 0 var(--section-pad-h);
 }
 
@@ -285,7 +285,7 @@
   font-family: var(--font-sans);
   font-size: 40px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--ink);
   line-height: 1;
 }
 
@@ -295,12 +295,12 @@
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
-  color: rgba(247,244,239,0.5);
+  color: var(--slate);
 }
 
 .stat-divider {
   width: 1px;
-  background-color: rgba(255,255,255,0.08);
+  background-color: var(--mist);
   align-self: stretch;
   flex-shrink: 0;
 }
@@ -327,7 +327,7 @@
    WHAT YOU LEARN
    ========================================================================== */
 .learn {
-  background-color: var(--ink);
+  background-color: var(--paper-blue);
   padding: var(--section-pad-v) var(--section-pad-h);
 }
 
@@ -348,21 +348,21 @@
   font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 54px);
   font-weight: 700;
-  color: var(--white);
+  color: var(--ink);
   line-height: 1.1;
   letter-spacing: -0.025em;
   margin-top: 16px;
 }
 .learn-h2 em {
   font-style: italic;
-  color: var(--teal);
+  color: var(--forest);
 }
 
 .learn-header .eyebrow { color: var(--teal); }
 
 .learn-intro {
   font-size: 16px;
-  color: rgba(247, 244, 239, 0.6);
+  color: var(--slate);
   line-height: 1.8;
   padding-top: 48px;
 }
@@ -372,11 +372,11 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(2, 60, 68, 0.12);
 }
 
 .learn-card {
-  background-color: var(--ink);
+  background-color: rgba(255, 255, 255, 0.74);
   padding: 48px 40px;
   position: relative;
   overflow: hidden;
@@ -393,7 +393,7 @@
   transition: width 0.4s var(--ease-spring);
 }
 .learn-card:hover {
-  background-color: #222222;
+  background-color: var(--white);
 }
 .learn-card:hover::after {
   width: 100%;
@@ -414,7 +414,7 @@
   font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--ink);
   margin-bottom: 14px;
   line-height: 1.3;
   letter-spacing: -0.01em;
@@ -422,7 +422,7 @@
 
 .learn-card p {
   font-size: 15px;
-  color: rgba(247, 244, 239, 0.55);
+  color: var(--slate);
   line-height: 1.7;
   margin-bottom: 24px;
 }
@@ -475,7 +475,7 @@
    FOUNDER
    ========================================================================== */
 .founder {
-  background-color: var(--mist);
+  background-color: var(--warm-white);
   padding: var(--section-pad-v) var(--section-pad-h);
 }
 
@@ -595,7 +595,7 @@
 /* Divider */
 .founder-divider {
   height: 1px;
-  background-color: var(--mist);
+  background-color: rgba(2, 60, 68, 0.14);
   margin: 28px 0;
 }
 
@@ -708,7 +708,7 @@
    CTA BANNER
    ========================================================================== */
 .cta-banner {
-  background-color: var(--ink);
+  background-color: var(--paper-blue);
   padding: 100px var(--section-pad-h);
   position: relative;
   overflow: hidden;
@@ -721,7 +721,7 @@
   font-family: var(--font-sans);
   font-size: clamp(280px, 35vw, 500px);
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.03);
+  color: rgba(2, 60, 68, 0.06);
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -742,19 +742,19 @@
   font-family: var(--font-sans);
   font-size: clamp(36px, 4vw, 56px);
   font-weight: 700;
-  color: var(--white);
+  color: var(--ink);
   line-height: 1.1;
   letter-spacing: -0.025em;
   margin-bottom: 20px;
 }
 .cta-h2 em {
   font-style: italic;
-  color: var(--teal);
+  color: var(--forest);
 }
 
 .cta-sub {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--slate);
   line-height: 1.75;
   max-width: 540px;
 }
@@ -763,7 +763,7 @@
    FOOTER
    ========================================================================== */
 .footer {
-  background-color: var(--ink);
+  background-color: var(--white);
   padding: 80px var(--section-pad-h) 40px;
 }
 
@@ -794,7 +794,7 @@
   height: 32px;
   width: auto;
   display: block;
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 .footer-logo-bar {
@@ -811,7 +811,7 @@
   font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 
@@ -828,7 +828,7 @@
 
 .footer-tagline {
   font-size: 14px;
-  color: rgba(247, 244, 239, 0.4);
+  color: var(--slate);
   line-height: 1.7;
   max-width: 260px;
 }
@@ -839,7 +839,7 @@
   font-weight: 600;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: rgba(247, 244, 239, 0.3);
+  color: var(--forest);
   margin-bottom: 20px;
 }
 
@@ -851,14 +851,14 @@
 .footer-links a {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: rgba(247, 244, 239, 0.55);
+  color: var(--slate);
   transition: color var(--ease-fast);
 }
 .footer-links a:hover { color: var(--teal); }
 
 .footer-divider {
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--mist);
   margin-bottom: 32px;
 }
 
@@ -872,7 +872,7 @@
 .footer-copy {
   font-family: var(--font-sans);
   font-size: 12px;
-  color: rgba(247, 244, 239, 0.3);
+  color: rgba(9, 23, 23, 0.45);
 }
 
 .footer-social {
@@ -885,7 +885,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(247, 244, 239, 0.4);
+  color: var(--slate);
   transition: color var(--ease-fast);
 }
 .footer-social a:hover { color: var(--teal); }

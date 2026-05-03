@@ -101,9 +101,9 @@
   padding: 16px 36px;
 }
 .btn-primary:hover {
-  background-color: var(--teal-light);
+  background-color: var(--peach);
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(62, 207, 207, 0.45);
+  box-shadow: 0 8px 28px rgba(53, 189, 200, 0.28);
 }
 .btn-primary:hover svg {
   transform: translateX(4px);
@@ -111,22 +111,23 @@
 
 /* Nav CTA — ink on white pill */
 .btn-nav {
-  background-color: var(--teal);
-  color: var(--ink);
+  background-color: var(--forest);
+  color: var(--white);
   padding: 10px 22px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 99px;
 }
 .btn-nav:hover {
-  background-color: var(--teal-light);
-  box-shadow: 0 4px 18px rgba(62, 207, 207, 0.5);
+  background-color: var(--teal);
+  color: var(--ink);
+  box-shadow: 0 4px 18px rgba(53, 189, 200, 0.32);
 }
 
 /* CTA Banner button — Clay bg, ink text */
 .btn-cta {
-  background-color: var(--teal);
-  color: var(--ink);
+  background-color: var(--forest);
+  color: var(--white);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -135,9 +136,10 @@
   white-space: nowrap;
 }
 .btn-cta:hover {
-  background-color: var(--teal-light);
+  background-color: var(--teal);
+  color: var(--ink);
   transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(62, 207, 207, 0.45);
+  box-shadow: 0 10px 32px rgba(53, 189, 200, 0.28);
 }
 .btn-cta:hover svg {
   transform: translateX(4px);
@@ -248,8 +250,8 @@
   position: relative;
 }
 .tool-pill:hover {
-  background-color: var(--ink);
-  color: var(--teal);
+  background-color: var(--paper-blue);
+  color: var(--ink);
   z-index: 1;
 }
 
@@ -283,7 +285,7 @@
 }
 .course-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(26, 26, 26, 0.12), 0 0 0 1px rgba(62, 207, 207, 0.2), 0 0 24px rgba(62, 207, 207, 0.08);
+  box-shadow: 0 20px 40px rgba(2, 60, 68, 0.10), 0 0 0 1px rgba(53, 189, 200, 0.18), 0 0 24px rgba(53, 189, 200, 0.08);
 }
 
 /* Thumbnail */
@@ -296,9 +298,9 @@
   justify-content: space-between;
   overflow: hidden;
 }
-.course-thumb--ink    { background-color: var(--ink); }
-.course-thumb--forest { background-color: var(--forest); }
-.course-thumb--dark   { background-color: #2A1F18; }
+.course-thumb--ink    { background-color: var(--paper-blue); }
+.course-thumb--forest { background-color: #A3DADF; }
+.course-thumb--dark   { background-color: var(--peach); }
 
 .thumb-ghost {
   position: absolute;
@@ -307,7 +309,7 @@
   font-family: var(--font-sans);
   font-size: 110px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.06);
+  color: rgba(2, 60, 68, 0.10);
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -320,7 +322,7 @@
   font-weight: 600;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: rgba(247, 244, 239, 0.5);
+  color: var(--forest);
 }
 
 .course-badge {
@@ -330,7 +332,7 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  background-color: var(--teal);
+  background-color: var(--white);
   color: var(--ink);
   padding: 4px 10px;
   align-self: flex-start;
@@ -341,7 +343,7 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background-color: var(--ink);
+  background-color: var(--forest);
 }
 .course-video iframe {
   position: absolute;
@@ -366,9 +368,9 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  background-color: rgba(247, 244, 239, 0.15);
-  color: var(--warm-white);
-  border: 1px solid rgba(247, 244, 239, 0.3);
+  background-color: rgba(255, 255, 255, 0.75);
+  color: var(--forest);
+  border: 1px solid rgba(2, 60, 68, 0.18);
   padding: 3px 7px;
   border-radius: 99px;
   align-self: flex-start;
@@ -395,8 +397,8 @@
 
 /* Label variant for light background */
 .course-label--dark {
-  color: var(--slate);
-  opacity: 0.6;
+  color: var(--forest);
+  opacity: 0.78;
   display: block;
   margin-bottom: 8px;
 }
@@ -501,14 +503,14 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--ink);
+  background-color: var(--paper-blue);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
-  color: var(--teal);
+  color: var(--forest);
   flex-shrink: 0;
 }
 
