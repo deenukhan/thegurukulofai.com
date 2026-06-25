@@ -55,13 +55,14 @@ module.exports = function (eleventyConfig) {
     return `<div class="reel-grid">${tiles}</div>`;
   });
 
-  // ---- Shortcode: gallery of still -> video pairs (horizontal). Items: "imageUrl::guid::label" ----
+  // ---- Shortcode: gallery of still -> video pairs (uses the same layout as stillToMotion) ----
+  // Items: "imageUrl::guid::label"
   eleventyConfig.addShortcode("pairGallery", (...items) => {
-    const arrow = `<div class="pair-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+    const arrow = `<div class="s2m-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
     const cells = items.map((it) => {
       const [img, guid, label = ""] = String(it).split("::");
-      const cap = label ? `<figcaption class="pair-label">${label}</figcaption>` : "";
-      return `<figure class="pair">${cap}<div class="pair-row"><div class="pair-cell"><span class="pair-tag">Still</span><img class="pair-still" src="${img.trim()}" alt="${label} still image" loading="lazy" decoding="async"></div>${arrow}<div class="pair-cell"><span class="pair-tag">Video</span><div class="post-video-frame">${iframe(guid.trim(), "responsive=true&preload=true&loop=true&muted=true&autoplay=false")}</div></div></div></figure>`;
+      const cap = label ? `<figcaption>${label}</figcaption>` : "";
+      return `<figure class="s2m"><div class="s2m-row"><div class="s2m-cell"><span class="s2m-label">Still image</span><img src="${img.trim()}" alt="${label} still image" loading="lazy" decoding="async"></div>${arrow}<div class="s2m-cell"><span class="s2m-label">Finished video</span><div class="post-video-frame">${iframe(guid.trim(), "responsive=true&preload=true&loop=true&muted=true&autoplay=false")}</div></div></div>${cap}</figure>`;
     }).join("");
     return `<div class="pair-gallery">${cells}</div>`;
   });
