@@ -120,4 +120,4 @@ These are the exact **Claude Code skills** behind everything above. Download the
 
 References in, finished videos out, with your attention spent on taste rather than busywork. Once the setup is done in Claude Code, that really is all there is to it.
 
-If you want to turn this into a full system you can run for yourself or a brand, that is exactly what we teach inside [GenAI Mastery](/#courses).
+If you want to go deeper, we teach workflows like this across [our courses](/#courses).
