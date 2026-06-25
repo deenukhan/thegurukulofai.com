@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>The Gurukul Journal — The Gurukul of AI</title>
+    <link>https://thegurukulofai.com/blog/</link>
+    <description>End-to-end AI tutorials for creators and D2C brands — images, infographics, and video. By Deenu Khan.</description>
+    <language>en-in</language>
+    <item>
+      <title>AI Product Photography for D2C Brands: A Full Workflow</title>
+      <link>https://thegurukulofai.com/blog/ai-product-photography-d2c/</link>
+      <guid>https://thegurukulofai.com/blog/ai-product-photography-d2c/</guid>
+      <pubDate>Thu, 25 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Shoot a complete D2C campaign — packshots, hero shots, lifestyle, editorial, and video — without a studio, a team, or a photographer. Here is the exact workflow.</description>
+    </item>
+  </channel>
+</rss>

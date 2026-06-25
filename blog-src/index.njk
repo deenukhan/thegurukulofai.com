@@ -1,0 +1,35 @@
+---
+layout: base.njk
+title: The Gurukul Journal
+description: End-to-end AI tutorials for creators and D2C brands — images, infographics, and video. By Deenu Khan.
+---
+<section class="blog-hero">
+  <div class="blog-hero-inner">
+    <span class="post-eyebrow">Tutorials &amp; Guides</span>
+    <h1 class="blog-hero-title">The Gurukul <em>Journal</em></h1>
+    <div class="clay-rule" aria-hidden="true"></div>
+    <p class="blog-hero-lede">End-to-end AI tutorials for creators and brand builders. Real tools, real prompts, real workflows — with images, infographics, and video.</p>
+  </div>
+</section>
+
+<section class="blog-list">
+  <div class="post-grid">
+    {% for post in collections.posts %}
+    <a class="post-card" href="{{ post.url | url }}">
+      {% if post.data.cover %}
+      <div class="post-card-thumb">
+        <img src="{{ post.data.cover }}" alt="{{ post.data.title }}" loading="lazy" decoding="async">
+      </div>
+      {% endif %}
+      <div class="post-card-body">
+        {% if post.data.tag %}<span class="post-card-tag">{{ post.data.tag }}</span>{% endif %}
+        <h2 class="post-card-title">{{ post.data.title }}</h2>
+        <p class="post-card-desc">{{ post.data.description }}</p>
+        <div class="post-card-meta">
+          <time datetime="{{ post.date | isoDate }}">{{ post.date | readableDate }}</time>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>

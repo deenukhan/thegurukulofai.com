@@ -1,0 +1,44 @@
+---
+layout: base.njk
+---
+<article class="post">
+  <header class="post-head">
+    <div class="post-head-inner">
+      <a href="/blog/" class="post-back">← All tutorials</a>
+      {% if tag %}<span class="post-eyebrow">{{ tag }}</span>{% endif %}
+      <h1 class="post-title">{{ title }}</h1>
+      <div class="clay-rule" aria-hidden="true"></div>
+      <p class="post-lede">{{ description }}</p>
+      <div class="post-meta">
+        <span class="post-author">By {{ site.author }}</span>
+        <span class="post-dot">·</span>
+        <time datetime="{{ page.date | isoDate }}">{{ page.date | readableDate }}</time>
+        <span class="post-dot">·</span>
+        <span>{{ content | readTime }} min read</span>
+      </div>
+    </div>
+  </header>
+
+  {% if cover %}
+  <div class="post-cover">
+    <img src="{{ cover }}" alt="{{ title }}" fetchpriority="high" decoding="async">
+  </div>
+  {% endif %}
+
+  <div class="post-prose">
+    {{ content | safe }}
+  </div>
+
+  <aside class="post-cta">
+    <h2 class="post-cta-title">Want the full system, not just the highlights?</h2>
+    <p>These workflows are taught end-to-end inside <strong>100x GenAI Mastery</strong> — every tool, prompt, and template.</p>
+    <a class="btn btn-primary" href="https://learn.thegurukulofai.com/l/1ca4e7af03" target="_blank" rel="noopener noreferrer">Explore the course</a>
+  </aside>
+
+  <footer class="post-author-card">
+    <div class="post-author-meta">
+      <span class="post-author-name">Deenu Khan</span>
+      <span class="post-author-role">ML Engineer · AI creator · 300K+ on @neuraltech.ai</span>
+    </div>
+  </footer>
+</article>
