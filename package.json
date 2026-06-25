@@ -1,0 +1,14 @@
+{
+  "name": "thegurukulofai-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blog/tutorials build for thegurukulofai.com (Eleventy -> static HTML in /blog)",
+  "scripts": {
+    "build": "eleventy --config=eleventy.config.js",
+    "serve": "eleventy --config=eleventy.config.js --serve",
+    "watch": "eleventy --config=eleventy.config.js --watch"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}
