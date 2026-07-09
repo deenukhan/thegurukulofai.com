@@ -2,7 +2,7 @@
    Source: blog-src/  ->  Output: blog/  (served at /blog/, committed to git).
    Heavy media lives on Bunny CDN/Stream, never in this repo. */
 
-const STREAM_LIBRARY_ID = 691066; // public (appears in embed URLs); safe to commit
+const STREAM_LIBRARY_ID = 700793; // public (appears in embed URLs); safe to commit
 
 module.exports = function (eleventyConfig) {
   // ---- Date filters ----

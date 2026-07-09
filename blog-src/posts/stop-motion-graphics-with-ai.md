@@ -3,7 +3,7 @@ title: "How to Make Stop-Motion Graphic Videos with AI"
 date: 2026-06-26
 tag: "AI Motion"
 description: "Production-grade stop-motion graphics, made with AI. The full process end to end: what the style is, how the automation works, and how you make finished videos by doing almost nothing."
-cover: "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/chess-hands.webp"
+cover: "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/chess-hands.webp"
 ---
 
 You have probably seen these videos. A flat coloured screen sits empty for a beat, and then cut-out elements come flying in from the edges and lock together into a sharp, witty scene. It looks like a designed piece of motion graphics, the kind a studio would charge a fortune for, and yet it moves with a rhythm that feels alive.
@@ -16,7 +16,7 @@ Here is the promise, and it is a big one. **You can produce these at studio qual
 
 Here is the chess scene from the cover actually moving, so you can see exactly what we are building towards:
 
-{% bunnyVideo "790def65-5659-4680-bcc2-eebc7dd7fd1d", "A finished piece. It starts on an empty background and assembles itself, element by element." %}
+{% bunnyVideo "1387e0a9-9cd1-49ac-8c99-aeffcd80f58a", "A finished piece. It starts on an empty background and assembles itself, element by element." %}
 
 By the end of this post you will understand the whole process, and you will have the exact tools to do it yourself.
 
@@ -29,7 +29,7 @@ Before the how, it helps to name the style, because once you can name its parts 
 - **Flat, bold colour.** The background is one strong, even colour with no shading, which makes everything pop.
 - **A sharp idea.** Each scene carries a small concept or visual pun rather than just being decorative. The idea is what makes it memorable.
 
-{% figure "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/conductor.webp", "A stop-motion graphic still of a halftone conductor figure directing a scene", "The look in one frame: halftone elements, clean edges, a flat colour field, and one clear idea." %}
+{% figure "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/conductor.webp", "A stop-motion graphic still of a halftone conductor figure directing a scene", "The look in one frame: halftone elements, clean edges, a flat colour field, and one clear idea." %}
 
 Then there is the **motion**, which is the part that turns a still into a scene. The frame does not simply wobble or drift. It **assembles itself**. It opens on an empty background and builds, piece by piece, until the full composition is in place. That building motion is the signature of the whole style.
 
@@ -76,7 +76,7 @@ This is the entire job. Everything happens in the Claude Code chat. Six steps, a
 
 The one creative leap worth seeing up close is the final step, where a flat still becomes a moving scene. This is what that transformation actually looks like:
 
-{% stillToMotion "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/clock-wings.webp", "2ff22c4a-be29-4ae9-be45-92f77d73f1a7", "On the left, a finished still. On the right, the same still turned into a video. The assistant invents every frame in between." %}
+{% stillToMotion "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/clock-wings.webp", "26f4b25f-6441-48a7-a666-429812e76ddc", "On the left, a finished still. On the right, the same still turned into a video. The assistant invents every frame in between." %}
 
 ## The clever bit, in plain words
 
@@ -91,7 +91,7 @@ Now the tool has a real job, because the only honest way to travel from an empty
 
 One video is a nice trick. A whole library of them, in different colours and ideas, is what proves this is a real production system. Every example below started as a **single still image on the left**, and became the **finished video on the right**, through the exact flow above.
 
-{% pairGallery "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/autopilot.webp::de608e78-bfe4-4f89-a4e7-f240a9544724::Autopilot", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/puppeteer.webp::8450cefc-69d9-461e-87a0-79be8c0eeb53::Puppeteer", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/decision.webp::d3c140e0-446b-4450-9cfd-5bcbb1092a5e::The big decision", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/lightbulb.webp::6715321d-53bd-48ec-922d-adf77963db87::Bright idea", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/astronaut.webp::483e8bfe-5009-4530-b27f-7be243f2ed07::Lift off", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/hummingbird.webp::016408bd-910f-4f1e-8aa6-62408f4f764e::Hummingbird", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/tightrope.webp::d451cee8-e092-4a31-91a9-842f1aa835ec::Tightrope", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/cyclist.webp::7494f8aa-5a52-4070-b62b-443ffcaa2d45::Uphill", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/conductor.webp::87948210-4e5b-42b5-a82a-1140522aaef8::Conductor", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/boxer.webp::79850766-3aa8-445f-bf68-9c21aa93032b::Knockout" %}
+{% pairGallery "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/autopilot.webp::e11db3be-e2f5-4408-82bc-c8bfc9d7aad5::Autopilot", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/puppeteer.webp::a5a55fff-77df-4300-a706-c97c3078ec24::Puppeteer", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/decision.webp::367f9cf1-caf4-4d99-b2f1-533a29fdcdb2::The big decision", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/lightbulb.webp::20336bd8-c1d8-4a66-9e92-94ead4fe9ec4::Bright idea", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/astronaut.webp::0648ca5d-9ae4-45bd-95b0-4d68a3ebcbf6::Lift off", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/hummingbird.webp::fc437905-64c9-4ce8-b190-d261ed140453::Hummingbird", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/tightrope.webp::984565de-4669-436d-aad2-f2dde92146d0::Tightrope", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/cyclist.webp::bf3363dd-7b13-42be-ac31-833f483b1fa2::Uphill", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/conductor.webp::dbe5d453-63b4-4294-b2cb-656030cb6ae1::Conductor", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/boxer.webp::cc6ba491-d3b9-4c03-ad16-b56d0927828b::Knockout" %}
 
 Notice how they all share the same **design language**, the halftone elements, the clean edges, the bold colour, while each one tells its own idea. That consistency is what makes a set look like a brand instead of a pile of one-offs.
 
@@ -114,7 +114,7 @@ These are the exact **Claude Code skills** behind everything above. Download the
 - **Image analysis skill** reads any reference inside and out, the style, colours, composition and materials, then generates your on-brand version.
 - **Motion design skill** takes your chosen stills and converts them into finished, high-quality stop-motion videos.
 
-{% downloads "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/skills/image-analysis.skill::Image analysis skill::Analyse references and generate on-brand stills", "https://cdn.thegurukulofai.com/blog/stop-motion-graphics-with-ai/skills/motion-design.skill::Motion design skill::Turn your stills into finished videos" %}
+{% downloads "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/skills/image-analysis.skill::Image analysis skill::Analyse references and generate on-brand stills", "https://tgai-cdn-2.b-cdn.net/blog/stop-motion-graphics-with-ai/skills/motion-design.skill::Motion design skill::Turn your stills into finished videos" %}
 
 ## That is the whole process
 
