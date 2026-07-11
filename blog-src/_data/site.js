@@ -5,5 +5,5 @@ module.exports = {
     "End-to-end AI tutorials for creators and brand builders, with images, infographics, and video. By Deenu Khan.",
   url: "https://thegurukulofai.com",
   author: "Deenu Khan",
-  cssVersion: 5,
+  cssVersion: 6,
 };

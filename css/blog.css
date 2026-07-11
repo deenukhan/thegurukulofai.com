@@ -172,6 +172,25 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .post-prose hr { border: 0; border-top: 1px solid var(--mist); margin: 44px 0; }
+.post-prose pre {
+  background: var(--white);
+  border: 1px solid var(--mist);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin: 28px 0;
+  overflow-x: auto;
+}
+.post-prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  display: block;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--slate);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
 
 /* images / figures (Bunny CDN) */
 .post-figure, .post-video { margin: 36px 0; }
