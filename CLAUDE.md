@@ -72,10 +72,35 @@ Website for **The Gurukul of AI**, an AI education brand founded by **Deenu Khan
 
 ---
 
+## Gallery (`gallery.html`)
+
+Achievements gallery: 47 curated stills and clips from Google, Microsoft, Meta,
+OpenAI, Xbox, Dubai's 1 Billion Followers Summit, stages, and event passes.
+
+- **Generated file.** Edit `scripts/gallery/manifest.json`, then rebuild. Never hand-edit `gallery.html`.
+- **Rebuild everything:** `python3 scripts/gallery/build-gallery.py`
+  (needs `pip3 install --user pillow imageio-ffmpeg`; originals live in `Images for Website/`, which is gitignored)
+- **Rebuild just the page:** `python3 scripts/gallery/build-gallery.py --html-only`
+- **After a video change:** `scripts/bunny-upload-gallery.sh scripts/gallery/video-out`
+
+**Where media lives**
+- Stills: committed to `assets/gallery/` as AVIF + WebP at 800px (grid) and 1400px (lightbox)
+- Videos: Bunny Storage at `https://tgai-cdn-2.b-cdn.net/gallery/`, never committed.
+  Each has a full `<slug>.mp4` and a silent 4s `<slug>-loop.mp4` used for desktop hover previews.
+
+**Performance choices**
+- Grid tiles are lazy-loaded; the first six are eager and the first two get `fetchpriority="high"`
+- Every tile carries an inline base64 blur placeholder, so there is no layout shift
+- Videos are `preload="none"` and only fetched on hover or click
+- Pure-CSS multicol masonry, so the layout needs no JavaScript to render
+
+---
+
 ## File Structure
 
 ```
 index.html
+gallery.html          — generated, do not hand-edit (see Gallery below)
 privacy-policy.html
 css/
   base.css        — tokens, reset, typography, globals
@@ -83,8 +108,10 @@ css/
   sections.css    — per-section layout styles
   animations.css  — keyframes, hero entry, scroll reveal, cursor
   responsive.css  — all breakpoints
+  gallery.css     — gallery page shell, filter chips, masonry, lightbox
 js/
   main.js         — cursor, nav scroll state, scroll reveal, stat counters, smooth scroll
+  gallery.js      — gallery filters, hover previews, lightbox
 assets/
   images/
     logo-tgai.png       — TGAI circles logo (nav + footer)
@@ -92,6 +119,16 @@ assets/
     founder/
       hero-section.webp — hero background photo
       deenu-khan.webp   — founder photo
+  gallery/              — optimized gallery stills (AVIF + WebP, 800px and 1400px)
+scripts/
+  bunny-upload-images.sh   — blog media to Bunny Storage
+  bunny-upload-video.sh    — video to Bunny Stream
+  bunny-upload-gallery.sh  — gallery videos to Bunny Storage under gallery/
+  gallery/
+    manifest.json          — curation: source file, slug, tags, caption, place
+    gallery-data.json      — generated: dimensions + blur placeholders
+    gallery.template.html  — page shell with {{CHIPS}} / {{TILES}} placeholders
+    build-gallery.py       — rebuilds images, videos, and gallery.html
 ```
 
 ---

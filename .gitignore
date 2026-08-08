@@ -27,3 +27,10 @@ npm-debug.log*
 
 # OS
 Thumbs.db
+
+# Gallery source media — originals stay local, optimized output is committed
+# to assets/gallery/ and videos are served from Bunny CDN.
+Images for Website/
+scripts/gallery/video-out/
+scripts/gallery/_tmp.jpg
+scripts/gallery/_poster.png

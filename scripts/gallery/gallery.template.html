@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - The Gurukul of AI</title>
+  <meta name="description" content="Photos and clips from the rooms Deenu Khan works in: Google, Microsoft, Meta, OpenAI, Xbox, and the 1 Billion Followers Summit in Dubai.">
+  <meta name="author" content="Deenu Khan">
+  <link rel="canonical" href="https://thegurukulofai.com/gallery.html">
+
+  <meta property="og:title" content="Gallery - The Gurukul of AI">
+  <meta property="og:description" content="Keynotes, launches, and summits with the teams building AI.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://thegurukulofai.com/gallery.html">
+  <meta property="og:image" content="https://thegurukulofai.com/assets/gallery/{{FIRST}}-1400.webp">
+
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/images/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://tgai-cdn-2.b-cdn.net">
+  <link rel="preload" as="image" href="assets/gallery/{{FIRST}}-800.avif" type="image/avif">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css?v={{V_BASE}}">
+  <link rel="stylesheet" href="css/components.css?v={{V_COMPONENTS}}">
+  <link rel="stylesheet" href="css/gallery.css?v={{V_GALLERY}}">
+</head>
+<body>
+
+  <div class="gallery-shell">
+
+    <!-- ===================== NAVIGATION ===================== -->
+    <nav class="gallery-nav" aria-label="Gallery navigation">
+      <a href="index.html" class="logo" aria-label="The Gurukul of AI - Home">
+        <img src="assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
+      </a>
+      <div class="gallery-nav-links">
+        <a href="index.html#courses">Courses</a>
+        <a href="index.html#founder">About</a>
+        <a href="gallery.html" aria-current="page">Gallery</a>
+        <a href="blog/">Blog</a>
+        <a href="free-guides.html">Free Guides</a>
+        <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a>
+      </div>
+      <a href="http://learn.thegurukulofai.com/" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Login</a>
+    </nav>
+
+    <main class="gallery-page">
+
+      <!-- ===================== HEADER ===================== -->
+      <header class="gallery-header">
+        <span class="gallery-eyebrow">Gallery</span>
+        <h1 class="gallery-h1">The rooms this work has <em>opened up</em>.</h1>
+        <p class="gallery-lede">Keynotes, launches, and summits with the teams building AI. What I learn in these rooms goes straight back into the courses.</p>
+        <div class="gallery-brands">
+          <span class="gallery-brand">Google</span>
+          <span class="gallery-brand">Microsoft</span>
+          <span class="gallery-brand">Meta</span>
+          <span class="gallery-brand">OpenAI</span>
+          <span class="gallery-brand">Xbox</span>
+          <span class="gallery-brand">1 Billion Followers Summit, Dubai</span>
+        </div>
+      </header>
+
+      <!-- ===================== FILTERS ===================== -->
+      <div class="gallery-filters" role="group" aria-label="Filter the gallery">
+{{CHIPS}}
+      </div>
+      <p id="galleryStatus" class="sr-only" role="status" aria-live="polite"></p>
+
+      <!-- ===================== GRID ===================== -->
+      <div class="gallery-grid" id="galleryGrid">
+{{TILES}}
+      </div>
+
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="gallery-footer">
+      <span>&copy; 2026 The Gurukul of AI. All rights reserved.</span>
+      <span>
+        <a href="index.html">Home</a> &nbsp;·&nbsp;
+        <a href="blog/">Blog</a> &nbsp;·&nbsp;
+        <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">Instagram</a> &nbsp;·&nbsp;
+        <a href="privacy-policy.html">Privacy Policy</a>
+      </span>
+    </footer>
+  </div>
+
+  <!-- ===================== LIGHTBOX ===================== -->
+  <div class="g-lightbox" id="galleryLightbox" role="dialog" aria-modal="true" aria-label="Gallery viewer" aria-hidden="true">
+    <button type="button" class="g-lb-close" aria-label="Close viewer">&times;</button>
+    <button type="button" class="g-lb-btn g-lb-prev" aria-label="Previous">&#8249;</button>
+    <div class="g-lb-stage">
+      <div class="g-lb-media"></div>
+      <div class="g-lb-info">
+        <p class="g-lb-title"></p>
+        <p class="g-lb-meta"></p>
+      </div>
+    </div>
+    <button type="button" class="g-lb-btn g-lb-next" aria-label="Next">&#8250;</button>
+  </div>
+
+  <script src="js/gallery.js?v={{V_GALLERY}}"></script>
+</body>
+</html>
