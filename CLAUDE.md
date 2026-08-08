@@ -63,7 +63,7 @@ Website for **The Gurukul of AI**, an AI education brand founded by **Deenu Khan
 1. **Hero** — full-bleed photo card (`hero-section.webp`), dark overlay + animated teal radial glow, corner badges, headline with teal italic accent, white CTA button (teal on hover)
 2. **Ticker** — scrolling tools marquee, rounded, ink background, pulsing teal dots
 3. **Cards Stack** — wrapper div with rounded sections (border-radius: 20px), warm-white bg
-4. **Courses** (`id="courses"`) — 3 cards: 100x GenAI Mastery (YouTube embed, ₹3,999) · AI Influencer Mastery (coming soon, ₹2,999) · AI UGC Mastery (coming soon, ₹2,999)
+4. **Courses** (`id="courses"`) — 3 cards: 100x GenAI Mastery (YouTube embed, ₹4,999) · AI Influencer Mastery (coming soon, ₹2,999) · AI UGC Mastery (coming soon, ₹2,999)
 5. **Tools Strip** — pill grid of AI tools
 6. **Founder** (`id="founder"`) — Deenu Khan bio, photo, animated stat counters, tool pills
 7. **Testimonials** — 3 student quote cards
