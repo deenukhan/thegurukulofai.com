@@ -15,6 +15,7 @@
 
   <link rel="stylesheet" href="css/base.css?v=37">
   <link rel="stylesheet" href="css/components.css?v=37">
+  <link rel="stylesheet" href="css/nav-mobile.css?v=1">
   <style>
     body {
       background: var(--warm-white);
@@ -282,11 +283,11 @@
 </head>
 <body>
   <div class="resources-shell">
-    <nav class="resources-nav" aria-label="Free Resources navigation">
+    <nav class="js-nav-pill resources-nav" aria-label="Free Resources navigation">
       <a href="index.html" class="logo" aria-label="The Gurukul of AI - Home">
         <img src="assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
       </a>
-      <div class="resources-nav-links">
+      <div id="navMenu" class="resources-nav-links js-nav-menu">
         <a href="index.html#courses">Courses</a>
         <a href="index.html#founder">About</a>
         <a href="gallery.html">Gallery</a>
@@ -294,6 +295,9 @@
         <a href="free-guides.html">Free Guides</a>
         <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a>
       </div>
+      <button type="button" class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
       <a href="http://learn.thegurukulofai.com/" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Login</a>
     </nav>
 
@@ -360,5 +364,6 @@
       <a href="index.html">Back to homepage</a>
     </footer>
   </div>
+  <script src="js/nav-mobile.js?v=1"></script>
 </body>
 </html>

@@ -26,17 +26,18 @@
   <link rel="stylesheet" href="css/base.css?v={{V_BASE}}">
   <link rel="stylesheet" href="css/components.css?v={{V_COMPONENTS}}">
   <link rel="stylesheet" href="css/gallery.css?v={{V_GALLERY}}">
+  <link rel="stylesheet" href="css/nav-mobile.css?v=1">
 </head>
 <body>
 
   <div class="gallery-shell">
 
     <!-- ===================== NAVIGATION ===================== -->
-    <nav class="gallery-nav" aria-label="Gallery navigation">
+    <nav class="js-nav-pill gallery-nav" aria-label="Gallery navigation">
       <a href="index.html" class="logo" aria-label="The Gurukul of AI - Home">
         <img src="assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
       </a>
-      <div class="gallery-nav-links">
+      <div id="navMenu" class="gallery-nav-links js-nav-menu">
         <a href="index.html#courses">Courses</a>
         <a href="index.html#founder">About</a>
         <a href="gallery.html" aria-current="page">Gallery</a>
@@ -44,6 +45,9 @@
         <a href="free-guides.html">Free Guides</a>
         <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a>
       </div>
+      <button type="button" class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
       <a href="http://learn.thegurukulofai.com/" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Login</a>
     </nav>
 
@@ -104,5 +108,6 @@
   </div>
 
   <script src="js/gallery.js?v={{V_GALLERY}}"></script>
+  <script src="js/nav-mobile.js?v=1"></script>
 </body>
 </html>

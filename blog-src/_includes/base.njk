@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="/css/sections.css?v=41">
   <link rel="stylesheet" href="/css/responsive.css?v=39">
   <link rel="stylesheet" href="/css/blog.css?v={{ site.cssVersion }}">
+  <link rel="stylesheet" href="/css/nav-mobile.css?v=1">
 
   {% if isPost %}
   <script type="application/ld+json">
@@ -58,11 +59,11 @@
 
   <!-- ===================== NAVIGATION ===================== -->
   <nav class="nav" id="nav" role="navigation" aria-label="Main navigation">
-    <div class="nav-inner">
+    <div class="js-nav-pill nav-inner">
       <a href="/" class="logo" aria-label="The Gurukul of AI, Home">
         <img src="/assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
       </a>
-      <ul class="nav-links" role="list">
+      <ul id="navMenu" class="nav-links js-nav-menu" role="list">
         <li><a href="/#courses">Courses</a></li>
         <li><a href="/#founder">About</a></li>
         <li><a href="/gallery.html">Gallery</a></li>
@@ -70,6 +71,9 @@
         <li><a href="/free-guides.html">Free Guides</a></li>
         <li><a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">@neuraltech.ai</a></li>
       </ul>
+      <button type="button" class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
       <a href="http://learn.thegurukulofai.com/" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Login</a>
     </div>
   </nav>
@@ -124,5 +128,6 @@
     </div>
   </footer>
 
+  <script src="/js/nav-mobile.js?v=1"></script>
 </body>
 </html>
