@@ -1,0 +1,21 @@
+# The Gurukul of AI — server config
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # The gallery moved from /gallery.html to /gallery/ — keep old links alive.
+  RewriteRule ^gallery\.html$ /gallery/ [R=301,L]
+</IfModule>
+
+# Long cache for fingerprinted and immutable media. HTML stays uncached so
+# deploys show up immediately.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/avif "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png  "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType text/css   "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType text/html  "access plus 0 seconds"
+</IfModule>

@@ -4,7 +4,7 @@
 Reads  scripts/gallery/manifest.json  (curation: which file, slug, tags, caption)
 Writes assets/gallery/<slug>-{800,1400}.{avif,webp}
        scripts/gallery/gallery-data.json  (dimensions + blur placeholders)
-       gallery.html
+       gallery/index.html
 Videos are transcoded to scripts/gallery/video-out/ then uploaded separately:
        scripts/bunny-upload-gallery.sh scripts/gallery/video-out
 
@@ -130,8 +130,8 @@ def build_html(data):
         attrs = ['type="button"', 'class="g-item"',
                  'data-cats="%s"' % " ".join(d["cats"]),
                  'data-title="%s"' % title, 'data-place="%s"' % place,
-                 'data-full="assets/gallery/%s-1400.webp"' % slug,
-                 'data-full-avif="assets/gallery/%s-1400.avif"' % slug]
+                 'data-full="/assets/gallery/%s-1400.webp"' % slug,
+                 'data-full-avif="/assets/gallery/%s-1400.avif"' % slug]
         if d["type"] == "video":
             attrs.append('data-mp4="%s/%s"' % (CDN, d["mp4"]))
             attrs.append('data-loop="%s/%s"' % (CDN, d["loop"]))
@@ -141,8 +141,8 @@ def build_html(data):
         tiles.append(
             '        <button {attrs}>\n'
             '          <picture>\n'
-            '            <source srcset="assets/gallery/{slug}-800.avif" type="image/avif">\n'
-            '            <img src="assets/gallery/{slug}-800.webp" alt="{title}"\n'
+            '            <source srcset="/assets/gallery/{slug}-800.avif" type="image/avif">\n'
+            '            <img src="/assets/gallery/{slug}-800.webp" alt="{title}"\n'
             '                 width="{w}" height="{h}" loading="{load}" decoding="async"{fp}>\n'
             '          </picture>{badge}\n'
             '          <span class="g-cap">\n'
@@ -161,8 +161,10 @@ def build_html(data):
               .replace("{{V_BASE}}", str(CSS_V["base"])) \
               .replace("{{V_COMPONENTS}}", str(CSS_V["components"])) \
               .replace("{{V_GALLERY}}", str(CSS_V["gallery"]))
-    open(os.path.join(ROOT, "gallery.html"), "w").write(page)
-    print("wrote gallery.html:", len(data), "items", counts)
+    outdir = os.path.join(ROOT, "gallery")
+    os.makedirs(outdir, exist_ok=True)
+    open(os.path.join(outdir, "index.html"), "w").write(page)
+    print("wrote gallery/index.html:", len(data), "items", counts)
 
 
 if __name__ == "__main__":
