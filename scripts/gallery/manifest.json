@@ -1,49 +1,890 @@
 [
- {"src":"PXL_20260109_054740068.mp4","slug":"1b-summit-creator-pro-pass","type":"video","cats":["dubai","access"],"caption":"Creator Pro pass, 1 Billion Followers Summit","place":"Dubai, 2026","feature":true},
- {"src":"PXL_20260109_111427797.jpg","slug":"1b-summit-dubai-skyline","type":"image","cats":["dubai"],"caption":"1 Billion Followers Summit, the world's largest creator gathering","place":"Dubai, 2026","feature":true},
- {"src":"20250608_162433.jpg","slug":"team-gemini-sign","type":"image","cats":["google"],"caption":"Team Gemini, invited by Google","place":"India, 2025"},
- {"src":"20250820_134436.jpg","slug":"microsoft-copilot-era","type":"image","cats":["microsoft"],"caption":"The Copilot Era, Microsoft","place":"India, 2025"},
- {"src":"PXL_20260109_101248187.mp4","slug":"humanoid-robot-handshake","type":"video","cats":["dubai"],"caption":"Shaking hands with a humanoid robot on the expo floor","place":"Dubai, 2026","feature":true},
- {"src":"PXL_20260131_065024339.jpg","slug":"openai-peak-xv-wall","type":"image","cats":["openai"],"caption":"OpenAI and Peak XV founders session","place":"India, 2026"},
- {"src":"20250608_163711.jpg","slug":"house-of-gemini-pass","type":"image","cats":["google","access"],"caption":"House of Gemini pass","place":"India, 2025"},
- {"src":"PXL_20251128_083912368.PORTRAIT.jpg","slug":"house-of-instagram-mumbai","type":"image","cats":["meta"],"caption":"House of Instagram, Mumbai","place":"Mumbai, 2025","feature":true},
- {"src":"PXL_20260109_092230818.mp4","slug":"museum-of-the-future-walk","type":"video","cats":["dubai"],"caption":"Outside the Museum of the Future","place":"Dubai, 2026"},
- {"src":"IMG_20251210_142950.jpg","slug":"microsoft-stage","type":"image","cats":["microsoft","stage"],"caption":"On the Microsoft stage","place":"India, 2025","feature":true},
- {"src":"PXL_20251028_105515032.mp4","slug":"gemini-masterclass","type":"video","cats":["google"],"caption":"Google Gemini Masterclass","place":"Delhi, 2025"},
- {"src":"PXL_20251119_114452208~2.jpg","slug":"autodm-summit-meta","type":"image","cats":["meta","stage"],"caption":"AutoDM Summit, Meta and SuperProfile","place":"India, 2025","feature":true},
- {"src":"PXL_20251111_054750982.jpg","slug":"xbox-media-pass","type":"image","cats":["access"],"caption":"Xbox media pass","place":"India, 2025"},
- {"src":"PXL_20260111_104820139.jpg","slug":"museum-of-the-future","type":"image","cats":["dubai"],"caption":"Museum of the Future","place":"Dubai, 2026"},
- {"src":"20241020_010018.jpg","slug":"rad-creator-award","type":"image","cats":["stage"],"caption":"RAD Creator Awards by Adani","place":"India, 2024","feature":true},
- {"src":"PXL_20251028_112505902.jpg","slug":"gemini-meet-your-professor","type":"image","cats":["google"],"caption":"Meet Your Professor card, Google Gemini Masterclass","place":"Delhi, 2025"},
- {"src":"20250919_143001.jpg","slug":"meta-office","type":"image","cats":["meta"],"caption":"At the Meta office","place":"India, 2025"},
- {"src":"PXL_20260109_102821060.TS-000.jpg","slug":"1b-summit-brand-wall","type":"image","cats":["dubai"],"caption":"Backdrop of every major platform, 1 Billion Followers Summit","place":"Dubai, 2026"},
- {"src":"20250520_113002.jpg","slug":"video-gen-keynote","type":"image","cats":["stage"],"caption":"Teaching AI video generation to a full hall","place":"India, 2025","feature":true},
- {"src":"PXL_20251216_033751102.jpg","slug":"google-lab-to-impact","type":"image","cats":["google","access"],"caption":"Google Lab to Impact","place":"India, 2025"},
- {"src":"PXL_20251210_051306342.jpg","slug":"microsoft-leadership-connection","type":"image","cats":["microsoft"],"caption":"Microsoft Leadership Connection","place":"India, 2025"},
- {"src":"PXL_20260111_092640920.PORTRAIT.jpg","slug":"cybertruck-dubai","type":"image","cats":["dubai"],"caption":"Cybertruck on the summit grounds","place":"Dubai, 2026"},
- {"src":"20250608_174740.jpg","slug":"gemini-names-wall","type":"image","cats":["google"],"caption":"On the Team Gemini wall","place":"India, 2025"},
- {"src":"PXL_20251115_093950444.jpg","slug":"speaker-pass-startup-summit","type":"image","cats":["stage","access"],"caption":"Speaker pass, Startup Summit","place":"India, 2025"},
- {"src":"PXL_20260109_130428456.jpg","slug":"1b-summit-cubes","type":"image","cats":["dubai"],"caption":"Inside the 1 Billion Followers Summit","place":"Dubai, 2026"},
- {"src":"PXL_20251015_093406817.jpg","slug":"meta-wall","type":"image","cats":["meta"],"caption":"Meta India","place":"India, 2025"},
- {"src":"20250823_161255.mp4","slug":"syntx-ai-unplugged-pass","type":"video","cats":["access","stage"],"caption":"SyntX AI Unplugged, let's make India AI ready","place":"India, 2025"},
- {"src":"PXL_20260110_123758186.jpg","slug":"1b-summit-creators","type":"image","cats":["dubai"],"caption":"With creators from around the world","place":"Dubai, 2026"},
- {"src":"f6d8ae3edbbc11efb3cd0242ac120006.JPG","slug":"future-summit-panel","type":"image","cats":["stage"],"caption":"Panel at India's biggest futuristic festival","place":"India, 2025","feature":true},
- {"src":"20250608_190900.jpg","slug":"team-gemini-group","type":"image","cats":["google"],"caption":"Welcome Team Gemini","place":"India, 2025"},
- {"src":"PXL_20251119_085147229.jpg","slug":"meta-autodm-pass","type":"image","cats":["meta","access"],"caption":"AutoDM Summit pass, Meta","place":"India, 2025"},
- {"src":"PXL_20260131_092332126.jpg","slug":"openai-polaris","type":"image","cats":["openai"],"caption":"OpenAI at Polaris School of Technology","place":"India, 2026"},
- {"src":"PXL_20251015_092240496.mp4","slug":"signing-the-wall","type":"video","cats":["stage"],"caption":"Signing the creators wall","place":"India, 2025"},
- {"src":"20250526_150612.jpg","slug":"creators-hq-dubai","type":"image","cats":["dubai"],"caption":"Creators HQ","place":"Dubai, 2025"},
- {"src":"20250820_134518.jpg","slug":"microsoft-arch","type":"image","cats":["microsoft"],"caption":"Microsoft AI Tour","place":"India, 2025"},
- {"src":"PXL_20251128_093902736.jpg","slug":"house-of-instagram-creators","type":"image","cats":["meta"],"caption":"With fellow creators, House of Instagram","place":"Mumbai, 2025"},
- {"src":"20240921_162958.jpg","slug":"super-connect-pass","type":"image","cats":["access"],"caption":"Super Connect 2024, tech and AI coach","place":"India, 2024"},
- {"src":"PXL_20260109_111443432.mp4","slug":"dubai-summit-street","type":"video","cats":["dubai"],"caption":"Between sessions in Dubai","place":"Dubai, 2026"},
- {"src":"20250608_225928.jpg","slug":"gemini-kit","type":"image","cats":["google"],"caption":"The Team Gemini kit","place":"India, 2025"},
- {"src":"PXL_20251128_144513092.jpg","slug":"instagram-thank-you","type":"image","cats":["meta"],"caption":"Instagram's thank you for making 2025 iconic","place":"Mumbai, 2025"},
- {"src":"20240823_122241.jpg","slug":"odoo-keynote","type":"image","cats":["stage"],"caption":"Speaking at Odoo Community Days","place":"India, 2024"},
- {"src":"PXL_20260109_125510043.jpg","slug":"1b-members-lounge","type":"image","cats":["dubai"],"caption":"Members lounge, 1 Billion Followers Summit","place":"Dubai, 2026"},
- {"src":"PXL_20251028_142435075.PORTRAIT.jpg","slug":"hey-gemini","type":"image","cats":["google"],"caption":"Hey Gemini, make me a ...","place":"Delhi, 2025"},
- {"src":"Superprofile Event Deenu10.jpg","slug":"superprofile-podcast","type":"image","cats":["stage"],"caption":"On the SuperProfile podcast","place":"India, 2025"},
- {"src":"20250520_125203.mp4","slug":"college-workshop-feedback","type":"video","cats":["stage"],"caption":"After a campus workshop","place":"India, 2025"},
- {"src":"Shaheed Bhagat Singh College DU Deenu 15.jpg","slug":"campus-creators-meet","type":"image","cats":["stage"],"caption":"Creators meet, Shaheed Bhagat Singh College, DU","place":"Delhi, 2025"},
- {"src":"PXL_20260111_093427991.jpg","slug":"1b-summit-global-creator","type":"image","cats":["dubai"],"caption":"Trading notes with a global creator","place":"Dubai, 2026"}
+ {
+  "src": "PXL_20260109_054740068.mp4",
+  "slug": "1b-summit-creator-pro-pass",
+  "type": "video",
+  "cats": [
+   "dubai",
+   "access"
+  ],
+  "caption": "Creator Pro pass, 1 Billion Followers Summit",
+  "place": "Dubai, 2026",
+  "feature": true
+ },
+ {
+  "src": "PXL_20260109_111427797.jpg",
+  "slug": "1b-summit-dubai-skyline",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "1 Billion Followers Summit, the world's largest creator gathering",
+  "place": "Dubai, 2026",
+  "feature": true
+ },
+ {
+  "src": "20250608_162433.jpg",
+  "slug": "team-gemini-sign",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Team Gemini, invited by Google",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250820_134436.jpg",
+  "slug": "microsoft-copilot-era",
+  "type": "image",
+  "cats": [
+   "microsoft"
+  ],
+  "caption": "The Copilot Era, Microsoft",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260109_101248187.mp4",
+  "slug": "humanoid-robot-handshake",
+  "type": "video",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Shaking hands with a humanoid robot on the expo floor",
+  "place": "Dubai, 2026",
+  "feature": true
+ },
+ {
+  "src": "PXL_20260131_065024339.jpg",
+  "slug": "openai-peak-xv-wall",
+  "type": "image",
+  "cats": [
+   "openai"
+  ],
+  "caption": "OpenAI and Peak XV founders session",
+  "place": "India, 2026"
+ },
+ {
+  "src": "20250608_163711.jpg",
+  "slug": "house-of-gemini-pass",
+  "type": "image",
+  "cats": [
+   "google",
+   "access"
+  ],
+  "caption": "House of Gemini pass",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251128_083912368.PORTRAIT.jpg",
+  "slug": "house-of-instagram-mumbai",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "House of Instagram, Mumbai",
+  "place": "Mumbai, 2025",
+  "feature": true
+ },
+ {
+  "src": "PXL_20260109_092230818.mp4",
+  "slug": "museum-of-the-future-walk",
+  "type": "video",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Outside the Museum of the Future",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "IMG_20251210_142950.jpg",
+  "slug": "microsoft-stage",
+  "type": "image",
+  "cats": [
+   "microsoft",
+   "stage"
+  ],
+  "caption": "On the Microsoft stage",
+  "place": "India, 2025",
+  "feature": true
+ },
+ {
+  "src": "PXL_20260111_104820139.jpg",
+  "slug": "museum-of-the-future",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Museum of the Future",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "PXL_20251028_105515032.mp4",
+  "slug": "gemini-masterclass",
+  "type": "video",
+  "cats": [
+   "google"
+  ],
+  "caption": "Google Gemini Masterclass",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "PXL_20251119_114452208~2.jpg",
+  "slug": "autodm-summit-meta",
+  "type": "image",
+  "cats": [
+   "meta",
+   "stage"
+  ],
+  "caption": "AutoDM Summit, Meta and SuperProfile",
+  "place": "India, 2025",
+  "feature": true
+ },
+ {
+  "src": "20241020_010018.jpg",
+  "slug": "rad-creator-award",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "RAD Creator Awards by Adani",
+  "place": "India, 2024",
+  "feature": true
+ },
+ {
+  "src": "PXL_20251210_051306342.jpg",
+  "slug": "microsoft-leadership-connection",
+  "type": "image",
+  "cats": [
+   "microsoft"
+  ],
+  "caption": "Microsoft Leadership Connection",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260131_092332126.jpg",
+  "slug": "openai-polaris",
+  "type": "image",
+  "cats": [
+   "openai"
+  ],
+  "caption": "OpenAI at Polaris School of Technology",
+  "place": "India, 2026"
+ },
+ {
+  "src": "PXL_20251111_054750982.jpg",
+  "slug": "xbox-media-pass",
+  "type": "image",
+  "cats": [
+   "access"
+  ],
+  "caption": "Xbox media pass",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260109_102821060.TS-000.jpg",
+  "slug": "1b-summit-brand-wall",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Backdrop of every major platform, 1 Billion Followers Summit",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "PXL_20251028_112505902.jpg",
+  "slug": "gemini-meet-your-professor",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Meet Your Professor card, Google Gemini Masterclass",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "20250919_143001.jpg",
+  "slug": "meta-office",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "At the Meta office",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250520_113002.jpg",
+  "slug": "video-gen-keynote",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Teaching AI video generation to a full hall",
+  "place": "India, 2025",
+  "feature": true
+ },
+ {
+  "src": "20250820_134518.jpg",
+  "slug": "microsoft-arch",
+  "type": "image",
+  "cats": [
+   "microsoft"
+  ],
+  "caption": "Microsoft AI Tour",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250823_161255.mp4",
+  "slug": "syntx-ai-unplugged-pass",
+  "type": "video",
+  "cats": [
+   "access",
+   "stage"
+  ],
+  "caption": "SyntX AI Unplugged, let's make India AI ready",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260111_092640920.PORTRAIT.jpg",
+  "slug": "cybertruck-dubai",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Cybertruck on the summit grounds",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "PXL_20251216_033751102.jpg",
+  "slug": "google-lab-to-impact",
+  "type": "image",
+  "cats": [
+   "google",
+   "access"
+  ],
+  "caption": "Google Lab to Impact",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251015_093406817.jpg",
+  "slug": "meta-wall",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Meta India",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251115_093950444.jpg",
+  "slug": "speaker-pass-startup-summit",
+  "type": "image",
+  "cats": [
+   "stage",
+   "access"
+  ],
+  "caption": "Speaker pass, Startup Summit",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20240921_162958.jpg",
+  "slug": "super-connect-pass",
+  "type": "image",
+  "cats": [
+   "access"
+  ],
+  "caption": "Super Connect 2024, tech and AI coach",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20260109_130428456.jpg",
+  "slug": "1b-summit-cubes",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Inside the 1 Billion Followers Summit",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "20250608_174740.jpg",
+  "slug": "gemini-names-wall",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "On the Team Gemini wall",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251119_085147229.jpg",
+  "slug": "meta-autodm-pass",
+  "type": "image",
+  "cats": [
+   "meta",
+   "access"
+  ],
+  "caption": "AutoDM Summit pass, Meta",
+  "place": "India, 2025"
+ },
+ {
+  "src": "f6d8ae3edbbc11efb3cd0242ac120006.JPG",
+  "slug": "future-summit-panel",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Panel at India's biggest futuristic festival",
+  "place": "India, 2025",
+  "feature": true
+ },
+ {
+  "src": "PXL_20251111_055810585.jpg",
+  "slug": "xbox-launch",
+  "type": "image",
+  "cats": [
+   "access"
+  ],
+  "caption": "Xbox launch floor",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260110_123758186.jpg",
+  "slug": "1b-summit-creators",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "With creators from around the world",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "20250608_190900.jpg",
+  "slug": "team-gemini-group",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Welcome Team Gemini",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251128_093902736.jpg",
+  "slug": "house-of-instagram-creators",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "With fellow creators, House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "PXL_20251015_092240496.mp4",
+  "slug": "signing-the-wall",
+  "type": "video",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Signing the creators wall",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250526_150612.jpg",
+  "slug": "creators-hq-dubai",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Creators HQ",
+  "place": "Dubai, 2025"
+ },
+ {
+  "src": "20250608_225928.jpg",
+  "slug": "gemini-kit",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "The Team Gemini kit",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251128_144513092.jpg",
+  "slug": "instagram-thank-you",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Instagram's thank you for making 2025 iconic",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20240823_122241.jpg",
+  "slug": "odoo-keynote",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Speaking at Odoo Community Days",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20260109_111443432.mp4",
+  "slug": "dubai-summit-street",
+  "type": "video",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Between sessions in Dubai",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "PXL_20251028_142435075.PORTRAIT.jpg",
+  "slug": "hey-gemini",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Hey Gemini, make me a ...",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "20250919_104517.jpg",
+  "slug": "meta-pass",
+  "type": "image",
+  "cats": [
+   "meta",
+   "access"
+  ],
+  "caption": "Meta day pass",
+  "place": "India, 2025"
+ },
+ {
+  "src": "Superprofile Event Deenu10.jpg",
+  "slug": "superprofile-podcast",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "On the SuperProfile podcast",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260109_125510043.jpg",
+  "slug": "1b-members-lounge",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Members lounge, 1 Billion Followers Summit",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "20250608_182236.jpg",
+  "slug": "team-gemini-welcome",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Welcome Team Gemini",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251119_120918839.jpg",
+  "slug": "autodm-summit-standee",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "AutoDM Summit, empowering 40,000 creators",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250520_125203.mp4",
+  "slug": "college-workshop-feedback",
+  "type": "video",
+  "cats": [
+   "stage"
+  ],
+  "caption": "After a campus workshop",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20260111_093427991.jpg",
+  "slug": "1b-summit-global-creator",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Trading notes with a global creator",
+  "place": "Dubai, 2026"
+ },
+ {
+  "src": "20250608_190700.jpg",
+  "slug": "team-gemini-creators",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "With a fellow creator at Team Gemini",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251128_084106622.TS-000.jpg",
+  "slug": "instagram-mural",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "The Instagram mural wall",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "Shaheed Bhagat Singh College DU Deenu 15.jpg",
+  "slug": "campus-creators-meet",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Creators meet, Shaheed Bhagat Singh College, DU",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "20250526_152948.mp4",
+  "slug": "creators-hq-walkthrough",
+  "type": "video",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Walking through Creators HQ",
+  "place": "Dubai, 2025"
+ },
+ {
+  "src": "PXL_20251028_145003764.jpg",
+  "slug": "gemini-professor-cards",
+  "type": "image",
+  "cats": [
+   "google"
+  ],
+  "caption": "Meet Your Professor cards, Gemini Masterclass",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "PXL_20251128_090918657.TS-000.jpg",
+  "slug": "instagram-morning",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Morning at House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20240823_121045.jpg",
+  "slug": "odoo-community-days",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Odoo Community Days",
+  "place": "India, 2024"
+ },
+ {
+  "src": "20250526_191720.jpg",
+  "slug": "audi-concept-dubai",
+  "type": "image",
+  "cats": [
+   "dubai"
+  ],
+  "caption": "Audi concept car on show",
+  "place": "Dubai, 2025"
+ },
+ {
+  "src": "PXL_20251128_093358640.jpg",
+  "slug": "instagram-garden",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "In the garden room, House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20240823_185129.jpg",
+  "slug": "odoo-after-hours",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "After the Odoo keynote",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_102851891.jpg",
+  "slug": "instagram-creators-1",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Meeting creators at House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241019_104154.jpg",
+  "slug": "creator-awards-floor",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "On the floor at the Creator Awards",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_115141710.jpg",
+  "slug": "instagram-creators-2",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Trading ideas at House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241019_145929.jpg",
+  "slug": "creator-awards-venue",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Creator Awards, before the show",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_122643809.mp4",
+  "slug": "instagram-creator-chat",
+  "type": "video",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Catching up with a creator, House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241019_162653.jpg",
+  "slug": "creator-awards-green-room",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Green room, Creator Awards",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_122657060.jpg",
+  "slug": "instagram-creators-3",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "House of Instagram, Mumbai",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241019_223000.jpg",
+  "slug": "rad-creator-awards-backdrop",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "RAD Creator Awards by Adani",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_123511296.TS-000.jpg",
+  "slug": "instagram-evening",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Evening at House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241203_113818.jpg",
+  "slug": "iqoo-launch",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "iQOO 13 launch",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_125132814.jpg",
+  "slug": "instagram-mural-group",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "At the mural wall with creators",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20241226_212014.jpg",
+  "slug": "late-night-planning",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Late night planning with a collaborator",
+  "place": "India, 2024"
+ },
+ {
+  "src": "PXL_20251128_141759618.PORTRAIT.jpg",
+  "slug": "instagram-creators-4",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "House of Instagram, after dark",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20250111_155454.jpg",
+  "slug": "design-dialogue-delhi",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Design Dialogue, Delhi",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "PXL_20251128_142422268.jpg",
+  "slug": "instagram-creators-5",
+  "type": "image",
+  "cats": [
+   "meta"
+  ],
+  "caption": "Last of the night, House of Instagram",
+  "place": "Mumbai, 2025"
+ },
+ {
+  "src": "20250111_165023.jpg",
+  "slug": "design-dialogue-meetup",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Between talks at Design Dialogue",
+  "place": "Delhi, 2025"
+ },
+ {
+  "src": "20250503_160703.jpg",
+  "slug": "ecell-panel",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "E-Cell panel",
+  "place": "India, 2025"
+ },
+ {
+  "src": "20250503_161853.jpg",
+  "slug": "endeavour-panelist",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Content creator panelist, Endeavour",
+  "place": "India, 2025"
+ },
+ {
+  "src": "IMG_2460.HEIC",
+  "slug": "summit-lineup",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "With the speaker lineup",
+  "place": "India, 2025"
+ },
+ {
+  "src": "IMG_5222.HEIC",
+  "slug": "ai-engineers-day",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "AI Engineers Day",
+  "place": "India, 2025"
+ },
+ {
+  "src": "IMG_6959.JPG",
+  "slug": "summit-hallway-1",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Hallway conversations after the sessions",
+  "place": "India, 2025"
+ },
+ {
+  "src": "IMG_6961.JPG",
+  "slug": "summit-hallway-2",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Comparing notes between talks",
+  "place": "India, 2025"
+ },
+ {
+  "src": "IMG_6969.JPG",
+  "slug": "summit-hallway-3",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Meeting the other speakers",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251117_131114458.jpg",
+  "slug": "startup-summit-crowd",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "At the Startup Summit",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251117_131442606.TS-000.jpg",
+  "slug": "startup-summit-creators",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "With a fellow creator, Startup Summit",
+  "place": "India, 2025"
+ },
+ {
+  "src": "PXL_20251117_144731425.jpg",
+  "slug": "startup-summit-hallway",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Backstage at the Startup Summit",
+  "place": "India, 2025"
+ },
+ {
+  "src": "Shaheed Bhagat Singh College DU Deenu 6.jpg",
+  "slug": "campus-creators-poster",
+  "type": "image",
+  "cats": [
+   "stage"
+  ],
+  "caption": "Creators Meet, Shaheed Bhagat Singh College",
+  "place": "Delhi, 2025"
+ }
 ]

@@ -25,6 +25,7 @@ CSS_V = {"base": 37, "components": 38, "gallery": 1}
 
 images_only = "--images-only" in sys.argv
 html_only = "--html-only" in sys.argv
+force = "--force" in sys.argv          # re-transcode videos that already exist
 
 CATS = [
     ("all", "All"), ("dubai", "Dubai"), ("google", "Google"),
@@ -63,7 +64,8 @@ def build_media():
         entry = {k: item[k] for k in ("slug", "type", "cats", "caption", "place")}
         entry["feature"] = item.get("feature", False)
 
-        if item["type"] == "video" and not images_only:
+        already = os.path.exists(os.path.join(OUT_VID, slug + ".mp4"))
+        if item["type"] == "video" and not images_only and not (already and not force):
             vf = ("scale='if(gt(iw,ih),min(1280,iw),-2)':'if(gt(iw,ih),-2,min(1280,ih))'"
                   ",scale=trunc(iw/2)*2:trunc(ih/2)*2")
             subprocess.run([ffmpeg, "-y", "-i", src, "-vf", vf,
