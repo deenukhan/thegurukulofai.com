@@ -133,3 +133,17 @@ p {
   background-color: var(--teal);
   margin: 28px 0;
 }
+
+/* Present for search engines and screen readers, absent for sighted users.
+   Used where poster artwork already carries the headline. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

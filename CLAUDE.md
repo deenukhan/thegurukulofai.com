@@ -216,9 +216,36 @@ scripts/
 
 ---
 
+## Poster Sections (homepage)
+
+The homepage hero and the closing banner both use AI-generated poster artwork
+with the headline **baked into the image** (`assets/images/hero/`):
+
+- Hero — `no-shoot-day-{1400,2688}.{avif,webp}`
+- Closing banner — `ads-that-sell-{1400,2688}.{avif,webp}`
+
+Both were generated with GPT Image 2 from Deenu's character sheet, at 16:9.
+
+**How the layout works.** The poster is a finished composition — type on the
+left, subject on the right — so nothing is overlaid on it. The artwork runs
+full width of the 1200px card at its own 16:9, and the supporting copy sits in
+a band directly beneath it. Both cards share the same 20px radius. This is the
+same at every breakpoint, which is deliberate: a 16:9 poster inside a tall
+mobile card would be cropped by `object-fit: cover` and the headline, being on
+the left, would be the first thing cut.
+
+**The live `h1`/`h2` are still in the markup** carrying `.visually-hidden`, so
+search engines and screen readers get real headings even though the visible
+headline is pixels. Do not delete them.
+
+Trade-off to remember: baked-in type does not reflow on mobile and cannot be
+edited without regenerating the image. If a headline needs to change, the image
+has to be regenerated — see `hero-drafts/` for the working set and prompts.
+
+---
+
 ## Still To Do
-1. Compress `hero-section.webp` to under 300KB (use squoosh.app)
-2. Add Google Analytics
-3. Update OG image for social sharing (`assets/og-image.jpg`)
-4. Replace testimonials with real student quotes
-5. Review `new_design` branch → merge to `dev` when approved
+1. Add Google Analytics
+2. Update OG image for social sharing (`assets/og-image.jpg`)
+3. Replace testimonials with real student quotes
+4. Review `new_design` branch → merge to `dev` when approved

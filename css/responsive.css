@@ -221,3 +221,10 @@
     padding: 80px 64px 64px;
   }
 }
+
+@media (max-width: 900px) {
+  .hero-card--poster .hero-content { padding: 24px 24px 30px; }
+  .hero-card--poster .hero-badge--tl { display: none; }
+  .cta-banner--poster { padding: 0 16px 28px; }
+  .cta-banner--poster .cta-inner { padding: 24px 24px 30px; }
+}
