@@ -123,8 +123,8 @@ promote a piece to `client` without Deenu confirming the engagement was real.
   `<slug>-loop.mp4` at 540px for desktop hover previews.
 - Source is ~2.1 GB and transcodes down to ~108 MB.
 
-**Still to wire up:** `WHATSAPP` in `build-portfolio.py` is a placeholder
-number. Swap it for the real one and rebuild before this page goes live.
+**Enquiry CTA:** every CTA points at `WHATSAPP` in `build-portfolio.py`
+(+91 78278 76564, with a prefilled message). Change it there, then rebuild.
 
 ---
 

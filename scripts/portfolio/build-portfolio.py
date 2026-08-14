@@ -30,8 +30,7 @@ WIDTHS = [600, 1200]
 QUALITY = {600: {"avif": 55, "webp": 76}, 1200: {"avif": 50, "webp": 70}}
 CSS_V = {"base": 37, "components": 38, "portfolio": 1}
 
-# TODO: swap in the real WhatsApp business number before this page goes live.
-WHATSAPP = ("https://wa.me/910000000000?text="
+WHATSAPP = ("https://wa.me/917827876564?text="
             "Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project.")
 
 media_only = "--media-only" in sys.argv
