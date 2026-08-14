@@ -28,7 +28,7 @@ OUT_VID = os.path.join(HERE, "video-out")
 CDN = "https://tgai-cdn-2.b-cdn.net/portfolio"
 WIDTHS = [600, 1200]
 QUALITY = {600: {"avif": 55, "webp": 76}, 1200: {"avif": 50, "webp": 70}}
-CSS_V = {"base": 37, "components": 38, "portfolio": 2}
+CSS_V = {"base": 38, "components": 38, "portfolio": 3}
 
 WHATSAPP = ("https://wa.me/917827876564?text="
             "Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project.")

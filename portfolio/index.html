@@ -9,10 +9,10 @@
   <link rel="canonical" href="https://thegurukulofai.com/portfolio/">
 
   <meta property="og:title" content="AI Ads Portfolio - Deenu Khan">
-  <meta property="og:description" content="Product films, UGC, and D2C ads made with AI. No shoot days, no crew.">
+  <meta property="og:description" content="Product films, UGC, and D2C ads made with AI. No shoot day, no crew.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://thegurukulofai.com/portfolio/">
-  <meta property="og:image" content="https://thegurukulofai.com/assets/portfolio/noor-lighting-1200.webp">
+  <meta property="og:image" content="https://thegurukulofai.com/assets/images/poster/no-shoot-day-1400.webp">
 
   <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/images/favicon.png">
@@ -20,15 +20,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://tgai-cdn-2.b-cdn.net">
-  <link rel="preload" as="image" href="/assets/portfolio/noor-lighting-600.avif" type="image/avif">
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" type="image/avif"
+        href="/assets/images/poster/no-shoot-day-2688.avif"
+        imagesrcset="/assets/images/poster/no-shoot-day-1400.avif 1400w,
+                     /assets/images/poster/no-shoot-day-2688.avif 2688w"
+        imagesizes="(max-width: 1264px) 100vw, 1200px">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/base.css?v=37">
+  <link rel="stylesheet" href="/css/base.css?v=38">
   <link rel="stylesheet" href="/css/components.css?v=38">
-  <link rel="stylesheet" href="/css/portfolio.css?v=2">
+  <link rel="stylesheet" href="/css/portfolio.css?v=3">
   <link rel="stylesheet" href="/css/nav-mobile.css?v=1">
 </head>
-<body>
+<body class="p-body">
 
   <div class="portfolio-shell">
 
@@ -53,11 +57,24 @@
 
     <main class="p-page">
 
-      <!-- ===================== HERO ===================== -->
+      <!-- ===================== HERO =====================
+           The poster carries the headline, so the h1 stays in the markup for
+           search engines and screen readers but is not shown. -->
       <header class="p-hero">
-        <div class="p-hero-inner">
-          <span class="p-eyebrow">Ads Portfolio</span>
-          <h1 class="p-h1">Ads for your brand, <em>made with AI</em>.</h1>
+        <picture class="p-poster">
+          <source type="image/avif" sizes="(max-width: 1264px) 100vw, 1200px"
+                  srcset="/assets/images/poster/no-shoot-day-1400.avif 1400w,
+                          /assets/images/poster/no-shoot-day-2688.avif 2688w">
+          <source type="image/webp" sizes="(max-width: 1264px) 100vw, 1200px"
+                  srcset="/assets/images/poster/no-shoot-day-1400.webp 1400w,
+                          /assets/images/poster/no-shoot-day-2688.webp 2688w">
+          <img src="/assets/images/poster/no-shoot-day-2688.webp"
+               alt="Deenu Khan sipping from an oversized mug beside the words No Shoot Day"
+               width="2688" height="1520" fetchpriority="high" decoding="async">
+        </picture>
+
+        <div class="p-hero-copy">
+          <h1 class="visually-hidden">Ads for your brand, made with AI</h1>
           <p class="p-lede">
             Product films, UGC, and scroll-stopping D2C ads. No shoot day, no crew,
             no studio hire. You send the product. I send back the ad.
@@ -66,13 +83,14 @@
             <a href="https://wa.me/917827876564?text=Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project." class="btn btn-primary" target="_blank" rel="noopener noreferrer">Start a project on WhatsApp</a>
             <a href="#work" class="p-link-arrow">See the work &#8594;</a>
           </div>
-          <dl class="p-stats">
-            <div class="p-stat"><dt>Ads delivered</dt><dd data-count="120">120+</dd></div>
-            <div class="p-stat"><dt>Brands worked with</dt><dd data-count="30">30+</dd></div>
-            <div class="p-stat"><dt>First cut</dt><dd>48 hrs</dd></div>
-            <div class="p-stat"><dt>Delivery</dt><dd>Up to 4K</dd></div>
-          </dl>
         </div>
+
+        <dl class="p-stats">
+          <div class="p-stat"><dt>Ads delivered</dt><dd data-count="120">120+</dd></div>
+          <div class="p-stat"><dt>Brands worked with</dt><dd data-count="30">30+</dd></div>
+          <div class="p-stat"><dt>First cut</dt><dd>48 hrs</dd></div>
+          <div class="p-stat"><dt>Delivery</dt><dd>Up to 4K</dd></div>
+        </dl>
       </header>
 
       <!-- ===================== CLIENT WALL ===================== -->
@@ -94,18 +112,22 @@
         <span class="p-section-label">What I make</span>
         <div class="p-service-grid">
           <article class="p-service">
+            <span class="p-service-num">01</span>
             <h2>D2C performance ads</h2>
             <p>Hook-first cuts built for Meta and YouTube. Written to sell, not to look pretty.</p>
           </article>
           <article class="p-service">
+            <span class="p-service-num">02</span>
             <h2>UGC and creator ads</h2>
             <p>AI creators who speak to camera. Any face, any language, no casting call.</p>
           </article>
           <article class="p-service">
+            <span class="p-service-num">03</span>
             <h2>Product films</h2>
             <p>One product photo becomes a full spot. Macro detail, studio light, real texture.</p>
           </article>
           <article class="p-service">
+            <span class="p-service-num">04</span>
             <h2>3D and CGI</h2>
             <p>Animated brand stories and miniature worlds. The kind of spot that used to need a studio.</p>
           </article>
@@ -115,7 +137,7 @@
       <!-- ===================== FILTERS ===================== -->
       <div class="p-work-head" id="work">
         <span class="p-section-label">The work</span>
-        <h2 class="p-h2">22 spots. Every one made with AI.</h2>
+        <h2 class="p-h2">22 spots.<br>Every one made with AI.</h2>
       </div>
       <div class="p-filters" role="group" aria-label="Filter the work">
         <button type="button" class="p-chip" data-filter="all" aria-pressed="true">All work<span class="p-chip-count">22</span></button>
@@ -464,9 +486,22 @@
 
       <!-- ===================== CTA ===================== -->
       <section class="p-cta">
-        <h2 class="p-cta-h">Got a product? Let's make the <em>ad</em>.</h2>
-        <p class="p-cta-p">Tell me what you sell. I will send back a first cut in 48 hours.</p>
-        <a href="https://wa.me/917827876564?text=Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project." class="btn btn-primary" target="_blank" rel="noopener noreferrer">Message me on WhatsApp</a>
+        <picture class="p-poster">
+          <source type="image/avif" sizes="(max-width: 1264px) 100vw, 1200px"
+                  srcset="/assets/images/poster/ads-that-sell-1400.avif 1400w,
+                          /assets/images/poster/ads-that-sell-2688.avif 2688w">
+          <source type="image/webp" sizes="(max-width: 1264px) 100vw, 1200px"
+                  srcset="/assets/images/poster/ads-that-sell-1400.webp 1400w,
+                          /assets/images/poster/ads-that-sell-2688.webp 2688w">
+          <img src="/assets/images/poster/ads-that-sell-2688.webp"
+               alt="Deenu Khan in front of a wall of vintage televisions beside the words Ads That Sell"
+               width="2688" height="1520" loading="lazy" decoding="async">
+        </picture>
+        <div class="p-cta-copy">
+          <h2 class="visually-hidden">Got a product? Let's make the ad.</h2>
+          <p class="p-cta-p">Tell me what you sell. I will send back a first cut in 48 hours.</p>
+          <a href="https://wa.me/917827876564?text=Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project." class="btn btn-primary" target="_blank" rel="noopener noreferrer">Message me on WhatsApp</a>
+        </div>
       </section>
 
     </main>
@@ -499,7 +534,7 @@
     <button type="button" class="p-lb-btn p-lb-next" aria-label="Next ad">&#8250;</button>
   </div>
 
-  <script src="/js/portfolio.js?v=2"></script>
+  <script src="/js/portfolio.js?v=3"></script>
   <script src="/js/nav-mobile.js?v=1"></script>
 </body>
 </html>

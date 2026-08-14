@@ -216,31 +216,40 @@ scripts/
 
 ---
 
-## Poster Sections (homepage)
+## Poster Sections (portfolio page)
 
-The homepage hero and the closing banner both use AI-generated poster artwork
-with the headline **baked into the image** (`assets/images/hero/`):
+The ads portfolio opens and closes with AI-generated poster artwork that has
+the headline **baked into the image** (`assets/images/poster/`):
 
 - Hero — `no-shoot-day-{1400,2688}.{avif,webp}`
-- Closing banner — `ads-that-sell-{1400,2688}.{avif,webp}`
+- Closing CTA — `ads-that-sell-{1400,2688}.{avif,webp}`
 
-Both were generated with GPT Image 2 from Deenu's character sheet, at 16:9.
+Both were generated with GPT Image 2 from Deenu's character sheet at 16:9.
+Working set and the rest of the round lives in `hero-drafts/` (gitignored).
+
+**These are portfolio-only.** The homepage keeps its original photo hero
+(`hero-section.webp`). Do not move them back without asking.
 
 **How the layout works.** The poster is a finished composition — type on the
-left, subject on the right — so nothing is overlaid on it. The artwork runs
-full width of the 1200px card at its own 16:9, and the supporting copy sits in
-a band directly beneath it. Both cards share the same 20px radius. This is the
-same at every breakpoint, which is deliberate: a 16:9 poster inside a tall
-mobile card would be cropped by `object-fit: cover` and the headline, being on
-the left, would be the first thing cut.
+left, subject on the right — so nothing is overlaid on it. It runs full width
+of the card at its own 16:9 and the copy sits in a band directly beneath. Same
+at every breakpoint on purpose: a 16:9 poster in a tall mobile card gets
+cropped by `object-fit: cover`, and the headline, being on the left, is the
+first thing lost.
 
-**The live `h1`/`h2` are still in the markup** carrying `.visually-hidden`, so
-search engines and screen readers get real headings even though the visible
-headline is pixels. Do not delete them.
+**The live `h1`/`h2` stay in the markup** with `.visually-hidden` (defined in
+`base.css`), so the page still has real headings for search engines and screen
+readers even though the visible headline is pixels. Do not delete them.
+
+**The page is styled to match the artwork:** warm paper (`#EDE9E1`), charcoal
+type, cobalt accent (`#1B47D8`, sampled from the posters), the mug's ember
+orange for small highlights, a film-grain overlay, and **Anton** for all
+headings — the closest web face to the condensed grotesque burned into the
+posters. Note this page deliberately drops the brand teal; it is the one page
+that does.
 
 Trade-off to remember: baked-in type does not reflow on mobile and cannot be
-edited without regenerating the image. If a headline needs to change, the image
-has to be regenerated — see `hero-drafts/` for the working set and prompts.
+edited without regenerating the image.
 
 ---
 

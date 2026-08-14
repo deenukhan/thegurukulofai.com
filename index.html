@@ -21,19 +21,15 @@
   <link rel="preconnect" href="https://www.youtube.com">
   <link rel="preconnect" href="https://i.ytimg.com">
   <!-- Preload hero image -->
-  <link rel="preload" as="image" type="image/avif"
-        href="assets/images/hero/no-shoot-day-2688.avif"
-        imagesrcset="assets/images/hero/no-shoot-day-1400.avif 1400w,
-                     assets/images/hero/no-shoot-day-2688.avif 2688w"
-        imagesizes="100vw">
+  <link rel="preload" as="image" href="assets/images/founder/hero-section.webp">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/base.css?v=38">
+  <link rel="stylesheet" href="css/base.css?v=37">
   <link rel="stylesheet" href="css/components.css?v=38">
-  <link rel="stylesheet" href="css/sections.css?v=44">
+  <link rel="stylesheet" href="css/sections.css?v=41">
   <link rel="stylesheet" href="css/animations.css?v=39">
-  <link rel="stylesheet" href="css/responsive.css?v=42">
+  <link rel="stylesheet" href="css/responsive.css?v=39">
   <link rel="stylesheet" href="css/nav-mobile.css?v=1">
 </head>
 <body>
@@ -66,21 +62,8 @@
   <!-- ===================== HERO ===================== -->
   <section class="hero" id="home" aria-labelledby="hero-heading">
 
-    <!-- Photo card — poster artwork carries the headline, so the h1 below is
-         kept for search engines and screen readers but hidden visually. -->
-    <div class="hero-card hero-card--poster">
-
-      <picture class="hero-poster">
-        <source type="image/avif" sizes="100vw"
-                srcset="assets/images/hero/no-shoot-day-1400.avif 1400w,
-                        assets/images/hero/no-shoot-day-2688.avif 2688w">
-        <source type="image/webp" sizes="100vw"
-                srcset="assets/images/hero/no-shoot-day-1400.webp 1400w,
-                        assets/images/hero/no-shoot-day-2688.webp 2688w">
-        <img src="assets/images/hero/no-shoot-day-2688.webp"
-             alt="Deenu Khan sipping from an oversized mug beside the words No Shoot Day"
-             width="2688" height="1520" fetchpriority="high" decoding="async">
-      </picture>
+    <!-- Photo card — full-bleed photo inside a rounded card -->
+    <div class="hero-card" style="background-image: url('assets/images/founder/hero-section.webp')">
 
       <!-- Corner badges -->
       <div class="hero-badge hero-badge--tl animate-eyebrow">Creative AI Education For Everyone</div>
@@ -88,9 +71,12 @@
 
       <!-- Content overlaid on photo -->
       <div class="hero-content">
-        <h1 class="hero-h1 visually-hidden" id="hero-heading">
-          Build AI content that looks genuinely premium.
+        <h1 class="hero-h1 animate-h1" id="hero-heading">
+          Build AI content<br>
+          that looks<br>
+          <em>genuinely premium.</em>
         </h1>
+        <div class="clay-rule animate-rule" aria-hidden="true"></div>
         <p class="hero-body animate-body">
           Learn the exact tools, prompts, and workflows used to
           create high-end images and videos for real brands.
@@ -383,33 +369,23 @@
   </section>
 
   <!-- ===================== CTA BANNER ===================== -->
-  <section class="cta-banner cta-banner--poster" aria-labelledby="cta-heading">
-    <div class="cta-card">
-      <picture class="cta-poster">
-        <source type="image/avif" sizes="(max-width: 1264px) 100vw, 1200px"
-                srcset="assets/images/hero/ads-that-sell-1400.avif 1400w,
-                        assets/images/hero/ads-that-sell-2688.avif 2688w">
-        <source type="image/webp" sizes="(max-width: 1264px) 100vw, 1200px"
-                srcset="assets/images/hero/ads-that-sell-1400.webp 1400w,
-                        assets/images/hero/ads-that-sell-2688.webp 2688w">
-        <img src="assets/images/hero/ads-that-sell-2688.webp"
-             alt="Deenu Khan in front of a wall of vintage televisions beside the words Ads That Sell"
-             width="2688" height="1520" loading="lazy" decoding="async">
-      </picture>
-      <div class="cta-inner">
-        <div class="cta-copy reveal">
-          <h2 class="cta-h2 visually-hidden" id="cta-heading">
-            Stop watching others create with AI. Start building.
-          </h2>
-          <p class="cta-sub">Join thousands of Indian creators and brand builders who are already using AI to produce premium content.</p>
-        </div>
-        <a href="#courses" class="btn btn-cta reveal reveal-delay-2">
-          Start Learning
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
+  <section class="cta-banner" aria-labelledby="cta-heading">
+    <div class="cta-ghost" aria-hidden="true">G</div>
+    <div class="cta-inner">
+      <div class="cta-copy reveal">
+        <h2 class="cta-h2" id="cta-heading">
+          Stop watching others<br>
+          create with AI.<br>
+          <em>Start building.</em>
+        </h2>
+        <p class="cta-sub">Join thousands of Indian creators and brand builders who are already using AI to produce premium content.</p>
       </div>
+      <a href="#courses" class="btn btn-cta reveal reveal-delay-2">
+        Start Learning
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
     </div>
   </section>
 
