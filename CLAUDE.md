@@ -96,6 +96,38 @@ OpenAI, Xbox, Dubai's 1 Billion Followers Summit, stages, and event passes.
 
 ---
 
+## Ads Portfolio (`portfolio/index.html`)
+
+Sales page for the AI ad work: 22 spots covering D2C ads, UGC, product films,
+and 3D/CGI. Built on the same pipeline as the gallery.
+
+- **Generated file.** Edit `scripts/portfolio/manifest.json`, then rebuild. Never hand-edit `portfolio/index.html`.
+- **Rebuild everything:** `python3 scripts/portfolio/build-portfolio.py`
+  (needs `pip3 install --user pillow imageio-ffmpeg`; originals live in
+  `thegurukulofai x ADS/Our Video Ads/` on Google Drive, outside the repo)
+- **Rebuild just the page:** `python3 scripts/portfolio/build-portfolio.py --html-only`
+- **After a video change:** `scripts/bunny-upload-portfolio.sh scripts/portfolio/video-out`
+
+**Honest attribution — do not weaken this.** Every tile carries a `status`:
+- `client` — paid work. Only these appear in the "Selected clients" wall.
+- `spec` — a real brand's product, but unsolicited concept work.
+- `concept` — an invented brand, used to show range.
+
+Philips, Mars Cosmetics, Dot & Key, and Zipgo are `spec`, not clients. Never
+promote a piece to `client` without Deenu confirming the engagement was real.
+
+**Where media lives**
+- Posters: committed to `assets/portfolio/` as AVIF + WebP at 800px and 1200px
+- Videos: Bunny Storage at `https://tgai-cdn-2.b-cdn.net/portfolio/`, never committed.
+  Each has a full `<slug>.mp4` (longest side 1280, CRF 24) and a silent 4s
+  `<slug>-loop.mp4` at 540px for desktop hover previews.
+- Source is ~2.1 GB and transcodes down to ~108 MB.
+
+**Still to wire up:** `WHATSAPP` in `build-portfolio.py` is a placeholder
+number. Swap it for the real one and rebuild before this page goes live.
+
+---
+
 ## File Structure
 
 ```

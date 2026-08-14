@@ -1,0 +1,200 @@
+[
+ {
+  "src": "Client Work/Evaga Final 3d Style 1080p high quality.mp4",
+  "slug": "evaga-3d-style",
+  "brand": "Evaga Entertainment",
+  "title": "The event planner who stopped panicking",
+  "kind": "3D Animated Film",
+  "status": "client",
+  "cats": ["cgi", "d2c"]
+ },
+ {
+  "src": "Client Work/Sutisancha draft v2_1080p_final.mp4",
+  "slug": "sutisancha-handloom",
+  "brand": "Sutisancha",
+  "title": "Handloom origin story, weaver to wardrobe",
+  "kind": "3D Animated Film",
+  "status": "client",
+  "cats": ["cgi", "fashion", "d2c"]
+ },
+ {
+  "src": "Client Work/Final Version Ajfan Dates Milkshake.mp4",
+  "slug": "ajfan-dates-milkshake",
+  "brand": "Ajfan Dates",
+  "title": "Dates milkshake, morning launch spot",
+  "kind": "3D Animated Film",
+  "status": "client",
+  "cats": ["cgi", "food", "d2c"]
+ },
+ {
+  "src": "2. Product to Ad showcase draft 1.mp4",
+  "slug": "product-to-ad-showcase",
+  "brand": "Maruvi",
+  "title": "One product photo to a finished campaign",
+  "kind": "Product Film",
+  "status": "concept",
+  "cats": ["product", "fashion", "d2c"]
+ },
+ {
+  "src": "Client Work/Evaga Miniature 1080p High.mp4",
+  "slug": "evaga-miniature",
+  "brand": "Evaga Entertainment",
+  "title": "Miniature world, planning a wedding in one tap",
+  "kind": "3D Animated Film",
+  "status": "client",
+  "cats": ["cgi", "d2c"]
+ },
+ {
+  "src": "Client Work/mars cosmetics video.mov",
+  "slug": "mars-cosmetics",
+  "brand": "Mars Cosmetics",
+  "title": "Scale-play desert spot for a serum bottle",
+  "kind": "Beauty Ad",
+  "status": "spec",
+  "cats": ["fashion", "product", "d2c"]
+ },
+ {
+  "src": "5. Scroll Stopping Content Draft .1.mp4",
+  "slug": "scroll-stopping-content",
+  "brand": "Terrane Motors",
+  "title": "Snow chase hook built to stop the scroll",
+  "kind": "Performance Ad",
+  "status": "concept",
+  "cats": ["d2c", "product"]
+ },
+ {
+  "src": "Client Work/PHILIPS AD DRAFT1.mov",
+  "slug": "philips-airfryer",
+  "brand": "Philips",
+  "title": "Two-presenter kitchen demo for an air fryer",
+  "kind": "Product Film",
+  "status": "spec",
+  "cats": ["product", "food", "d2c"]
+ },
+ {
+  "src": "Client Work/Nano banan drink 4k.mp4",
+  "slug": "nano-banana-drink",
+  "brand": "Nano Banana",
+  "title": "Citrus pour, shot from the street up",
+  "kind": "Food & Drink Ad",
+  "status": "concept",
+  "cats": ["food", "product"]
+ },
+ {
+  "src": "4. Video.mp4",
+  "slug": "velour-house",
+  "brand": "Velour House",
+  "title": "Texture-first film for a winter drop",
+  "kind": "Fashion Ad",
+  "status": "concept",
+  "cats": ["fashion", "product", "cgi"]
+ },
+ {
+  "src": "Indian Audience Ad/Zipgo Example.mp4",
+  "slug": "zipgo-sneakers",
+  "brand": "Zipgo",
+  "title": "Wet-street sneaker spot, night reflections",
+  "kind": "Product Film",
+  "status": "spec",
+  "cats": ["product", "fashion", "d2c"]
+ },
+ {
+  "src": "3. Showcase With Voiceover draft 1.mp4",
+  "slug": "noire-atelier",
+  "brand": "Noire Atelier",
+  "title": "Leather goods spot with scripted voiceover",
+  "kind": "Product Film",
+  "status": "concept",
+  "cats": ["product", "fashion"]
+ },
+ {
+  "src": "UGC Ads/UGC DotnKey.mp4",
+  "slug": "dotnkey-ugc-1",
+  "brand": "Dot & Key",
+  "title": "Kitchen-counter skincare review",
+  "kind": "UGC",
+  "status": "spec",
+  "cats": ["ugc", "d2c"]
+ },
+ {
+  "src": "UGC Ads/UGC DotnKEY 2.mov",
+  "slug": "dotnkey-ugc-2",
+  "brand": "Dot & Key",
+  "title": "Before and after, spoken to camera",
+  "kind": "UGC",
+  "status": "spec",
+  "cats": ["ugc", "d2c"]
+ },
+ {
+  "src": "UGC Ads/UGC DotnKEY 3.mp4",
+  "slug": "dotnkey-ugc-3",
+  "brand": "Dot & Key",
+  "title": "Daylight routine, second angle",
+  "kind": "UGC",
+  "status": "spec",
+  "cats": ["ugc", "d2c"]
+ },
+ {
+  "src": "UGC Ads/UGC Video 1.mp4",
+  "slug": "skinfolk-ugc-1",
+  "brand": "Skinfolk",
+  "title": "Rooftop testimonial, unfiltered skin",
+  "kind": "UGC",
+  "status": "concept",
+  "cats": ["ugc", "d2c"]
+ },
+ {
+  "src": "UGC Ads/UGC Video 2.mp4",
+  "slug": "skinfolk-ugc-2",
+  "brand": "Skinfolk",
+  "title": "Morning routine, talking-head cut",
+  "kind": "UGC",
+  "status": "concept",
+  "cats": ["ugc", "d2c"]
+ },
+ {
+  "src": "Indian Audience Ad/Indian Ad 1.mp4",
+  "slug": "aamras-drink",
+  "brand": "Aamras Co.",
+  "title": "Cold mango pour for an Indian feed",
+  "kind": "Food & Drink Ad",
+  "status": "concept",
+  "cats": ["food", "d2c"]
+ },
+ {
+  "src": "Indian Audience Ad/Indian Ad 2.mp4",
+  "slug": "rasa-beauty-gloss",
+  "brand": "Rasa Beauty",
+  "title": "Macro gloss shot, six-second hook",
+  "kind": "Beauty Ad",
+  "status": "concept",
+  "cats": ["fashion", "d2c"]
+ },
+ {
+  "src": "Indian Audience Ad/Indian Ad 3.mp4",
+  "slug": "trailkit-backpack",
+  "brand": "Trailkit",
+  "title": "Strap and stitch detail, built-tough cut",
+  "kind": "Product Film",
+  "status": "concept",
+  "cats": ["product", "d2c"]
+ },
+ {
+  "src": "Indian Audience Ad/Indian Ad 4.mp4",
+  "slug": "tapan-cookware",
+  "brand": "Tapan Cookware",
+  "title": "Flame-to-pan spot for a kitchen range",
+  "kind": "Product Film",
+  "status": "concept",
+  "cats": ["product", "food", "d2c"]
+ },
+ {
+  "src": "Indian Audience Ad/Light Ad.mp4",
+  "slug": "noor-lighting",
+  "brand": "Noor Lighting",
+  "title": "Late-night study lamp, mood-led spot",
+  "kind": "Product Film",
+  "status": "concept",
+  "cats": ["product", "d2c"]
+ }
+]

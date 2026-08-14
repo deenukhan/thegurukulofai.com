@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Ads Portfolio - Deenu Khan</title>
+  <meta name="description" content="AI-generated ads for D2C brands: product films, UGC, 3D and CGI spots. Work by Deenu Khan for Evaga Entertainment, Sutisancha, Ajfan Dates and more.">
+  <meta name="author" content="Deenu Khan">
+  <link rel="canonical" href="https://thegurukulofai.com/portfolio/">
+
+  <meta property="og:title" content="AI Ads Portfolio - Deenu Khan">
+  <meta property="og:description" content="Product films, UGC, and D2C ads made with AI. No shoot days, no crew.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://thegurukulofai.com/portfolio/">
+  <meta property="og:image" content="https://thegurukulofai.com/assets/portfolio/{{FIRST}}-1200.webp">
+
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/assets/images/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://tgai-cdn-2.b-cdn.net">
+  <link rel="preload" as="image" href="/assets/portfolio/{{FIRST}}-600.avif" type="image/avif">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/base.css?v={{V_BASE}}">
+  <link rel="stylesheet" href="/css/components.css?v={{V_COMPONENTS}}">
+  <link rel="stylesheet" href="/css/portfolio.css?v={{V_PORTFOLIO}}">
+  <link rel="stylesheet" href="/css/nav-mobile.css?v=1">
+</head>
+<body>
+
+  <div class="portfolio-shell">
+
+    <!-- ===================== NAVIGATION ===================== -->
+    <nav class="js-nav-pill p-nav" aria-label="Portfolio navigation">
+      <a href="/" class="logo" aria-label="The Gurukul of AI - Home">
+        <img src="/assets/images/logo-tgai.png" alt="The Gurukul of AI" class="logo-img">
+      </a>
+      <div id="navMenu" class="p-nav-links js-nav-menu">
+        <a href="/#courses">Courses</a>
+        <a href="/#founder">About</a>
+        <a href="/portfolio/" aria-current="page">Ads Portfolio</a>
+        <a href="/gallery/">Gallery</a>
+        <a href="/blog/">Blog</a>
+        <a href="/free-guides.html">Free Guides</a>
+      </div>
+      <button type="button" class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+      </button>
+      <a href="{{WHATSAPP}}" class="btn btn-nav" target="_blank" rel="noopener noreferrer">Start a project</a>
+    </nav>
+
+    <main class="p-page">
+
+      <!-- ===================== HERO ===================== -->
+      <header class="p-hero">
+        <div class="p-hero-inner">
+          <span class="p-eyebrow">Ads Portfolio</span>
+          <h1 class="p-h1">Ads for your brand, <em>made with AI</em>.</h1>
+          <p class="p-lede">
+            Product films, UGC, and scroll-stopping D2C ads. No shoot day, no crew,
+            no studio hire. You send the product. I send back the ad.
+          </p>
+          <div class="p-hero-actions">
+            <a href="{{WHATSAPP}}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Start a project on WhatsApp</a>
+            <a href="#work" class="p-link-arrow">See the work &#8594;</a>
+          </div>
+          <dl class="p-stats">
+            <div class="p-stat"><dt>Ads delivered</dt><dd data-count="60">60+</dd></div>
+            <div class="p-stat"><dt>Brands worked with</dt><dd data-count="12">12</dd></div>
+            <div class="p-stat"><dt>First cut</dt><dd>48 hrs</dd></div>
+            <div class="p-stat"><dt>Delivery</dt><dd>Up to 4K</dd></div>
+          </dl>
+        </div>
+      </header>
+
+      <!-- ===================== CLIENT WALL ===================== -->
+      <section class="p-clients" aria-label="Selected clients">
+        <span class="p-section-label">Selected clients</span>
+        <div class="p-logos">
+{{BRANDS}}
+        </div>
+        <p class="p-clients-note">
+          Client work is marked on the tile. Everything else here is spec or
+          concept work, made to show range.
+        </p>
+      </section>
+
+      <!-- ===================== SERVICES ===================== -->
+      <section class="p-services" aria-label="What I make">
+        <span class="p-section-label">What I make</span>
+        <div class="p-service-grid">
+          <article class="p-service">
+            <h2>D2C performance ads</h2>
+            <p>Hook-first cuts built for Meta and YouTube. Written to sell, not to look pretty.</p>
+          </article>
+          <article class="p-service">
+            <h2>UGC and creator ads</h2>
+            <p>AI creators who speak to camera. Any face, any language, no casting call.</p>
+          </article>
+          <article class="p-service">
+            <h2>Product films</h2>
+            <p>One product photo becomes a full spot. Macro detail, studio light, real texture.</p>
+          </article>
+          <article class="p-service">
+            <h2>3D and CGI</h2>
+            <p>Animated brand stories and miniature worlds. The kind of spot that used to need a studio.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===================== FILTERS ===================== -->
+      <div class="p-work-head" id="work">
+        <span class="p-section-label">The work</span>
+        <h2 class="p-h2">{{COUNT}} spots. Every one made with AI.</h2>
+      </div>
+      <div class="p-filters" role="group" aria-label="Filter the work">
+{{CHIPS}}
+      </div>
+      <p id="portfolioStatus" class="sr-only" role="status" aria-live="polite"></p>
+
+      <!-- ===================== GRID ===================== -->
+      <div class="p-grid" id="portfolioGrid">
+{{TILES}}
+      </div>
+
+      <!-- ===================== PROCESS ===================== -->
+      <section class="p-process" aria-label="How it works">
+        <span class="p-section-label">How it works</span>
+        <ol class="p-steps">
+          <li class="p-step">
+            <span class="p-step-num">01</span>
+            <h3>Send the brief</h3>
+            <p>Product shots, the offer, and who you are selling to. A WhatsApp message is enough.</p>
+          </li>
+          <li class="p-step">
+            <span class="p-step-num">02</span>
+            <h3>First cut in 48 hours</h3>
+            <p>You get a full draft with sound and voiceover. Not a mood board, a finished ad.</p>
+          </li>
+          <li class="p-step">
+            <span class="p-step-num">03</span>
+            <h3>Two rounds, then delivery</h3>
+            <p>Revisions on script, pacing, and hook. Final files come in every ratio you run.</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ===================== CTA ===================== -->
+      <section class="p-cta">
+        <h2 class="p-cta-h">Got a product? Let's make the <em>ad</em>.</h2>
+        <p class="p-cta-p">Tell me what you sell. I will send back a first cut in 48 hours.</p>
+        <a href="{{WHATSAPP}}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Message me on WhatsApp</a>
+      </section>
+
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="p-footer">
+      <span>&copy; 2026 The Gurukul of AI. All rights reserved.</span>
+      <span>
+        <a href="/">Home</a> &nbsp;&middot;&nbsp;
+        <a href="/gallery/">Gallery</a> &nbsp;&middot;&nbsp;
+        <a href="/blog/">Blog</a> &nbsp;&middot;&nbsp;
+        <a href="https://instagram.com/neuraltech.ai" target="_blank" rel="noopener noreferrer">Instagram</a> &nbsp;&middot;&nbsp;
+        <a href="/privacy-policy.html">Privacy Policy</a>
+      </span>
+    </footer>
+  </div>
+
+  <!-- ===================== PLAYER ===================== -->
+  <div class="p-lightbox" id="portfolioPlayer" role="dialog" aria-modal="true" aria-label="Ad player" aria-hidden="true">
+    <button type="button" class="p-lb-close" aria-label="Close player">&times;</button>
+    <button type="button" class="p-lb-btn p-lb-prev" aria-label="Previous ad">&#8249;</button>
+    <div class="p-lb-stage">
+      <div class="p-lb-media"></div>
+      <div class="p-lb-info">
+        <p class="p-lb-brand"></p>
+        <p class="p-lb-title"></p>
+        <p class="p-lb-meta"></p>
+      </div>
+    </div>
+    <button type="button" class="p-lb-btn p-lb-next" aria-label="Next ad">&#8250;</button>
+  </div>
+
+  <script src="/js/portfolio.js?v={{V_PORTFOLIO}}"></script>
+  <script src="/js/nav-mobile.js?v=1"></script>
+</body>
+</html>
