@@ -316,11 +316,28 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Masonry ---------- */
+/* ---------- Masonry ----------
+   Two layouts on purpose. Without JS, CSS multicol renders every tile — but it
+   fills column-by-column, so tile 15 lands atop the third column and the
+   newest-first order reads wrong. With JS, portfolio.js swaps in explicit
+   columns and fills left-to-right, so the top row is genuinely the newest work. */
 .p-grid {
   padding: 28px var(--section-pad-h) clamp(56px, 8vw, 96px);
   columns: 3 260px;
   column-gap: 14px;
+}
+
+.p-grid.is-masonry {
+  columns: auto;
+  column-gap: normal;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.p-col {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .p-item {

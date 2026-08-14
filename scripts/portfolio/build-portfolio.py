@@ -28,7 +28,7 @@ OUT_VID = os.path.join(HERE, "video-out")
 CDN = "https://tgai-cdn-2.b-cdn.net/portfolio"
 WIDTHS = [600, 1200]
 QUALITY = {600: {"avif": 55, "webp": 76}, 1200: {"avif": 50, "webp": 70}}
-CSS_V = {"base": 37, "components": 38, "portfolio": 1}
+CSS_V = {"base": 37, "components": 38, "portfolio": 2}
 
 WHATSAPP = ("https://wa.me/917827876564?text="
             "Hi%20Deenu%2C%20I%20saw%20your%20ads%20portfolio%20and%20want%20to%20discuss%20a%20project.")
@@ -46,6 +46,12 @@ CATS = [
 # How each piece is labelled on the tile. Paid work says so; everything else is
 # openly marked, so nothing on this page overstates the relationship.
 STATUS = {"client": "Client work", "spec": "Spec", "concept": "Concept"}
+
+
+def newest_first(entries):
+    """Newest work leads the grid. Python's sort is stable, so pieces sharing a
+    date keep the order they were written in the manifest."""
+    return sorted(entries, key=lambda e: e["date"], reverse=True)
 
 
 def build_media():
@@ -67,14 +73,14 @@ def build_media():
         return ("scale='if(gt(iw,ih),min({p},iw),-2)':'if(gt(iw,ih),-2,min({p},ih))'"
                 ",scale=trunc(iw/2)*2:trunc(ih/2)*2".format(p=px))
 
-    manifest = json.load(open(os.path.join(HERE, "manifest.json")))
+    manifest = newest_first(json.load(open(os.path.join(HERE, "manifest.json"))))
     data = []
     for n, item in enumerate(manifest, 1):
         slug = item["slug"]
         src = os.path.join(SRC, item["src"])
         if not os.path.exists(src):
             sys.exit("missing source: " + src)
-        entry = {k: item[k] for k in ("slug", "brand", "title", "kind", "status", "cats")}
+        entry = {k: item[k] for k in ("slug", "brand", "title", "kind", "status", "date", "cats")}
 
         done = os.path.exists(os.path.join(OUT_VID, slug + ".mp4"))
         if not done or force:
@@ -118,6 +124,7 @@ def build_media():
 
 
 def build_html(data):
+    data = newest_first(data)
     counts = {k: 0 for k, _ in CATS}
     counts["all"] = len(data)
     for d in data:

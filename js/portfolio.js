@@ -58,6 +58,51 @@
     items.forEach(function (el) { el.classList.add('is-in'); });
   }
 
+  /* ---------- Masonry ----------
+     CSS multicol fills column-by-column, which would drop the oldest work at the
+     top of the last column. Tiles are laid out into explicit columns instead,
+     each one going to the shortest column so far — that keeps the newest-first
+     order reading left-to-right while still balancing the column heights. */
+  function columnCount() {
+    var w = window.innerWidth;
+    if (w <= 560) return 1;
+    if (w <= 900) return 2;
+    return 3;
+  }
+
+  function ratioOf(el) {
+    var img = el.querySelector('img');
+    var w = img && +img.getAttribute('width');
+    var h = img && +img.getAttribute('height');
+    return w && h ? h / w : 1;
+  }
+
+  var laidOutCols = 0;
+
+  function layout() {
+    var n = columnCount();
+    var cols = [];
+    var heights = [];
+    grid.classList.add('is-masonry');
+    grid.textContent = '';
+    for (var i = 0; i < n; i++) {
+      var c = document.createElement('div');
+      c.className = 'p-col';
+      grid.appendChild(c);
+      cols.push(c);
+      heights.push(0);
+    }
+    visible.forEach(function (el) {
+      var k = 0;
+      for (var i = 1; i < n; i++) {
+        if (heights[i] < heights[k] - 0.0001) k = i;
+      }
+      cols[k].appendChild(el);
+      heights[k] += ratioOf(el) + 0.04;   // +gap, in column-width units
+    });
+    laidOutCols = n;
+  }
+
   /* ---------- Filters ---------- */
   function applyFilter(key) {
     visible = [];
@@ -75,10 +120,21 @@
     if (status) {
       status.textContent = visible.length + (visible.length === 1 ? ' ad' : ' ads') + ' shown';
     }
+    layout();
   }
 
   chips.forEach(function (chip) {
     chip.addEventListener('click', function () { applyFilter(chip.dataset.filter); });
+  });
+
+  layout();
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (columnCount() !== laidOutCols) layout();
+    }, 150);
   });
 
   /* ---------- Hover previews (desktop pointers only) ----------
