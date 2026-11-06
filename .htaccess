@@ -3,6 +3,10 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Repo files that deploy with the site but are not for visitors.
+  RewriteRule ^(CLAUDE\.md|package(-lock)?\.json|eleventy\.config\.js|\.gitignore)$ - [R=404,L]
+  RewriteRule ^(scripts|blog-src|\.claude)(/|$) - [R=404,L]
+
   # The gallery moved from /gallery.html to /gallery/ — keep old links alive.
   RewriteRule ^gallery\.html$ /gallery/ [R=301,L]
 </IfModule>

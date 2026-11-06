@@ -1,0 +1,89 @@
+/* Shared look for the legal pages (terms, refund policy). Tokens from base.css. */
+.lg-nav {
+  padding: 24px 60px;
+  border-bottom: 1px solid var(--mist);
+}
+.lg-nav a {
+  font-size: 14px;
+  color: var(--slate);
+}
+.lg-nav a:hover { color: var(--ink); }
+
+.lg-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 80px 60px 120px;
+}
+.lg-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--forest-mid);
+  margin-bottom: 16px;
+}
+.lg-h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.lg-updated { font-size: 13px; margin-bottom: 40px; }
+.lg-summary {
+  background: var(--paper-blue);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 48px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.lg-section { margin-bottom: 44px; }
+.lg-section h2 {
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--mist);
+}
+.lg-section p,
+.lg-section li {
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+.lg-section ul { list-style: disc; padding-left: 20px; margin-bottom: 12px; }
+.lg-section a,
+.lg-summary a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--teal);
+}
+.lg-section a:hover { color: var(--forest-mid); }
+
+@media (max-width: 600px) {
+  .lg-nav { padding: 20px 24px; }
+  .lg-wrap { padding: 48px 24px 80px; }
+}
+
+/* About, Contact and Pricing pages */
+.lg-photo { width: 220px; height: auto; border-radius: 14px; margin-bottom: 20px; }
+.lg-prices { list-style: none !important; padding: 0 !important; }
+.lg-prices li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--mist);
+}
+.lg-prices b { font-size: 18px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.lg-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-top: 24px;
+  border-top: 1px solid var(--mist);
+  font-size: 14px;
+}
+.lg-foot a { color: var(--slate); text-decoration: underline; }
+.lg-foot a:hover { color: var(--ink); }
