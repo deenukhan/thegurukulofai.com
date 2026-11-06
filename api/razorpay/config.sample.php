@@ -33,6 +33,14 @@ return [
     'mail_from'   => 'deenu@thegurukulofai.com',
     'mail_notify' => 'deenu@thegurukulofai.com',
 
+    // Sends through the mail_from mailbox, so emails pass SPF, DKIM and DMARC.
+    // The password is that mailbox's own. Leave it empty to use PHP mail() instead.
+    'smtp' => [
+        'host'     => 'ssl://smtp.hostinger.com',
+        'port'     => 465,
+        'password' => 'PASTE_MAILBOX_PASSWORD_HERE',
+    ],
+
     // Marker files that stop a buyer being emailed twice.
     'sent_dir' => __DIR__ . '/razorpay-sent',
 ];
