@@ -11,6 +11,9 @@
   RewriteRule ^gallery\.html$ /gallery/ [R=301,L]
 </IfModule>
 
+# Some servers send AVIF as plain text, so name the type here.
+AddType image/avif .avif
+
 # Long cache for fingerprinted and immutable media. HTML stays uncached so
 # deploys show up immediately.
 <IfModule mod_expires.c>

@@ -280,8 +280,8 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 - Page-sized copies live in `assets/images/masterclass/` (hero background, logo, avatar). Keep them small:
   the originals are far larger than this page needs. Compress real proof screenshots to WebP before adding them.
 - Bunny caches for 30 days, so give changed media a new filename rather than overwriting it.
-- `masterclass/placeholder-media/` holds borrowed reels and is gitignored. Do not publish them
-  without the creators' permission.
+- The page's reels come from Bunny. Deenu confirmed permission for the Nishant, Vishnu and Farhan
+  reels on 7 Nov 2026. `masterclass/placeholder-media/` holds the local originals and is gitignored.
 
 ---
 

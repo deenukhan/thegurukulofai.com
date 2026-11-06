@@ -58,8 +58,10 @@
   border-radius: 999px;
   background: var(--forest);
   color: var(--white);
-  font-weight: 600;
-  font-size: 17px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
   box-shadow: 0 12px 28px rgba(2, 60, 68, 0.18);
@@ -93,7 +95,9 @@
 }
 .mc-cta:hover i { background: var(--forest); }
 .mc-cta:hover svg { transform: translateX(3px); stroke: var(--white); }
-.mc-cta--block { width: 100%; justify-content: space-between; }
+/* Full-width buttons: label centred, arrow pinned to the right */
+.mc-cta--block { position: relative; width: 100%; min-height: 60px; justify-content: center; padding: 8px 60px; }
+.mc-cta--block i { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
 .mc-cta--small { font-size: 15px; padding: 6px 6px 6px 22px; gap: 12px; box-shadow: none; }
 .mc-cta--small i { width: 36px; height: 36px; }
 
@@ -910,16 +914,22 @@
 .mc-bar.is-on { transform: none; }
 .mc-bar-logo { height: 28px; width: auto; }
 .mc-bar-when { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
-.mc-bar .mc-cta { margin-left: auto; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-/* A slow teal pulse on the booking button. Hover and reduced motion turn it off. */
+.mc-bar .mc-cta { margin-left: auto; }
+/* A slow teal pulse and a nudging arrow on every buy button. Hover and reduced motion turn it off. */
 @media (prefers-reduced-motion: no-preference) {
-  .mc-bar .mc-cta { animation: mcBarPulse 2.2s ease-in-out infinite; }
-  .mc-bar .mc-cta i { animation: mcBarArrow 2.2s ease-in-out infinite; }
-  .mc-bar .mc-cta:hover, .mc-bar .mc-cta:hover i { animation: none; }
+  .mc-cta { animation: mcBarPulse 2.2s ease-in-out infinite; }
+  .mc-cta i { animation: mcBarArrow 2.2s ease-in-out infinite; }
+  .mc-cta svg { animation: mcArrowNudge 2.2s ease-in-out infinite; }
+  .mc-cta:hover, .mc-cta:hover i, .mc-cta:hover svg,
+  .mc-cta:disabled, .mc-cta:disabled i, .mc-cta:disabled svg { animation: none; }
 }
 @keyframes mcBarPulse {
-  0%, 100% { background-color: var(--forest); box-shadow: 0 0 0 0 rgba(53, 189, 200, 0); }
+  0%, 100% { background-color: var(--forest); box-shadow: 0 0 0 0 rgba(53, 189, 200, 0), 0 10px 24px rgba(2, 60, 68, 0.16); }
   50% { background-color: #075461; box-shadow: 0 0 0 4px rgba(53, 189, 200, 0.3), 0 0 20px rgba(53, 189, 200, 0.45); }
+}
+@keyframes mcArrowNudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
 }
 @keyframes mcBarArrow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
@@ -967,7 +977,8 @@
   .mc-info-v { font-size: 14px; }
   .mc-long { display: none; }
   .mc-short { display: inline; }
-  .mc-hero .mc-cta { margin-top: 18px; width: 100%; justify-content: space-between; }
+  .mc-hero .mc-cta { position: relative; margin-top: 18px; width: 100%; min-height: 60px; justify-content: center; padding: 8px 60px; }
+  .mc-hero .mc-cta i { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
   .mc-hero-note { margin-top: 10px; font-size: 13px; }
   .mc-count { min-width: 0; width: 100%; margin-top: 22px; }
 
@@ -1322,3 +1333,19 @@
 .mc-ty-link { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--forest-mid); text-decoration: underline; }
 .mc-ty-foot { margin-top: 32px; font-size: 15px; line-height: 1.6; }
 .mc-ty-foot a { text-decoration: underline; }
+
+/* Narrow cards: keep the centred label clear of the arrow */
+@media (max-width: 640px) {
+  .mc-cta { font-size: 14px; }
+  .mc-cta--small { font-size: 13px; }
+  .mc-cta--block { font-size: 13px; letter-spacing: 0.03em; padding: 8px 48px; }
+  .mc-cta--block i { width: 36px; height: 36px; right: 6px; }
+  .mc-hero .mc-cta { padding: 8px 52px; }
+}
+@media (max-width: 360px) {
+  .mc-cta--block { justify-content: flex-start; padding-left: 14px; font-size: 12px; letter-spacing: 0.02em; }
+  .mc-cta--block i { width: 38px; height: 38px; right: 6px; }
+}
+@media (max-width: 360px) {
+  .mc-hero .mc-cta { font-size: 13px; padding: 8px 52px; }
+}
