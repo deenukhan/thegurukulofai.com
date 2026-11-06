@@ -397,10 +397,9 @@ const CONFIG = {
 
   const reelsHost = $('[data-reels]');
   if (reelsHost && CONFIG.reels && CONFIG.reels.length) {
-    const MIN_TILES = 10;
     buildMarquee(reelsHost, () => {
       const out = [];
-      for (let k = 0; out.length < Math.max(MIN_TILES, CONFIG.reels.length); k++) {
+      for (let k = 0; out.length < CONFIG.reels.length; k++) {
         const i = k % CONFIG.reels.length;
         const r = CONFIG.reels[i];
         const b = document.createElement('button');
@@ -459,6 +458,68 @@ const CONFIG = {
       vid.className = 'is-reel';
       openLightbox(vid);
       vid.play().catch(() => {});
+    });
+  }
+
+  /* ---------- Before / after wipe ---------- */
+  const wipe = $('[data-wipe]');
+  if (wipe) {
+    const raw = $('.mc-wipe-raw', wipe);
+    const edit = $('.mc-wipe-edit', wipe);
+    const sound = $('.mc-wipe-sound', wipe);
+    const stillOnly = reduceMotion || (navigator.connection && navigator.connection.saveData);
+    const setLine = (percent) => wipe.style.setProperty('--x', `${percent}%`);
+    let touched = false;
+    let inView = false;
+
+    // The line drifts on its own until someone drags it.
+    const drift = (t) => {
+      if (!inView || touched) return;
+      setLine(50 + 36 * Math.sin(t / 1900));
+      requestAnimationFrame(drift);
+    };
+    const playBoth = () => {
+      [raw, edit].forEach((v) => {
+        if (!v.src) v.src = v.dataset.src;
+        v.play().catch(() => {});
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([e]) => {
+        inView = e.isIntersecting;
+        if (inView) {
+          if (!stillOnly) {
+            playBoth();
+            requestAnimationFrame(drift);
+          }
+        } else if (edit.src) {
+          raw.pause();
+          edit.pause();
+        }
+      }, { threshold: 0.2 }).observe(wipe);
+    }
+    // The reel is the master clock, so the two never drift apart.
+    edit.addEventListener('timeupdate', () => {
+      if (Math.abs(raw.currentTime - edit.currentTime) > 0.12) raw.currentTime = edit.currentTime;
+    });
+    const fromPointer = (e) => {
+      const box = wipe.getBoundingClientRect();
+      setLine(Math.min(100, Math.max(0, ((e.clientX - box.left) / box.width) * 100)));
+    };
+    wipe.addEventListener('pointerdown', (e) => {
+      if (e.target === sound) return;
+      touched = true;
+      wipe.setPointerCapture(e.pointerId);
+      fromPointer(e);
+    });
+    wipe.addEventListener('pointermove', (e) => {
+      if (wipe.hasPointerCapture(e.pointerId)) fromPointer(e);
+    });
+    sound.addEventListener('click', () => {
+      edit.muted = !edit.muted;
+      sound.textContent = edit.muted ? 'Sound on' : 'Sound off';
+      sound.setAttribute('aria-pressed', String(!edit.muted));
+      if (!edit.muted) playBoth();
     });
   }
 
