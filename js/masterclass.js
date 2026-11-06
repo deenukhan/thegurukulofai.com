@@ -12,12 +12,9 @@ const CONFIG = {
   bumpPrice: 499,       // recording + resource pack (tick box on the page)
   oneToOnePrice: 14788,
 
-  // Payment links. Make two products on learn.thegurukulofai.com:
-  //   1. "AI Video Editing Masterclass" at ₹1,499
-  //   2. "AI Video Editing Masterclass + Recording & Resources" at ₹1,998
-  // and paste each checkout link here. While empty, the pay button stays on this page.
-  checkoutUrl: '',          // TODO: ₹1,499 checkout link
-  checkoutUrlWithBump: '',  // TODO: ₹1,998 checkout link
+  // Razorpay server files (api/razorpay/). These prices are only for display:
+  // what the buyer actually pays is set in the private config on the server.
+  apiPath: '/api/razorpay/',
   oneToOneUrl: 'https://learn.thegurukulofai.com/web/checkout/6ae7f96ca307d6636a581fbe',
 
   // WhatsApp for questions (digits only, with country code)
@@ -126,17 +123,170 @@ const CONFIG = {
   $$('[data-wa]').forEach((a) => { a.href = wa; });
 
   /* ---------- Add-on tick box: total + which checkout ---------- */
-  const bump = $('.js-bump');
-  const pay = $('.js-pay');
-  const total = $('.js-total');
-  const syncBump = () => {
-    const on = bump && bump.checked;
-    if (total) total.textContent = inr(CONFIG.price + (on ? CONFIG.bumpPrice : 0));
-    const url = on ? CONFIG.checkoutUrlWithBump : CONFIG.checkoutUrl;
-    if (pay) pay.href = url ? withParams(url) : '#pricing';
+  // The tick box appears in the pricing card and in the pop-up. They stay in step.
+  const bumps = $$('.js-bump');
+  let addon = false;
+  const showTotals = () => {
+    $$('.js-total').forEach((t) => { t.textContent = inr(CONFIG.price + (addon ? CONFIG.bumpPrice : 0)); });
   };
-  if (bump) bump.addEventListener('change', syncBump);
-  syncBump();
+  const syncBump = (on) => {
+    addon = on;
+    bumps.forEach((b) => { b.checked = on; });
+    showTotals();
+  };
+  bumps.forEach((b) => b.addEventListener('change', () => syncBump(b.checked)));
+  syncBump(false);
+
+  /* ---------- Checkout pop-up + Razorpay ---------- */
+  const payBox = $('.mc-pay');
+  if (payBox && payBox.showModal) {
+    const form = $('.mc-pay-form', payBox);
+    const msg = $('.mc-pay-msg', payBox);
+    const submit = $('.js-pay-submit', payBox);
+    const label = $('.js-pay-label', payBox);
+    const labelHtml = label.innerHTML;
+    const query = new URLSearchParams(window.location.search);
+    const supportNumber = CONFIG.whatsapp.replace(/^91(\d{5})(\d{5})$/, '+91 $1 $2');
+
+    // Local preview talks to the server files on the live site (or a test server).
+    const isLocal = window.location.hostname === 'localhost';
+    const api = isLocal ? (query.get('api') || `https://thegurukulofai.com${CONFIG.apiPath}`) : CONFIG.apiPath;
+
+    let sdk = null;
+    const loadRazorpay = () => {
+      sdk = sdk || new Promise((resolve, reject) => {
+        if (window.Razorpay) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = resolve;
+        s.onerror = () => { sdk = null; reject(new Error('sdk')); };
+        document.head.append(s);
+      });
+      return sdk;
+    };
+
+    const say = (text, tone) => {
+      msg.textContent = text || '';
+      msg.hidden = !text;
+      msg.classList.toggle('is-info', tone === 'info');
+    };
+    let busy = false;
+    const setBusy = (on, text) => {
+      busy = on;
+      submit.disabled = on;
+      if (on) label.textContent = text;
+      else {
+        label.innerHTML = labelHtml;
+        showTotals();
+      }
+    };
+
+    const openPay = () => {
+      say('');
+      if (!payBox.open) payBox.showModal();
+      loadRazorpay().catch(() => {});
+    };
+    $$('a.mc-cta[href="#pricing"], .js-pay').forEach((a) => {
+      a.addEventListener('click', (e) => { e.preventDefault(); openPay(); });
+    });
+    $('.mc-pay-x', payBox).addEventListener('click', () => payBox.close());
+    payBox.addEventListener('click', (e) => { if (e.target === payBox && !busy) payBox.close(); });
+    payBox.addEventListener('cancel', (e) => { if (busy) e.preventDefault(); });
+
+    const check = (d) => {
+      if (d.name.length < 2) return ['name', 'Please enter your full name.'];
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return ['email', 'Please enter a valid email.'];
+      if (!/^[6-9]\d{9}$/.test(d.phone)) return ['phone', 'Please enter a 10-digit Indian mobile number.'];
+      return null;
+    };
+    const trouble = {
+      invalid_details: 'Please check your name, email and number.',
+      sales_closed: 'Seats for this batch have closed.',
+    };
+
+    // Razorpay already has the money by now, so never show the buyer a failure.
+    // If this check can't finish, the thank-you page points them to their email.
+    const finish = async (response) => {
+      let community = '';
+      try {
+        const r = await fetch(`${api}verify.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(response),
+        });
+        const data = await r.json();
+        if (data.ok) community = data.community_url || '';
+      } catch (e) { /* the thank-you page handles a missing link */ }
+      try {
+        sessionStorage.setItem('mc_paid', JSON.stringify({ community, addon }));
+      } catch (e) { /* private mode: same fallback */ }
+      window.location.href = 'thank-you/';
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (busy) return;
+      const fields = new FormData(form);
+      const details = {
+        name: String(fields.get('name') || '').trim(),
+        email: String(fields.get('email') || '').trim(),
+        phone: String(fields.get('phone') || '').replace(/\D/g, '').replace(/^(?:91|0)(?=\d{10}$)/, ''),
+      };
+      const problem = check(details);
+      if (problem) {
+        say(problem[1]);
+        form.elements[problem[0]].focus();
+        return;
+      }
+
+      say('');
+      setBusy(true, 'Opening secure payment...');
+      let data;
+      try {
+        await loadRazorpay();
+        const utm = {};
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((k) => {
+          if (query.get(k)) utm[k] = query.get(k);
+        });
+        const r = await fetch(`${api}create-order.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...details, addon, utm }),
+        });
+        data = await r.json();
+      } catch (err) {
+        data = { ok: false };
+      }
+      setBusy(false);
+      if (!data.ok) {
+        say(trouble[data.error] || `We couldn't start the payment. Please try again, or message us on WhatsApp: ${supportNumber}.`);
+        return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: data.key,
+        order_id: data.order_id,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'The Gurukul of AI',
+        description: addon ? 'AI Video Editing Masterclass + recording' : 'AI Video Editing Masterclass',
+        image: new URL('../assets/images/favicon.png', window.location.href).href,
+        prefill: { name: details.name, email: details.email, contact: `+91${data.phone}` },
+        theme: { color: '#023C44' },
+        handler: finish,
+        modal: {
+          confirm_close: true,
+          ondismiss: () => {
+            payBox.showModal();
+            say(`Your payment wasn't completed. You can try again. If money left your account, message us on WhatsApp: ${supportNumber}.`, 'info');
+          },
+        },
+      });
+      // A modal <dialog> sits above everything, so it must close first or Razorpay's window is hidden behind it.
+      payBox.close();
+      rzp.open();
+    });
+  }
 
   /* ---------- Proof videos ---------- */
   const v = CONFIG.videos || {};

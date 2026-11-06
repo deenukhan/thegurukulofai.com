@@ -23,7 +23,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../css/base.css?v=37">
-  <link rel="stylesheet" href="../css/masterclass.css?v=8">
+  <link rel="stylesheet" href="../css/masterclass.css?v=11">
 </head>
 <body class="mc">
 
@@ -397,6 +397,68 @@
     </a>
   </div>
 
-  <script src="../js/masterclass.js?v=6"></script>
+  <!-- Checkout pop-up: every "Save my seat" button opens this. Payment itself happens in Razorpay's window. -->
+  <dialog class="mc-pay" aria-labelledby="pay-title">
+    <button type="button" class="mc-pay-x" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <form class="mc-pay-form" novalidate>
+      <p class="mc-pay-kicker">AI Video Editing Masterclass</p>
+      <h2 id="pay-title">Save your <em>seat.</em></h2>
+
+      <div class="mc-pay-order">
+        <div>
+          <p class="mc-pay-order-name">Live masterclass seat</p>
+          <p class="mc-pay-order-when"><span data-mc="dateCompact">Thu, 12 Nov</span> · <span data-mc="timeCompact">3–6 PM IST</span> · Zoom</p>
+        </div>
+        <p class="mc-pay-order-price">₹<span data-mc="price">1,499</span></p>
+      </div>
+
+      <div class="mc-pay-fields">
+        <label class="mc-pay-field">
+          <span>Full name</span>
+          <input type="text" name="name" autocomplete="name" maxlength="80" required>
+        </label>
+        <label class="mc-pay-field">
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" inputmode="email" maxlength="120" required>
+          <small>Your confirmation goes to this email.</small>
+        </label>
+        <label class="mc-pay-field">
+          <span>WhatsApp number</span>
+          <span class="mc-pay-phone">
+            <b aria-hidden="true">+91</b>
+            <input type="tel" name="phone" autocomplete="tel-national" inputmode="numeric" maxlength="14" placeholder="10-digit number" required>
+          </span>
+          <small>We'll use this for class updates.</small>
+        </label>
+      </div>
+
+      <label class="mc-bump">
+        <input type="checkbox" class="js-bump">
+        <span class="mc-bump-box" aria-hidden="true"></span>
+        <span class="mc-bump-text">
+          <span class="mc-bump-title">Yes, add the recording + resource pack <b>+₹<span data-mc="bumpPrice">499</span></b></span>
+          <span class="mc-bump-body">Rewatch the full session anytime, plus every prompt, the folder templates and the files used live.</span>
+        </span>
+      </label>
+
+      <div class="mc-pay-total">
+        <span>Total today</span>
+        <strong>₹<span class="js-total">1,499</span></strong>
+      </div>
+
+      <p class="mc-pay-msg" role="alert" hidden></p>
+
+      <button type="submit" class="mc-cta mc-cta--block js-pay-submit">
+        <span class="js-pay-label">Pay ₹<span class="js-total">1,499</span></span>
+        <i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i>
+      </button>
+
+      <p class="mc-pay-note">Secure payment by Razorpay. All sales are final; see the <a href="../refund-policy.html">refund policy</a>.</p>
+    </form>
+  </dialog>
+
+  <script src="../js/masterclass.js?v=8"></script>
 </body>
 </html>

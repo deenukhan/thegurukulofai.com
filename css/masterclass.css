@@ -1067,3 +1067,167 @@
   .mc-set[aria-hidden] { display: none; }
   .mc-shot-col, .mc-reel { scroll-snap-align: start; }
 }
+
+/* ==========================================================================
+   CHECKOUT POP-UP
+   ========================================================================== */
+.mc-pay {
+  inset: 0;
+  margin: auto;            /* the site reset zeroes margins, which un-centres <dialog> */
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 24px;
+  background: var(--ink);
+  color: var(--mc-text-d);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mc-pay::backdrop {
+  background: rgba(9, 23, 23, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.mc-pay-form { padding: 32px; }
+.mc-pay-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mc-line-d);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--ease-fast), box-shadow var(--ease-fast);
+}
+.mc-pay-x:hover { border-color: var(--teal); box-shadow: 0 0 16px rgba(53, 189, 200, 0.35); }
+.mc-pay-x svg { width: 18px; height: 18px; stroke: var(--white); stroke-width: 2; fill: none; stroke-linecap: round; }
+.mc-pay-kicker {
+  padding-right: 44px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+.mc-pay h2 {
+  margin-top: 10px;
+  font-size: clamp(30px, 6vw, 38px);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  color: var(--white);
+}
+.mc-pay h2 em { font-family: var(--font-sans); font-style: italic; color: var(--teal); }
+
+.mc-pay-order {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--mc-line-d);
+  border-radius: 14px;
+  background: var(--mc-ink-2);
+}
+.mc-pay-order-name { font-weight: 600; color: var(--white); }
+.mc-pay-order-when { margin-top: 2px; font-size: 14px; }
+.mc-pay-order-price { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--white); white-space: nowrap; }
+
+.mc-pay-fields { display: grid; gap: 14px; margin-top: 20px; }
+.mc-pay-field { display: block; }
+.mc-pay-field > span:first-child {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+}
+.mc-pay-field small { display: block; margin-top: 5px; font-size: 13px; opacity: 0.75; }
+.mc-pay-field input,
+.mc-pay-phone {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: var(--mc-ink-2);
+  font: inherit;
+  font-size: 16px;            /* stops iPhones zooming the page on focus */
+  color: var(--white);
+}
+.mc-pay-field > input { padding: 10px 14px; }
+.mc-pay-field > input:focus,
+.mc-pay-phone:focus-within { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(53, 189, 200, 0.2); }
+.mc-pay-phone { display: flex; align-items: center; }
+.mc-pay-phone b { padding: 0 2px 0 14px; font-weight: 600; color: var(--mc-text-d); }
+.mc-pay-phone input { flex: 1; min-width: 0; min-height: 46px; padding: 10px 14px 10px 6px; border: 0; background: transparent; outline: none; }
+.mc-pay-phone input::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+.mc-pay .mc-bump { margin: 20px 0 0; }
+.mc-pay .mc-bump-body { color: var(--slate); }
+.mc-pay-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 18px 0 0;
+  font-weight: 600;
+  color: var(--white);
+}
+.mc-pay-total strong { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
+.mc-pay-msg {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 106, 43, 0.14);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #FFC9B3;
+}
+.mc-pay-msg[hidden] { display: none; }
+.mc-pay-msg.is-info { background: rgba(53, 189, 200, 0.14); color: var(--teal-light); }
+.mc-pay .mc-cta { margin-top: 16px; border: 0; font-family: inherit; cursor: pointer; }
+.mc-pay .mc-cta:disabled { opacity: 0.7; cursor: wait; }
+.mc-pay-note { margin-top: 12px; font-size: 13px; line-height: 1.5; text-align: center; opacity: 0.8; }
+.mc-pay-note a { color: var(--white); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .mc-pay { border-radius: 20px; }
+  .mc-pay-form { padding: 24px 18px; }
+}
+
+/* ==========================================================================
+   THANK-YOU PAGE
+   ========================================================================== */
+.mc-ty { max-width: 640px; margin: 0 auto; padding: clamp(40px, 8vw, 72px) var(--mc-gutter) 80px; }
+.mc-ty-logo { display: block; margin-bottom: 40px; }
+.mc-ty-logo img { display: block; width: auto; height: 36px; }
+.mc-ty h1 {
+  font-size: clamp(40px, 8vw, 60px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.mc-ty h1 em { font-family: var(--font-sans); font-style: italic; color: var(--forest-mid); }
+.mc-ty-lede { margin-top: 16px; font-size: 18px; line-height: 1.6; }
+.mc-ty-steps { display: grid; gap: 14px; margin-top: 36px; padding: 0; list-style: none; }
+.mc-ty-steps li {
+  padding: 22px;
+  border: 1px solid var(--mc-line);
+  border-radius: 18px;
+  background: var(--white);
+}
+.mc-ty-steps li.is-main { border: 0; background: var(--ink); color: var(--mc-text-d); }
+.mc-ty-steps h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+.mc-ty-steps li.is-main h2 { color: var(--white); }
+.mc-ty-steps p { margin-top: 6px; font-size: 16px; line-height: 1.55; }
+.mc-ty-steps .mc-cta { margin-top: 16px; }
+.mc-cta[hidden] { display: none; }
+.mc-ty-link { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--forest-mid); text-decoration: underline; }
+.mc-ty-foot { margin-top: 32px; font-size: 15px; line-height: 1.6; }
+.mc-ty-foot a { text-decoration: underline; }

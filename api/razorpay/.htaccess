@@ -1,0 +1,4 @@
+# Only the three endpoints can be called from outside.
+<FilesMatch "^(lib|config\.sample)\.php$">
+  Require all denied
+</FilesMatch>

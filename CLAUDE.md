@@ -192,7 +192,7 @@ scripts/
 ## Technical Rules
 
 - No frameworks — vanilla HTML/CSS/JS only
-- External dependency: Google Fonts only
+- External dependency: Google Fonts only (exception: Razorpay `checkout.js`, loaded only on the masterclass page when the pop-up opens)
 - Semantic HTML: `nav`, `section`, `footer`, `h1`–`h3`, `p`, `ul`, `a`
 - Smooth scroll + `scroll-padding-top: 90px` on `html`
 - Target browsers: Chrome, Safari, Firefox
@@ -250,6 +250,30 @@ that does.
 
 Trade-off to remember: baked-in type does not reflow on mobile and cannot be
 edited without regenerating the image.
+
+---
+
+## Masterclass Checkout (`masterclass/`, `api/razorpay/`)
+
+Every "Save my seat" button opens the pop-up in `masterclass/index.html`. The pop-up collects
+name, email, WhatsApp number and the add-on. Razorpay's own window then takes the payment.
+
+- **Prices that count live in the server config**, not in `js/masterclass.js`, which is display only.
+- **Secrets never go in this repo.** Everything here is served publicly. The real config is
+  `/home/u886151741/domains/thegurukulofai.com/private/razorpay-config.php`, based on
+  `api/razorpay/config.sample.php`.
+- `create-order.php` sets the price and saves the buyer's details in the order notes, so unpaid
+  checkouts are visible in the Razorpay dashboard for manual follow-up.
+- `verify.php` checks the payment signature and returns the WhatsApp community link for the
+  thank-you page. The link is never in the public page source.
+- `webhook.php` is the source of truth. It handles `order.paid`, ignores other products (the
+  Razorpay account is shared), and emails the buyer and Deenu once per payment.
+- A modal `<dialog>` sits above Razorpay's window, so the pop-up must close before `rzp.open()`.
+- No WhatsApp automation for now. Reminders and the Zoom link go out by hand in the community.
+- Media goes to Bunny under `masterclass/` with `scripts/bunny-upload-masterclass.sh`. It needs a
+  local `.env`, which is gitignored.
+- `masterclass/placeholder-media/` holds borrowed reels and is gitignored. Do not publish them
+  without the creators' permission.
 
 ---
 
