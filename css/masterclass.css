@@ -67,6 +67,8 @@
   box-shadow: 0 12px 28px rgba(2, 60, 68, 0.18);
   transition: transform var(--ease-fast), box-shadow var(--ease-base), background-color var(--ease-base), color var(--ease-base);
 }
+.mc-cta span { text-align: center; }
+.mc-cta small { display: block; margin-top: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; opacity: 0.8; }
 .mc-cta i {
   display: grid;
   place-items: center;
@@ -98,8 +100,8 @@
 /* Full-width buttons: label centred, arrow pinned to the right */
 .mc-cta--block { position: relative; width: 100%; min-height: 60px; justify-content: center; padding: 8px 60px; }
 .mc-cta--block i { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
-.mc-cta--small { font-size: 15px; padding: 6px 6px 6px 22px; gap: 12px; box-shadow: none; }
-.mc-cta--small i { width: 36px; height: 36px; }
+.mc-cta--small { min-height: 60px; font-size: 15px; padding: 8px 9px 8px 34px; gap: 26px; box-shadow: none; }
+.mc-cta--small i { width: 42px; height: 42px; }
 
 /* ---------- Top ---------- */
 .mc-top {
@@ -412,7 +414,7 @@
 
 /* ---------- Blocks ---------- */
 .mc-block {
-  padding: clamp(72px, 8vw, 110px) var(--mc-gutter);
+  padding: clamp(48px, 5.5vw, 76px) var(--mc-gutter);
   background: var(--white);
 }
 .mc-block[hidden] { display: none; }
@@ -444,7 +446,7 @@
 .mc-zig {
   list-style: none;
   max-width: 1000px;
-  margin: 56px auto 0;
+  margin: 40px auto 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
@@ -862,7 +864,7 @@
 /* ---------- Final CTA ---------- */
 .mc-final {
   text-align: center;
-  padding: clamp(80px, 10vw, 130px) var(--mc-gutter);
+  padding: clamp(56px, 7vw, 92px) var(--mc-gutter);
   background: radial-gradient(50% 60% at 50% 75%, rgba(53, 189, 200, 0.14), transparent 70%);
 }
 .mc-final h2 { font-size: clamp(40px, 6vw, 72px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
@@ -959,7 +961,7 @@
 
 @media (max-width: 640px) {
   #main { padding: 8px 12px 16px; gap: 10px; }
-  .mc-foot { margin: 0 12px 84px; }
+  .mc-foot { margin: 0 12px 96px; }
 
   /* Phone hero: everything up to the button fits the first screen */
   .mc-top { padding: 18px var(--mc-gutter); }
@@ -1003,8 +1005,8 @@
   .mc-bar-logo, .mc-bar-when { display: none; }
   /* Phones: always on screen, label centred, arrow pinned to the right */
   .mc-bar { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); transform: none; }
-  .mc-bar .mc-cta { position: relative; flex: 1; justify-content: center; margin-left: 0; min-height: 48px; padding: 0 44px; font-size: 14px; }
-  .mc-bar .mc-cta i { position: absolute; right: 6px; top: 50%; margin: 0; transform: translateY(-50%); }
+  .mc-bar .mc-cta { position: relative; flex: 1; justify-content: center; margin-left: 0; min-height: 56px; padding: 0 52px; font-size: 14px; }
+  .mc-bar .mc-cta i { position: absolute; right: 8px; width: 40px; height: 40px; top: 50%; margin: 0; transform: translateY(-50%); }
   .mc-faq details p { padding-right: 0; }
 }
 
@@ -1337,7 +1339,7 @@
 /* Narrow cards: keep the centred label clear of the arrow */
 @media (max-width: 640px) {
   .mc-cta { font-size: 14px; }
-  .mc-cta--small { font-size: 13px; }
+  .mc-cta--small { font-size: 14px; padding: 8px 9px 8px 26px; gap: 18px; }
   .mc-cta--block { font-size: 13px; letter-spacing: 0.03em; padding: 8px 48px; }
   .mc-cta--block i { width: 36px; height: 36px; right: 6px; }
   .mc-hero .mc-cta { padding: 8px 52px; }
