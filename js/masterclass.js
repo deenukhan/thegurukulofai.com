@@ -469,15 +469,8 @@ const CONFIG = {
     const sound = $('.mc-wipe-sound', wipe);
     const stillOnly = reduceMotion || (navigator.connection && navigator.connection.saveData);
     const setLine = (percent) => wipe.style.setProperty('--x', `${percent}%`);
-    let touched = false;
-    let inView = false;
 
-    // The line drifts on its own until someone drags it.
-    const drift = (t) => {
-      if (!inView || touched) return;
-      setLine(50 + 36 * Math.sin(t / 1900));
-      requestAnimationFrame(drift);
-    };
+    // The line rests in the middle and only moves when someone slides it.
     const playBoth = () => {
       [raw, edit].forEach((v) => {
         if (!v.src) v.src = v.dataset.src;
@@ -486,12 +479,8 @@ const CONFIG = {
     };
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(([e]) => {
-        inView = e.isIntersecting;
-        if (inView) {
-          if (!stillOnly) {
-            playBoth();
-            requestAnimationFrame(drift);
-          }
+        if (e.isIntersecting) {
+          if (!stillOnly) playBoth();
         } else if (edit.src) {
           raw.pause();
           edit.pause();
@@ -508,7 +497,6 @@ const CONFIG = {
     };
     wipe.addEventListener('pointerdown', (e) => {
       if (e.target === sound) return;
-      touched = true;
       wipe.setPointerCapture(e.pointerId);
       fromPointer(e);
     });
