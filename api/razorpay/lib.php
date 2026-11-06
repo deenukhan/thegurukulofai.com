@@ -107,7 +107,7 @@ function rp_create_order(array $config, array $order): ?array
  * password, because PHP mail() fails DMARC here and risks the spam folder.
  * mail() stays as the backup, so a buyer still hears from us if SMTP is down.
  */
-function rp_mail(array $config, string $to, string $subject, string $body): bool
+function rp_mail(array $config, string $to, string $subject, string $body, ?string &$route = null): bool
 {
     $from = $config['mail_from'];
     $subject = mb_encode_mimeheader($subject, 'UTF-8', 'B');
@@ -118,20 +118,27 @@ function rp_mail(array $config, string $to, string $subject, string $body): bool
         'Reply-To: ' . $from,
     ];
 
-    if (!empty($config['smtp']['password'])
-        && rp_smtp_send($config['smtp'], $from, $to, $subject, $body, $headers)) {
-        return true;
+    $route = 'PHP mail(), no SMTP password set';
+    if (!empty($config['smtp']['password'])) {
+        $failure = rp_smtp_send($config['smtp'], $from, $to, $subject, $body, $headers);
+        if ($failure === null) {
+            $route = 'SMTP';
+            return true;
+        }
+        $route = 'PHP mail(), because SMTP failed: ' . $failure;
     }
     return mail($to, $subject, $body, implode("\r\n", $headers), '-f' . $from);
 }
 
-/** Talks to the mail server directly. Short timeouts, because Razorpay gives a webhook 5 seconds. */
-function rp_smtp_send(array $smtp, string $from, string $to, string $subject, string $body, array $headers): bool
+/**
+ * Talks to the mail server directly and returns why it failed, or null if the mail was accepted.
+ * Short timeouts, because Razorpay gives a webhook 5 seconds.
+ */
+function rp_smtp_send(array $smtp, string $from, string $to, string $subject, string $body, array $headers): ?string
 {
     $socket = @stream_socket_client($smtp['host'] . ':' . $smtp['port'], $errno, $error, 4);
     if ($socket === false) {
-        error_log('smtp connect failed: ' . $error);
-        return false;
+        return 'connect: ' . ($error !== '' ? $error : 'TLS or network error');
     }
     stream_set_timeout($socket, 4);
 
@@ -165,14 +172,13 @@ function rp_smtp_send(array $smtp, string $from, string $to, string $subject, st
         }
         $code = rp_smtp_reply($socket);
         if ($code !== $expected) {
-            error_log('smtp failed at ' . $name . ': got ' . $code);
             fclose($socket);
-            return false;
+            return $name . ': got ' . $code;
         }
     }
     fwrite($socket, "QUIT\r\n");
     fclose($socket);
-    return true;
+    return null;
 }
 
 /** Reads one server reply, which can span several lines, and returns its code. */
@@ -217,7 +223,7 @@ function rp_send_emails(array $config, array $sale): bool
     $lines[] = 'The Gurukul of AI';
 
     $subject = 'You are in: ' . $event['name'];
-    $ok = rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines));
+    $ok = rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines), $route);
 
     $note = [
         'New masterclass seat',
@@ -228,6 +234,7 @@ function rp_send_emails(array $config, array $sale): bool
         'Amount: Rs ' . number_format($sale['amount'] / 100, 2),
         'Payment ID: ' . $sale['payment_id'],
         'Buyer email sent: ' . ($ok ? 'Yes' : 'NO, please send it by hand'),
+        'Sent through: ' . $route,
     ];
     rp_mail($config, $config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note));
 
