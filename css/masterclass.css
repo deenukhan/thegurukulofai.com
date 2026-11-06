@@ -1049,24 +1049,26 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 11px;
+  border-radius: 999px;
   background: var(--white);
   box-shadow: 0 4px 14px rgba(2, 60, 68, 0.3);
-}
-.mc-wipe-line i::before {
-  content: "‹ ›";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+  transform: translate(-50%, -50%);
   font-style: normal;
-  font-size: 17px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
   color: var(--forest);
 }
+.mc-wipe-line i::before, .mc-wipe-line i::after { font-size: 18px; line-height: 1; }
+.mc-wipe-line i::before { content: "‹"; }
+.mc-wipe-line i::after { content: "›"; }
 .mc-wipe-tag {
   position: absolute;
   top: 12px;
