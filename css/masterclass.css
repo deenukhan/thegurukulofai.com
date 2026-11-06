@@ -1019,6 +1019,92 @@
   .mc-faq details p { padding-right: 0; }
 }
 
+/* ---------- Before / after wipe ---------- */
+.mc-ba {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: clamp(32px, 6vw, 80px);
+  align-items: center;
+  justify-content: center;
+}
+.mc-ba-copy { max-width: 520px; justify-self: end; }
+.mc-ba-media { display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; }
+.mc-wipe {
+  --x: 50%;
+  position: relative;
+  aspect-ratio: 9 / 16;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--ink);
+  box-shadow: var(--mc-shadow);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+}
+.mc-wipe video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.mc-wipe-raw { clip-path: inset(0 calc(100% - var(--x)) 0 0); }
+.mc-wipe-line { position: absolute; top: 0; bottom: 0; left: var(--x); width: 2px; margin-left: -1px; background: var(--white); pointer-events: none; }
+.mc-wipe-line i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: var(--white);
+  box-shadow: 0 4px 14px rgba(2, 60, 68, 0.3);
+  transform: translate(-50%, -50%);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--forest);
+}
+.mc-wipe-line i::before, .mc-wipe-line i::after { font-size: 18px; line-height: 1; }
+.mc-wipe-line i::before { content: "‹"; }
+.mc-wipe-line i::after { content: "›"; }
+.mc-wipe-tag {
+  position: absolute;
+  top: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(9, 23, 23, 0.72);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.mc-wipe-tag--raw { left: 12px; }
+.mc-wipe-tag--edit { right: 12px; background: var(--teal); color: var(--ink); }
+.mc-wipe-sound {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--forest);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (max-width: 760px) {
+  .mc-ba { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .mc-ba-copy { justify-self: center; text-align: center; }
+  .mc-ba .mc-sub { margin-left: auto; margin-right: auto; }
+  .mc-wipe { max-width: 320px; }
+}
+
 /* ==========================================================================
    SOCIAL PROOF — screenshot wall + reel strip (built by masterclass.js)
    ========================================================================== */
