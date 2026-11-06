@@ -1022,18 +1022,19 @@
 /* ---------- Before / after wipe ---------- */
 .mc-ba {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  grid-template-columns: minmax(0, 520px) auto;
   gap: clamp(32px, 6vw, 80px);
   align-items: center;
   justify-content: center;
 }
-.mc-ba-copy { max-width: 520px; justify-self: end; }
-.mc-ba-media { display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; }
+.mc-ba-copy { max-width: 520px; }
+.mc-ba-media { display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .mc-wipe {
   --x: 50%;
   position: relative;
   aspect-ratio: 9 / 16;
-  width: 100%;
+  /* Short enough that the video and its button fit one laptop screen */
+  width: clamp(240px, calc((100vh - 280px) * 9 / 16), 360px);
   overflow: hidden;
   border-radius: 16px;
   background: var(--ink);
@@ -1098,11 +1099,12 @@
   font-weight: 700;
   cursor: pointer;
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .mc-ba { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .mc-ba-copy { justify-self: center; text-align: center; }
   .mc-ba .mc-sub { margin-left: auto; margin-right: auto; }
-  .mc-wipe { max-width: 320px; }
+  .mc-ba-media { width: 100%; }
+  .mc-wipe { width: 100%; max-width: 320px; }
 }
 
 /* ==========================================================================
