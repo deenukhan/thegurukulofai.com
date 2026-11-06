@@ -269,6 +269,8 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 - `webhook.php` is the source of truth. It handles `order.paid`, ignores other products (the
   Razorpay account is shared), and emails the buyer and Deenu once per payment.
 - A modal `<dialog>` sits above Razorpay's window, so the pop-up must close before `rzp.open()`.
+- Emails go through the `mail_from` mailbox over SMTP (`smtp` in the server config). PHP `mail()` is
+  only the backup: it fails DMARC here, because the sender is a shared Hostinger address.
 - No WhatsApp automation for now. Reminders and the Zoom link go out by hand in the community.
 - Media goes to Bunny under `masterclass/` with `scripts/bunny-upload-masterclass.sh`. It needs a
   local `.env`, which is gitignored.
