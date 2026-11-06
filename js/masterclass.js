@@ -51,6 +51,9 @@ const CONFIG = {
   reelsDir: 'https://tgai-cdn-2.b-cdn.net/masterclass/',
   reels: [
     { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-1.mp4', loop: 'deenu-1-loop.mp4', poster: 'deenu-1-poster.webp' },
+    { name: 'Nishant Chahar',  handle: 'unscripted.nishant', src: 'nishant.mp4', loop: 'nishant-loop.mp4', poster: 'nishant-poster.webp' },
+    { name: 'Vishnu Vijayan',  handle: 'v.i.s.h.ai',       src: 'vishnu.mp4',  loop: 'vishnu-loop.mp4', poster: 'vishnu-poster.webp' },
+    { name: 'Farhan Rakhangi', handle: 'farhannrakhangi',  src: 'farhan.mp4',  loop: 'farhan-loop.mp4', poster: 'farhan-poster.webp' },
     { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-2.mp4', loop: 'deenu-2-loop.mp4', poster: 'deenu-2-poster.webp' },
   ],
 };
