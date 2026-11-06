@@ -255,6 +255,9 @@ edited without regenerating the image.
 
 ## Masterclass Checkout (`masterclass/`, `api/razorpay/`)
 
+The page follows the home page's language on purpose: warm-white page, white rounded section cards,
+pale aqua panels, hairline borders, teal italic accents and forest buttons. No dark panels, no orange.
+
 Every "Save my seat" button opens the pop-up in `masterclass/index.html`. The pop-up collects
 name, email, WhatsApp number and the add-on. Razorpay's own window then takes the payment.
 
@@ -274,6 +277,9 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 - No WhatsApp automation for now. Reminders and the Zoom link go out by hand in the community.
 - Media goes to Bunny under `masterclass/` with `scripts/bunny-upload-masterclass.sh`. It needs a
   local `.env`, which is gitignored.
+- Page-sized copies live in `assets/images/masterclass/` (hero background, logo, avatar). Keep them small:
+  the originals are far larger than this page needs. Compress real proof screenshots to WebP before adding them.
+- Bunny caches for 30 days, so give changed media a new filename rather than overwriting it.
 - `masterclass/placeholder-media/` holds borrowed reels and is gitignored. Do not publish them
   without the creators' permission.
 

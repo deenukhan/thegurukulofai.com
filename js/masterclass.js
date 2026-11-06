@@ -9,17 +9,13 @@ const CONFIG = {
   platform: 'Live on Zoom',
 
   price: 1499,          // masterclass seat
-  bumpPrice: 499,       // recording + resource pack (tick box on the page)
+  bumpPrice: 499,       // recording + The AI Editor’s Vault (tick box on the page)
   oneToOnePrice: 14788,
 
   // Razorpay server files (api/razorpay/). These prices are only for display:
   // what the buyer actually pays is set in the private config on the server.
   apiPath: '/api/razorpay/',
   oneToOneUrl: 'https://learn.thegurukulofai.com/web/checkout/6ae7f96ca307d6636a581fbe',
-
-  // WhatsApp for questions (digits only, with country code)
-  whatsapp: '918800128247',
-  whatsappText: 'Hi, I have a question about the AI Video Editing Masterclass.',
 
   // Proof videos. Paste a direct .mp4 link (e.g. Bunny CDN) to show the "See it before you book" section.
   // introVertical: true if the intro video is 9:16.
@@ -51,15 +47,11 @@ const CONFIG = {
   // "What they're making" strip. The list repeats until the strip is full.
   // loop: a short silent clip (about 6 s, 360px wide) that plays on repeat in the strip.
   // src: the full reel with sound, opened when someone taps a tile.
-  // TODO: these are borrowed Instagram reels for layout only (kept out of git).
-  // Replace with reels you have permission to show, hosted on Bunny.
-  reelsDir: './placeholder-media/',
+  // Reels live on Bunny under masterclass/. Upload with scripts/bunny-upload-masterclass.sh.
+  reelsDir: 'https://tgai-cdn-2.b-cdn.net/masterclass/',
   reels: [
-    { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-1.mp4', loop: 'deenu-1-loop.mp4', poster: 'deenu-1.jpg' },
-    { name: 'Nishant Chahar',  handle: 'unscripted.nishant', src: 'nishant.mp4', loop: 'nishant-loop.mp4', poster: 'nishant.jpg' },
-    { name: 'Vishnu Vijayan',  handle: 'v.i.s.h.ai',       src: 'vishnu.mp4',  loop: 'vishnu-loop.mp4', poster: 'vishnu.jpg' },
-    { name: 'Farhan Rakhangi', handle: 'farhannrakhangi',  src: 'farhan.mp4',  loop: 'farhan-loop.mp4', poster: 'farhan.jpg' },
-    { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-2.mp4', loop: 'deenu-2-loop.mp4', poster: 'deenu-2.jpg' },
+    { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-1.mp4', loop: 'deenu-1-loop.mp4', poster: 'deenu-1-poster.webp' },
+    { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-2.mp4', loop: 'deenu-2-loop.mp4', poster: 'deenu-2-poster.webp' },
   ],
 };
 
@@ -93,6 +85,7 @@ const CONFIG = {
     const samePeriod = clock(start).slice(-2) === clock(end).slice(-2);
     values.date = start.toLocaleDateString('en-GB', { ...ist, day: 'numeric', month: 'long', year: 'numeric' });
     values.dateCompact = start.toLocaleDateString('en-GB', { ...ist, weekday: 'short', day: 'numeric', month: 'short' });
+    values.dateFull = start.toLocaleDateString('en-GB', { ...ist, weekday: 'long', day: 'numeric', month: 'long' });
     values.time = `${clock(start)} – ${clock(end)} IST`;
     values.timeCompact = `${samePeriod ? bare(start) : clock(start)}–${clock(end)} IST`;
     values.timeStart = clock(start);
@@ -119,8 +112,6 @@ const CONFIG = {
     return u.toString();
   };
   $$('.js-oneone').forEach((a) => { a.href = withParams(CONFIG.oneToOneUrl); });
-  const wa = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(CONFIG.whatsappText)}`;
-  $$('[data-wa]').forEach((a) => { a.href = wa; });
 
   /* ---------- Add-on tick box: total + which checkout ---------- */
   // The tick box appears in the pricing card and in the pop-up. They stay in step.
@@ -146,7 +137,6 @@ const CONFIG = {
     const label = $('.js-pay-label', payBox);
     const labelHtml = label.innerHTML;
     const query = new URLSearchParams(window.location.search);
-    const supportNumber = CONFIG.whatsapp.replace(/^91(\d{5})(\d{5})$/, '+91 $1 $2');
 
     // Local preview talks to the server files on the live site (or a test server).
     const isLocal = window.location.hostname === 'localhost';
@@ -259,7 +249,7 @@ const CONFIG = {
       }
       setBusy(false);
       if (!data.ok) {
-        say(trouble[data.error] || `We couldn't start the payment. Please try again, or message us on WhatsApp: ${supportNumber}.`);
+        say(trouble[data.error] || "We couldn't start the payment. Please try again. If it keeps failing, see the Contact link at the bottom of this page.");
         return;
       }
 
@@ -278,7 +268,7 @@ const CONFIG = {
           confirm_close: true,
           ondismiss: () => {
             payBox.showModal();
-            say(`Your payment wasn't completed. You can try again. If money left your account, message us on WhatsApp: ${supportNumber}.`, 'info');
+            say("Your payment wasn't completed. You can try again. If money left your account, see the Contact link at the bottom of this page.", 'info');
           },
         },
       });
@@ -413,7 +403,7 @@ const CONFIG = {
         b.setAttribute('aria-label', `Play reel by ${r.name}`);
         b.innerHTML = `
           <span class="mc-reel-frame">
-            <video muted loop playsinline preload="none" poster="${CONFIG.reelsDir + r.poster}" data-src="${CONFIG.reelsDir + (r.loop || r.src)}"></video>
+            <video muted loop playsinline preload="none" data-poster="${CONFIG.reelsDir + r.poster}" data-src="${CONFIG.reelsDir + (r.loop || r.src)}"></video>
             <span class="mc-reel-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
           </span>
           <span class="mc-reel-name"></span>
@@ -424,19 +414,32 @@ const CONFIG = {
       }
       return out;
     }, 36);
-    // Loops play while the strip is on screen and pause when it isn't (saves data and battery)
+    // Posters load when the strip comes near. Each tile plays only while it is on screen,
+    // and people on data saver or reduced motion see the poster alone.
     const loops = $$('video', reelsHost);
+    const stillOnly = reduceMotion || (navigator.connection && navigator.connection.saveData);
+    const showPosters = () => loops.forEach((v) => { v.poster = v.dataset.poster; });
     loops.forEach((v) => { v.muted = true; });
-    const setLoops = (on) => loops.forEach((v) => {
-      if (on) {
-        if (!v.src) v.src = v.dataset.src;
-        v.play().catch(() => {});
-      } else if (v.src) {
-        v.pause();
+    if ('IntersectionObserver' in window) {
+      const near = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        showPosters();
+        near.disconnect();
+      }, { rootMargin: '400px 0px' });
+      near.observe(reelsHost);
+      if (!stillOnly) {
+        const seen = new IntersectionObserver((entries) => entries.forEach(({ target: v, isIntersecting }) => {
+          if (isIntersecting) {
+            if (!v.src) v.src = v.dataset.src;
+            v.play().catch(() => {});
+          } else if (v.src) {
+            v.pause();
+          }
+        }));
+        loops.forEach((v) => seen.observe(v));
       }
-    });
-    if (!reduceMotion && 'IntersectionObserver' in window) {
-      new IntersectionObserver(([e]) => setLoops(e.isIntersecting), { rootMargin: '200px 0px' }).observe(reelsHost);
+    } else {
+      showPosters();
     }
     reelsHost.addEventListener('pick', (e) => {
       const r = CONFIG.reels[e.detail];

@@ -211,7 +211,7 @@ function rp_send_emails(array $config, array $sale): bool
         '',
     ];
     if ($sale['addon']) {
-        $lines[] = 'You also added the recording + resource pack. We will send it after the session.';
+        $lines[] = 'You also added the recording + The AI Editor’s Vault. We will send them after the session.';
         $lines[] = '';
     }
     $lines[] = 'Amount paid: Rs ' . number_format($sale['amount'] / 100, 2);

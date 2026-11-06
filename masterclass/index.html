@@ -6,6 +6,7 @@
   <title>AI Video Editing Masterclass · The Gurukul of AI</title>
   <meta name="description" content="A 3-hour live masterclass on Zoom with Deenu Khan. Learn to edit videos with Claude Code: cuts, captions, B-roll, graphics, music and sound. You just direct.">
   <meta name="author" content="Deenu Khan">
+  <link rel="canonical" href="https://thegurukulofai.com/masterclass/">
 
   <meta property="og:title" content="AI Video Editing Masterclass with Deenu Khan">
   <meta property="og:description" content="Your next reel, edited by Claude. You just direct. 3 hours, live on Zoom.">
@@ -17,13 +18,38 @@
   <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="../assets/images/favicon.png">
 
-  <!-- Site fonts: the exact same font request as the homepage (Instrument Sans for everything) -->
+  <!-- Instrument Sans only. Loaded without blocking the first paint. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://tgai-cdn-2.b-cdn.net">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"></noscript>
 
   <link rel="stylesheet" href="../css/base.css?v=37">
-  <link rel="stylesheet" href="../css/masterclass.css?v=11">
+  <link rel="stylesheet" href="../css/masterclass.css?v=18">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "AI Video Editing Masterclass with Deenu Khan",
+    "description": "A 3-hour live masterclass on Zoom. Learn to edit videos with Claude Code.",
+    "startDate": "2026-11-12T15:00:00+05:30",
+    "endDate": "2026-11-12T18:00:00+05:30",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
+    "location": { "@type": "VirtualLocation", "url": "https://thegurukulofai.com/masterclass/" },
+    "image": "https://thegurukulofai.com/assets/images/masterclass/og-masterclass.jpg",
+    "performer": { "@type": "Person", "name": "Deenu Khan" },
+    "organizer": { "@type": "Organization", "name": "The Gurukul of AI", "url": "https://thegurukulofai.com" },
+    "offers": {
+      "@type": "Offer",
+      "price": "1499",
+      "priceCurrency": "INR",
+      "availability": "https://schema.org/InStock",
+      "url": "https://thegurukulofai.com/masterclass/"
+    }
+  }
+  </script>
 </head>
 <body class="mc">
 
@@ -32,7 +58,7 @@
 
   <header class="mc-top">
     <a href="/" class="mc-logo" aria-label="The Gurukul of AI, home">
-      <img src="../assets/images/logo-tgai.png" alt="The Gurukul of AI" height="34">
+      <img src="../assets/images/masterclass/logo-tgai-102.webp" alt="The Gurukul of AI" width="98" height="30">
     </a>
   </header>
 
@@ -44,7 +70,7 @@
       <div class="mc-hero-inner">
 
         <p class="mc-host">
-          <img src="../assets/images/founder/deenu-thegurukulofai.webp?v=1" alt="" width="40" height="40">
+          <img src="../assets/images/masterclass/deenu-avatar-120.webp" alt="" width="40" height="40">
           <span>Live with <b>Deenu Khan</b> · @neuraltech.ai</span>
         </p>
 
@@ -90,6 +116,13 @@
       </div>
     </section>
 
+    <div class="mc-ticker" aria-hidden="true">
+      <div class="mc-ticker-track">
+        <span>Cuts</span><span>Captions</span><span>B-roll</span><span>Graphics</span><span>Music</span><span>Sound effects</span><span>Your style</span><span>Claude Code</span><span>Cuts</span><span>Captions</span><span>B-roll</span><span>Graphics</span><span>Music</span><span>Sound effects</span><span>Your style</span><span>Claude Code</span>
+        <span>Cuts</span><span>Captions</span><span>B-roll</span><span>Graphics</span><span>Music</span><span>Sound effects</span><span>Your style</span><span>Claude Code</span><span>Cuts</span><span>Captions</span><span>B-roll</span><span>Graphics</span><span>Music</span><span>Sound effects</span><span>Your style</span><span>Claude Code</span>
+      </div>
+    </div>
+
     <!-- ===================== PROOF VIDEOS (shown once CONFIG has video links) ===================== -->
     <section class="mc-block mc-proofv" id="proof" aria-labelledby="proof-title" hidden>
       <h2 id="proof-title" class="mc-h2 mc-center">See it <em>before you book.</em></h2>
@@ -117,8 +150,9 @@
          - Swap the placeholder screenshots for real ones (CONFIG.screens).
          - Swap the borrowed reels for ones you have permission to show, and host them on Bunny (CONFIG.reels).
          - Confirm the copy below matches who the people are (viewers, students, beta testers). -->
-    <section class="mc-block mc-block--dark mc-social" id="proof-wall" aria-labelledby="saying-title">
+    <section class="mc-block mc-block--aqua mc-social" id="proof-wall" aria-labelledby="saying-title">
       <div class="mc-social-head">
+        <p class="mc-kicker">What people say</p>
         <h2 id="saying-title" class="mc-h2">Here's what people <em>are saying.</em></h2>
         <p class="mc-sub">Comments, DMs and posts from editors and creators who've seen this workflow. Tap any one to read it.</p>
       </div>
@@ -131,9 +165,9 @@
       <div class="mc-marquee mc-reels" data-reels aria-label="Reels edited with Claude"></div>
 
       <div class="mc-social-foot">
-        <p>Your seat for <span data-mc="dateCompact">Thu, 12 Nov</span> is ₹<span data-mc="price">1,499</span>.</p>
+        <p>Your seat for <span data-mc="dateFull">Thursday, 12 November</span>.</p>
         <a href="#pricing" class="mc-cta mc-cta--small">
-          <span>Save my seat</span>
+          <span>Save my seat · ₹<span data-mc="price">1,499</span></span>
           <i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i>
         </a>
       </div>
@@ -148,6 +182,7 @@
 
     <!-- ===================== FOR YOU ===================== -->
     <section class="mc-block" aria-labelledby="for-title">
+      <p class="mc-kicker mc-center">Who it's for</p>
       <h2 id="for-title" class="mc-h2 mc-center">If this sounds like you, <em>you're in the right place.</em></h2>
       <ol class="mc-zig">
         <li>You've never edited a video, and big editing apps <em>feel like too much.</em></li>
@@ -162,6 +197,7 @@
 
     <!-- ===================== IDEA + TIMELINE ===================== -->
     <section class="mc-block mc-block--tint" aria-labelledby="idea-title">
+      <p class="mc-kicker mc-center">How it works</p>
       <h2 id="idea-title" class="mc-h2 mc-center">Claude does the slow parts. <em>You make every call.</em></h2>
       <p class="mc-sub mc-center">You type what you want in plain English. Claude cuts, captions, plans B-roll, builds graphics and adds sound, then waits for your approval.</p>
 
@@ -218,7 +254,8 @@
     </section>
 
     <!-- ===================== AGENDA ===================== -->
-    <section class="mc-block mc-block--dark" id="agenda" aria-labelledby="agenda-title">
+    <section class="mc-block" id="agenda" aria-labelledby="agenda-title">
+      <p class="mc-kicker mc-center">The plan</p>
       <h2 id="agenda-title" class="mc-h2 mc-center">Walk in with <em>raw footage.</em><br>Walk out with <em>a working editor.</em></h2>
       <p class="mc-sub mc-center">You follow along on your own laptop. Here's the plan for <span data-mc="dateCompact">Thu, 12 Nov</span>:</p>
 
@@ -235,10 +272,10 @@
     </section>
 
     <!-- ===================== ABOUT ===================== -->
-    <section class="mc-block mc-about" aria-labelledby="about-title">
+    <section class="mc-block mc-block--tint mc-about" aria-labelledby="about-title">
       <div class="mc-about-main">
         <div class="mc-about-photo">
-          <img src="../assets/gallery/video-gen-keynote-800.webp" alt="Deenu Khan on stage, teaching AI video generation to a full hall" width="800" height="1067" loading="lazy" decoding="async">
+          <picture><source srcset="../assets/gallery/video-gen-keynote-800.avif" type="image/avif"><img src="../assets/gallery/video-gen-keynote-800.webp" alt="Deenu Khan on stage, teaching AI video generation to a full hall" width="800" height="1067" loading="lazy" decoding="async"></picture>
         </div>
         <div class="mc-about-copy">
           <p class="mc-kicker">Your teacher</p>
@@ -248,14 +285,15 @@
         </div>
       </div>
       <ul class="mc-about-strip">
-        <li><img src="../assets/gallery/microsoft-stage-800.webp" alt="" width="800" height="1067" loading="lazy" decoding="async"><span>On the Microsoft stage</span></li>
-        <li><img src="../assets/gallery/gemini-masterclass-800.webp" alt="" width="800" height="1422" loading="lazy" decoding="async"><span>Google Gemini Masterclass</span></li>
-        <li><img src="../assets/gallery/team-gemini-sign-800.webp" alt="" width="800" height="600" loading="lazy" decoding="async"><span>Team Gemini, invited by Google</span></li>
+        <li><picture><source srcset="../assets/gallery/microsoft-stage-800.avif" type="image/avif"><img src="../assets/gallery/microsoft-stage-800.webp" alt="" width="800" height="1067" loading="lazy" decoding="async"></picture><span>On the Microsoft stage</span></li>
+        <li><picture><source srcset="../assets/gallery/gemini-masterclass-800.avif" type="image/avif"><img src="../assets/gallery/gemini-masterclass-800.webp" alt="" width="800" height="1422" loading="lazy" decoding="async"></picture><span>Google Gemini Masterclass</span></li>
+        <li><picture><source srcset="../assets/gallery/team-gemini-sign-800.avif" type="image/avif"><img src="../assets/gallery/team-gemini-sign-800.webp" alt="" width="800" height="600" loading="lazy" decoding="async"></picture><span>Team Gemini, invited by Google</span></li>
       </ul>
     </section>
 
     <!-- ===================== PRICING ===================== -->
-    <section class="mc-block mc-block--tint" id="pricing" aria-labelledby="pricing-title">
+    <section class="mc-block mc-block--aqua" id="pricing" aria-labelledby="pricing-title">
+      <p class="mc-kicker mc-center">Your seat</p>
       <h2 id="pricing-title" class="mc-h2 mc-center">The whole workflow, <em>live, for ₹<span data-mc="price">1,499</span>.</em></h2>
       <p class="mc-sub mc-center">Taught one-on-one, this workflow costs ₹<span data-mc="oneToOnePrice">14,788</span>. In the live masterclass, you learn it for about a tenth of that.</p>
 
@@ -288,8 +326,8 @@
           <input type="checkbox" class="js-bump">
           <span class="mc-bump-box" aria-hidden="true"></span>
           <span class="mc-bump-text">
-            <span class="mc-bump-title">Yes, add the recording + resource pack <b>+₹<span data-mc="bumpPrice">499</span></b></span>
-            <span class="mc-bump-body">Rewatch the full session anytime, plus every prompt, the folder templates and the files used live.</span>
+            <span class="mc-bump-title">Yes, add the recording + The AI Editor’s Vault <b>+₹<span data-mc="bumpPrice">499</span></b></span>
+            <span class="mc-bump-body">Rewatch the full session anytime. Plus 125+ ready-to-use styles, skills and prompts.</span>
           </span>
         </label>
 
@@ -309,7 +347,8 @@
     </section>
 
     <!-- ===================== FAQ ===================== -->
-    <section class="mc-block mc-block--dark" id="faq" aria-labelledby="faq-title">
+    <section class="mc-block" id="faq" aria-labelledby="faq-title">
+      <p class="mc-kicker mc-center">Questions</p>
       <h2 id="faq-title" class="mc-h2 mc-center">Still have questions? <em>Start here.</em></h2>
       <div class="mc-faq">
         <details>
@@ -338,7 +377,7 @@
         </details>
         <details>
           <summary>I can't make it at <span data-mc="timeStart">3 PM</span>. Will there be a recording?</summary>
-          <p>Yes, with the ₹<span data-mc="bumpPrice">499</span> add-on, which also includes the resource pack. Tick it before you pay.</p>
+          <p>Yes, with the ₹<span data-mc="bumpPrice">499</span> add-on, which also includes The AI Editor’s Vault: 125+ ready-to-use styles, skills and prompts. Tick it before you pay.</p>
         </details>
         <details>
           <summary>Is there support after the masterclass?</summary>
@@ -354,10 +393,6 @@
         </details>
       </div>
 
-      <a class="mc-wa" href="#" data-wa target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3.2 20.8l4.5-1.2A8.8 8.8 0 1 0 12 3.2Zm0 16a7.2 7.2 0 0 1-3.7-1l-.3-.2-2.6.7.7-2.6-.2-.3A7.2 7.2 0 1 1 12 19.2Zm4-5.4c-.2-.1-1.3-.6-1.5-.7-.2-.1-.4-.1-.5.1l-.7.9c-.1.1-.3.2-.5.1a5.9 5.9 0 0 1-2.9-2.6c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.6c-.2-.4-.4-.4-.5-.4h-.4a.8.8 0 0 0-.6.3 2.5 2.5 0 0 0-.8 1.9 4.4 4.4 0 0 0 .9 2.3 10 10 0 0 0 3.8 3.4c1.4.6 2 .7 2.7.6.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1l-.3-.2Z"/></svg>
-        <span><b>Still unsure?</b> Message us on WhatsApp</span>
-      </a>
     </section>
 
     <!-- ===================== FINAL CTA ===================== -->
@@ -378,6 +413,7 @@
     <p>© 2026 The Gurukul of AI</p>
     <ul>
       <li><a href="/">Home</a></li>
+      <li><a href="../contact.html">Contact</a></li>
       <li><a href="../terms.html">Terms</a></li>
       <li><a href="../refund-policy.html">Refund policy</a></li>
       <li><a href="../privacy-policy.html">Privacy policy</a></li>
@@ -386,11 +422,8 @@
 
   <!-- Booking bar -->
   <div class="mc-bar">
-    <img src="../assets/images/logo-tgai.png" alt="" height="28" class="mc-bar-logo">
+    <img src="../assets/images/masterclass/logo-tgai-102.webp" alt="" width="91" height="28" class="mc-bar-logo" loading="lazy" decoding="async">
     <p class="mc-bar-when"><span class="mc-live-dot" aria-hidden="true"></span><span data-mc="dateShort">Thu 12 Nov · 3 PM IST · Zoom</span></p>
-    <a class="mc-bar-wa" href="#" data-wa target="_blank" rel="noopener noreferrer" aria-label="Ask a question on WhatsApp">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3.2 20.8l4.5-1.2A8.8 8.8 0 1 0 12 3.2Zm0 16a7.2 7.2 0 0 1-3.7-1l-.3-.2-2.6.7.7-2.6-.2-.3A7.2 7.2 0 1 1 12 19.2Zm4-5.4c-.2-.1-1.3-.6-1.5-.7-.2-.1-.4-.1-.5.1l-.7.9c-.1.1-.3.2-.5.1a5.9 5.9 0 0 1-2.9-2.6c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.6c-.2-.4-.4-.4-.5-.4h-.4a.8.8 0 0 0-.6.3 2.5 2.5 0 0 0-.8 1.9 4.4 4.4 0 0 0 .9 2.3 10 10 0 0 0 3.8 3.4c1.4.6 2 .7 2.7.6.4-.1 1.3-.5 1.5-1.1.2-.5.2-1 .1-1.1l-.3-.2Z"/></svg>
-    </a>
     <a href="#pricing" class="mc-cta mc-cta--small">
       <span>Save my seat · ₹<span data-mc="price">1,499</span></span>
       <i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i>
@@ -438,8 +471,8 @@
         <input type="checkbox" class="js-bump">
         <span class="mc-bump-box" aria-hidden="true"></span>
         <span class="mc-bump-text">
-          <span class="mc-bump-title">Yes, add the recording + resource pack <b>+₹<span data-mc="bumpPrice">499</span></b></span>
-          <span class="mc-bump-body">Rewatch the full session anytime, plus every prompt, the folder templates and the files used live.</span>
+          <span class="mc-bump-title">Yes, add the recording + The AI Editor’s Vault <b>+₹<span data-mc="bumpPrice">499</span></b></span>
+          <span class="mc-bump-body">Rewatch the full session anytime. Plus 125+ ready-to-use styles, skills and prompts.</span>
         </span>
       </label>
 
@@ -459,6 +492,6 @@
     </form>
   </dialog>
 
-  <script src="../js/masterclass.js?v=8"></script>
+  <script src="../js/masterclass.js?v=13"></script>
 </body>
 </html>
