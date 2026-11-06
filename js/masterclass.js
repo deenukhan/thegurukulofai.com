@@ -54,7 +54,11 @@ const CONFIG = {
     { name: 'Nishant Chahar',  handle: 'unscripted.nishant', src: 'nishant.mp4', loop: 'nishant-loop.mp4', poster: 'nishant-poster.webp' },
     { name: 'Vishnu Vijayan',  handle: 'v.i.s.h.ai',       src: 'vishnu.mp4',  loop: 'vishnu-loop.mp4', poster: 'vishnu-poster.webp' },
     { name: 'Farhan Rakhangi', handle: 'farhannrakhangi',  src: 'farhan.mp4',  loop: 'farhan-loop.mp4', poster: 'farhan-poster.webp' },
+    { name: 'Achintya Singh', handle: '21.coders', src: 'achintya.mp4', loop: 'achintya-loop.mp4', poster: 'achintya-poster.webp' },
+    { name: 'Ankit Jha', handle: 'fullstackmodiji', src: 'ankit.mp4', loop: 'ankit-loop.mp4', poster: 'ankit-poster.webp' },
     { name: 'Deenu Khan',      handle: 'neuraltech.ai',    src: 'deenu-2.mp4', loop: 'deenu-2-loop.mp4', poster: 'deenu-2-poster.webp' },
+    { name: 'Nandini Sharma', handle: 'thisis_alaska_', src: 'nandini.mp4', loop: 'nandini-loop.mp4', poster: 'nandini-poster.webp' },
+    { name: 'Rishav Jha', handle: 'rishavbhaiyaa', src: 'rishav.mp4', loop: 'rishav-loop.mp4', poster: 'rishav-poster.webp' },
   ],
 };
 
