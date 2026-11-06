@@ -102,10 +102,15 @@ function rp_create_order(array $config, array $order): ?array
     return is_array($decoded) && !empty($decoded['id']) ? $decoded : null;
 }
 
-/** Sends the buyer's confirmation and a sale note to Deenu. True if the buyer's mail was accepted. */
-function rp_send_emails(array $config, array $sale): bool
+/**
+ * Sends one plain-text email. It goes through the mailbox when the config has a
+ * password, because PHP mail() fails DMARC here and risks the spam folder.
+ * mail() stays as the backup, so a buyer still hears from us if SMTP is down.
+ */
+function rp_mail(array $config, string $to, string $subject, string $body): bool
 {
     $from = $config['mail_from'];
+    $subject = mb_encode_mimeheader($subject, 'UTF-8', 'B');
     $headers = [
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
@@ -113,6 +118,77 @@ function rp_send_emails(array $config, array $sale): bool
         'Reply-To: ' . $from,
     ];
 
+    if (!empty($config['smtp']['password'])
+        && rp_smtp_send($config['smtp'], $from, $to, $subject, $body, $headers)) {
+        return true;
+    }
+    return mail($to, $subject, $body, implode("\r\n", $headers), '-f' . $from);
+}
+
+/** Talks to the mail server directly. Short timeouts, because Razorpay gives a webhook 5 seconds. */
+function rp_smtp_send(array $smtp, string $from, string $to, string $subject, string $body, array $headers): bool
+{
+    $socket = @stream_socket_client($smtp['host'] . ':' . $smtp['port'], $errno, $error, 4);
+    if ($socket === false) {
+        error_log('smtp connect failed: ' . $error);
+        return false;
+    }
+    stream_set_timeout($socket, 4);
+
+    $domain = substr(strrchr($from, '@'), 1);
+    $message = array_merge(
+        [
+            'Date: ' . date('r'),
+            'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $domain . '>',
+            'To: ' . $to,
+            'Subject: ' . $subject,
+        ],
+        $headers,
+        ['Content-Transfer-Encoding: quoted-printable', '', quoted_printable_encode($body)]
+    );
+    $data = preg_replace('/^\./m', '..', implode("\r\n", $message));
+
+    $steps = [
+        ['greeting', null, 220],
+        ['ehlo', 'EHLO ' . $domain, 250],
+        ['auth', 'AUTH LOGIN', 334],
+        ['username', base64_encode($from), 334],
+        ['password', base64_encode($smtp['password']), 235],
+        ['mail from', 'MAIL FROM:<' . $from . '>', 250],
+        ['rcpt to', 'RCPT TO:<' . $to . '>', 250],
+        ['data', 'DATA', 354],
+        ['message', $data . "\r\n.", 250],
+    ];
+    foreach ($steps as [$name, $line, $expected]) {
+        if ($line !== null) {
+            fwrite($socket, $line . "\r\n");
+        }
+        $code = rp_smtp_reply($socket);
+        if ($code !== $expected) {
+            error_log('smtp failed at ' . $name . ': got ' . $code);
+            fclose($socket);
+            return false;
+        }
+    }
+    fwrite($socket, "QUIT\r\n");
+    fclose($socket);
+    return true;
+}
+
+/** Reads one server reply, which can span several lines, and returns its code. */
+function rp_smtp_reply($socket): int
+{
+    while (($line = fgets($socket, 1024)) !== false) {
+        if (($line[3] ?? ' ') !== '-') {
+            return (int) substr($line, 0, 3);
+        }
+    }
+    return 0;
+}
+
+/** Sends the buyer's confirmation and a sale note to Deenu. True if the buyer's mail was accepted. */
+function rp_send_emails(array $config, array $sale): bool
+{
     $event = $config['event'];
     $lines = [
         'Hi ' . $sale['name'] . ',',
@@ -141,7 +217,7 @@ function rp_send_emails(array $config, array $sale): bool
     $lines[] = 'The Gurukul of AI';
 
     $subject = 'You are in: ' . $event['name'];
-    $ok = mail($sale['email'], $subject, implode("\r\n", $lines), implode("\r\n", $headers), '-f' . $from);
+    $ok = rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines));
 
     $note = [
         'New masterclass seat',
@@ -153,7 +229,7 @@ function rp_send_emails(array $config, array $sale): bool
         'Payment ID: ' . $sale['payment_id'],
         'Buyer email sent: ' . ($ok ? 'Yes' : 'NO, please send it by hand'),
     ];
-    mail($config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note), implode("\r\n", $headers), '-f' . $from);
+    rp_mail($config, $config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note));
 
     return $ok;
 }
