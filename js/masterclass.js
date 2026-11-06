@@ -471,13 +471,24 @@ const CONFIG = {
       const out = { d: $('[data-cd="d"]', cd), h: $('[data-cd="h"]', cd), m: $('[data-cd="m"]', cd), s: $('[data-cd="s"]', cd) };
       const pad = (n) => String(n).padStart(2, '0');
       let timer;
+      // The old number slides down and out while the new one drops in from the top.
+      const roll = (el, value) => {
+        const old = el.dataset.value;
+        if (old === value) return;
+        el.dataset.value = value;
+        if (old === undefined || reduceMotion) {
+          el.textContent = value;
+          return;
+        }
+        el.innerHTML = `<i class="cd-out">${old}</i><i class="cd-in">${value}</i>`;
+      };
       const tick = () => {
         const ms = Math.max(0, start - new Date());
         const t = Math.floor(ms / 1000);
-        out.d.textContent = pad(Math.floor(t / 86400));
-        out.h.textContent = pad(Math.floor((t % 86400) / 3600));
-        out.m.textContent = pad(Math.floor((t % 3600) / 60));
-        out.s.textContent = pad(t % 60);
+        roll(out.d, pad(Math.floor(t / 86400)));
+        roll(out.h, pad(Math.floor((t % 86400) / 3600)));
+        roll(out.m, pad(Math.floor((t % 3600) / 60)));
+        roll(out.s, pad(t % 60));
         if (ms === 0) { cd.hidden = true; clearInterval(timer); }
       };
       tick();

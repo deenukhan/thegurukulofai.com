@@ -215,6 +215,8 @@
 }
 .mc-host b { color: var(--ink); font-weight: 700; }
 
+.mc-claude { white-space: nowrap; }
+.mc-claude img { display: inline-block; height: 0.92em; width: auto; vertical-align: -0.1em; margin-left: 0.04em; }
 .mc-hero h1 {
   font-size: clamp(40px, 6.4vw, 80px);
   font-weight: 700;
@@ -311,6 +313,13 @@
   font-variant-numeric: tabular-nums;
 }
 .mc-count-units span:last-child b { color: var(--forest-mid); }
+/* Each new number slides down from the top */
+.mc-count-units b { display: block; position: relative; overflow: hidden; height: 1.2em; }
+.mc-count-units b i { display: block; font-style: normal; }
+.mc-count-units b .cd-in { animation: cdIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.mc-count-units b .cd-out { position: absolute; inset: 0; text-align: center; animation: cdOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+@keyframes cdIn { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes cdOut { to { transform: translateY(100%); } }
 
 /* ---------- Ticker: the home page's strip, in pale aqua ---------- */
 .mc-ticker {
