@@ -217,7 +217,7 @@ function rp_send_emails(array $config, array $sale): bool
     $lines[] = 'Amount paid: Rs ' . number_format($sale['amount'] / 100, 2);
     $lines[] = 'Payment ID: ' . $sale['payment_id'];
     $lines[] = '';
-    $lines[] = 'Questions? Reply to this email, or message us on WhatsApp: +91 88001 28247';
+    $lines[] = 'Questions? Reply to this email, or message us on WhatsApp: +91 83838 40943';
     $lines[] = '';
     $lines[] = 'Deenu Khan';
     $lines[] = 'The Gurukul of AI';
