@@ -1136,10 +1136,13 @@
 /* Screenshots */
 /* Comment wall: real Instagram comments, sliding like the reels. Wide cards keep the text readable. */
 .mc-shots { padding: 6px 0 18px; }
+.mc-shots .mc-set { align-items: stretch; }
 .mc-shot-col { display: flex; flex-direction: column; gap: 12px; width: 400px; }
-.mc-shot-col:nth-child(even) { margin-top: 24px; }
 .mc-shot {
-  display: block;
+  /* Cards share the column height, so all four columns end level */
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
   width: 100%;
   padding: 10px 6px;
   border: 0;
@@ -1436,7 +1439,6 @@
 
 @media (max-width: 640px) {
   .mc-shot-col { width: 320px; gap: 10px; }
-  .mc-shot-col:nth-child(even) { margin-top: 16px; }
 }
 
 /* Narrow cards: keep the centred label clear of the arrow */
