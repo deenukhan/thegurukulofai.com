@@ -29,17 +29,19 @@ const CONFIG = {
   // List each with its pixel size, which stops the page jumping while they load.
   screensDir: 'https://tgai-cdn-2.b-cdn.net/masterclass/',
   screens: [
-    { src: 'proof-sahil.webp', w: 640, h: 154, alt: 'sahilverma.ai: Deenu has helped me a lot with integrating AI into my video editing workflow. I have become 10x faster because of him.' },
-    { src: 'proof-abhay.webp', w: 640, h: 103, alt: 'abhaycreate: This is one of the most important reels I have seen, because it literally changed my video editing. Thanks sir.' },
-    { src: 'proof-farhan.webp', w: 640, h: 106, alt: 'farhannrakhangi: Deenu, honestly your workflow has helped me a lot, especially making the edits look much more premium.' },
-    { src: 'proof-rahul.webp', w: 640, h: 151, alt: 'socialcanvasbyrahul: This will save me countless hours while focusing more on content planning rather than editing videos.' },
-    { src: 'proof-fullstack.webp', w: 640, h: 81, alt: 'fullstackmodiji: This helped us a lot in our workflow. Gem video on Instagram. Thanks a lot.' },
-    { src: 'proof-rajhere.webp', w: 640, h: 149, alt: 'rajhere.in: This workflow is genuinely useful. Things that would normally require good editing skills can now be done by writing a prompt.' },
-    { src: 'proof-talkpro.webp', w: 640, h: 81, alt: 'talkprowithaman: This is very helpful bhai, thanks for sharing. Kaafi time save ho gaya.' },
-    { src: 'proof-tirth.webp', w: 640, h: 83, alt: 'tirthpatel00: Bye bye editors.' },
-    { src: 'proof-nandini.webp', w: 640, h: 83, alt: 'techwithnandini.ai: Amazing.' },
-    { src: 'proof-rishav.webp', w: 640, h: 81, alt: 'rishavbhaiyaa: crazyyyyyyyy' },
-    { src: 'proof-atul.webp', w: 640, h: 78, alt: 'atul.aicoach: AI ;)' },
+    { src: 'proof-sahil.webp', w: 640, h: 154, bg: '#171C1C', alt: 'sahilverma.ai: Deenu has helped me a lot with integrating AI into my video editing workflow. I have become 10x faster because of him.' },
+    { src: 'proof-abhay.webp', w: 640, h: 103, bg: '#171C1C', alt: 'abhaycreate: This is one of the most important reels I have seen, because it literally changed my video editing. Thanks sir.' },
+    { src: 'proof-dm.webp', w: 640, h: 145, bg: '#25292E', alt: 'A message from a creator: Hii bro, your video editing workflow is really helpful and even I am using it to automate my video editing. People must try this.' },
+    { src: 'proof-farhan.webp', w: 640, h: 106, bg: '#171C1C', alt: 'farhannrakhangi: Deenu, honestly your workflow has helped me a lot, especially making the edits look much more premium.' },
+    { src: 'proof-rahul.webp', w: 640, h: 151, bg: '#171C1C', alt: 'socialcanvasbyrahul: This will save me countless hours while focusing more on content planning rather than editing videos.' },
+    { src: 'proof-fullstack.webp', w: 640, h: 81, bg: '#171C1C', alt: 'fullstackmodiji: This helped us a lot in our workflow. Gem video on Instagram. Thanks a lot.' },
+    { src: 'proof-rajhere.webp', w: 640, h: 149, bg: '#171C1C', alt: 'rajhere.in: This workflow is genuinely useful. Things that would normally require good editing skills can now be done by writing a prompt.' },
+    { src: 'proof-abhishek.webp', w: 640, h: 118, bg: '#212328', alt: 'abhishek1594: Can we input multiple raw videos and ask Claude to combine them into one edited video? neuraltech.ai: Yes we can do that.' },
+    { src: 'proof-talkpro.webp', w: 640, h: 81, bg: '#171C1C', alt: 'talkprowithaman: This is very helpful bhai, thanks for sharing. Kaafi time save ho gaya.' },
+    { src: 'proof-tirth.webp', w: 640, h: 83, bg: '#191B1F', alt: 'tirthpatel00: Bye bye editors.' },
+    { src: 'proof-nandini.webp', w: 640, h: 83, bg: '#171C1C', alt: 'techwithnandini.ai: Amazing.' },
+    { src: 'proof-rishav.webp', w: 640, h: 81, bg: '#191B1F', alt: 'rishavbhaiyaa: crazyyyyyyyy' },
+    { src: 'proof-atul.webp', w: 640, h: 78, bg: '#171C1C', alt: 'atul.aicoach: AI ;)' },
   ],
 
   // "What they're making" strip. The list repeats until the strip is full.
@@ -330,11 +332,18 @@ const CONFIG = {
     const setA = document.createElement('div');
     setA.className = 'mc-set';
     makeItems().forEach((n) => setA.append(n));
+    track.append(setA);
+    host.append(track);
+    // Very wide screens: repeat the set so the loop never shows a gap.
+    const originals = [...setA.children];
+    const fill = Math.max(window.innerWidth, window.screen.width) + 100;
+    for (let i = 0; i < 3 && setA.scrollWidth < fill; i++) {
+      originals.forEach((n) => setA.append(n.cloneNode(true)));
+    }
     const setB = setA.cloneNode(true);
     setB.setAttribute('aria-hidden', 'true');
     $$('button', setB).forEach((b) => { b.tabIndex = -1; });
-    track.append(setA, setB);
-    host.append(track);
+    track.append(setB);
     // Same speed on every screen size
     const sync = () => track.style.setProperty('--dur', `${Math.max(20, setA.scrollWidth / pxPerSec)}s`);
     sync();
@@ -353,26 +362,44 @@ const CONFIG = {
 
   const shotsHost = $('[data-screens]');
   if (shotsHost && CONFIG.screens && CONFIG.screens.length) {
-    CONFIG.screens.forEach((s) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'mc-shot';
-      b.setAttribute('aria-label', `Open comment from ${s.alt}`);
-      const img = document.createElement('img');
+    const COL_H = 340; // stack comments into columns about this tall, in image pixels
+    buildMarquee(shotsHost, () => {
+      const cols = [];
+      let col = null;
+      let used = 0;
+      CONFIG.screens.forEach((s, i) => {
+        if (!col || used + s.h > COL_H) {
+          col = document.createElement('div');
+          col.className = 'mc-shot-col';
+          cols.push(col);
+          used = 0;
+        }
+        used += s.h;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mc-shot';
+        b.dataset.i = i;
+        b.style.background = s.bg;
+        b.setAttribute('aria-label', `Open: ${s.alt}`);
+        const img = document.createElement('img');
+        img.src = CONFIG.screensDir + s.src;
+        img.alt = s.alt;
+        img.width = s.w;
+        img.height = s.h;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        b.append(img);
+        col.append(b);
+      });
+      return cols;
+    }, 28);
+    shotsHost.addEventListener('pick', (e) => {
+      const s = CONFIG.screens[e.detail];
+      const img = new Image();
       img.src = CONFIG.screensDir + s.src;
       img.alt = s.alt;
-      img.width = s.w;
-      img.height = s.h;
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      b.append(img);
-      b.addEventListener('click', () => {
-        const big = new Image();
-        big.src = img.src;
-        big.alt = s.alt;
-        openLightbox(big);
-      });
-      shotsHost.append(b);
+      img.style.background = s.bg;
+      openLightbox(img);
     });
   }
 

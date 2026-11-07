@@ -1134,23 +1134,18 @@
 @keyframes mc-slide { to { transform: translateX(-50%); } }
 
 /* Screenshots */
-/* Comment wall: real Instagram comments, stacked like a masonry board */
-.mc-shots {
-  column-count: 3;
-  column-gap: 14px;
-  max-width: 1100px;
-  margin: clamp(32px, 4vw, 48px) auto 0;
-}
+/* Comment wall: real Instagram comments, sliding like the reels. Wide cards keep the text readable. */
+.mc-shots { padding: 6px 0 18px; }
+.mc-shot-col { display: flex; flex-direction: column; gap: 12px; width: 400px; }
+.mc-shot-col:nth-child(even) { margin-top: 24px; }
 .mc-shot {
   display: block;
   width: 100%;
-  margin: 0 0 14px;
   padding: 10px 6px;
   border: 0;
   background: #191B1F;
   border-radius: 14px;
   overflow: hidden;
-  break-inside: avoid;
   box-shadow: 0 10px 26px rgba(2, 60, 68, 0.14);
   cursor: zoom-in;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -1276,7 +1271,7 @@
   .mc-marquee { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-mask-image: none; mask-image: none; padding: 0 var(--mc-gutter) 8px; }
   .mc-track { animation: none; }
   .mc-set[aria-hidden] { display: none; }
-  .mc-reel { scroll-snap-align: start; }
+  .mc-shot-col, .mc-reel { scroll-snap-align: start; }
 }
 
 /* ==========================================================================
@@ -1439,12 +1434,9 @@
 .mc-ty-foot { margin-top: 32px; font-size: 15px; line-height: 1.6; }
 .mc-ty-foot a { text-decoration: underline; }
 
-@media (max-width: 1000px) {
-  .mc-shots { column-count: 2; }
-}
 @media (max-width: 640px) {
-  .mc-shots { column-count: 1; }
-  .mc-shot { margin-bottom: 10px; }
+  .mc-shot-col { width: 320px; gap: 10px; }
+  .mc-shot-col:nth-child(even) { margin-top: 16px; }
 }
 
 /* Narrow cards: keep the centred label clear of the arrow */
