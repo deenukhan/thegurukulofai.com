@@ -1134,16 +1134,22 @@
 @keyframes mc-slide { to { transform: translateX(-50%); } }
 
 /* Screenshots */
-.mc-shot-col { display: flex; flex-direction: column; gap: 12px; width: 280px; }
-.mc-shot-col:nth-child(even) { margin-top: 28px; }
+/* Comment wall: real Instagram comments, sliding like the reels. Wide cards keep the text readable. */
+.mc-shots { padding: 6px 0 18px; }
+.mc-shots .mc-set { align-items: stretch; }
+.mc-shot-col { display: flex; flex-direction: column; gap: 12px; width: 400px; }
 .mc-shot {
-  display: block;
-  padding: 0;
+  /* Cards share the column height, so all four columns end level */
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 6px;
   border: 0;
-  background: none;
+  background: #191B1F;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(2, 60, 68, 0.08);
+  box-shadow: 0 10px 26px rgba(2, 60, 68, 0.14);
   cursor: zoom-in;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -1258,8 +1264,6 @@
 .mc-lightbox-x svg { width: 20px; height: 20px; stroke: var(--ink); stroke-width: 2; fill: none; stroke-linecap: round; }
 
 @media (max-width: 640px) {
-  .mc-shot-col { width: 220px; }
-  .mc-shot-col:nth-child(even) { margin-top: 20px; }
   .mc-reel { width: 150px; }
   .mc-reel-name { font-size: 15px; }
   .mc-social-foot { justify-content: center; text-align: center; }
@@ -1432,6 +1436,10 @@
 .mc-ty-link { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--forest-mid); text-decoration: underline; }
 .mc-ty-foot { margin-top: 32px; font-size: 15px; line-height: 1.6; }
 .mc-ty-foot a { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .mc-shot-col { width: 320px; gap: 10px; }
+}
 
 /* Narrow cards: keep the centred label clear of the arrow */
 @media (max-width: 640px) {

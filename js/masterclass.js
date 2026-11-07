@@ -25,23 +25,23 @@ const CONFIG = {
     final: '', finalPoster: '',   // the same clip, edited by Claude
   },
 
-  // "What people are saying" wall. Drop real screenshots in assets/images/masterclass/proof/
-  // and list them here with their pixel size (stops the page jumping while they load).
-  // TODO: placeholders until Deenu sends the originals.
-  screensDir: '../assets/images/masterclass/proof/',
+  // "What people are saying" wall: real comments, hosted on Bunny under masterclass/.
+  // List each with its pixel size, which stops the page jumping while they load.
+  screensDir: 'https://tgai-cdn-2.b-cdn.net/masterclass/',
   screens: [
-    { src: 'placeholder-01.svg', w: 800, h: 390, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-02.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-03.svg', w: 800, h: 356, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-04.svg', w: 800, h: 326, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-05.svg', w: 800, h: 250, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-06.svg', w: 800, h: 622, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-07.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-08.svg', w: 800, h: 568, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-09.svg', w: 800, h: 424, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-10.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-11.svg', w: 800, h: 690, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-12.svg', w: 800, h: 538, alt: 'Placeholder screenshot' },
+    { src: 'proof-sahil.webp', w: 640, h: 154, bg: '#171C1C', col: 0, alt: 'sahilverma.ai: Deenu has helped me a lot with integrating AI into my video editing workflow. I have become 10x faster because of him.' },
+    { src: 'proof-abhay.webp', w: 640, h: 103, bg: '#171C1C', col: 0, alt: 'abhaycreate: This is one of the most important reels I have seen, because it literally changed my video editing. Thanks sir.' },
+    { src: 'proof-talkpro.webp', w: 640, h: 81, bg: '#171C1C', col: 0, alt: 'talkprowithaman: This is very helpful bhai, thanks for sharing. Kaafi time save ho gaya.' },
+    { src: 'proof-dm.webp', w: 640, h: 145, bg: '#25292E', col: 1, alt: 'A message from a creator: Hii bro, your video editing workflow is really helpful and even I am using it to automate my video editing. People must try this.' },
+    { src: 'proof-farhan.webp', w: 640, h: 106, bg: '#171C1C', col: 1, alt: 'farhannrakhangi: Deenu, honestly your workflow has helped me a lot, especially making the edits look much more premium.' },
+    { src: 'proof-fullstack.webp', w: 640, h: 81, bg: '#171C1C', col: 1, alt: 'fullstackmodiji: This helped us a lot in our workflow. Gem video on Instagram. Thanks a lot.' },
+    { src: 'proof-rahul.webp', w: 640, h: 151, bg: '#171C1C', col: 2, alt: 'socialcanvasbyrahul: This will save me countless hours while focusing more on content planning rather than editing videos.' },
+    { src: 'proof-tirth.webp', w: 640, h: 83, bg: '#191B1F', col: 2, alt: 'tirthpatel00: Bye bye editors.' },
+    { src: 'proof-nandini.webp', w: 640, h: 83, bg: '#171C1C', col: 2, alt: 'techwithnandini.ai: Amazing.' },
+    { src: 'proof-atul.webp', w: 640, h: 78, bg: '#171C1C', col: 2, alt: 'atul.aicoach: AI ;)' },
+    { src: 'proof-rajhere.webp', w: 640, h: 149, bg: '#171C1C', col: 3, alt: 'rajhere.in: This workflow is genuinely useful. Things that would normally require good editing skills can now be done by writing a prompt.' },
+    { src: 'proof-abhishek.webp', w: 640, h: 118, bg: '#212328', col: 3, alt: 'abhishek1594: Can we input multiple raw videos and ask Claude to combine them into one edited video? neuraltech.ai: Yes we can do that.' },
+    { src: 'proof-rishav.webp', w: 640, h: 81, bg: '#191B1F', col: 3, alt: 'rishavbhaiyaa: crazyyyyyyyy' },
   ],
 
   // "What they're making" strip. The list repeats until the strip is full.
@@ -332,11 +332,18 @@ const CONFIG = {
     const setA = document.createElement('div');
     setA.className = 'mc-set';
     makeItems().forEach((n) => setA.append(n));
+    track.append(setA);
+    host.append(track);
+    // Very wide screens: repeat the set so the loop never shows a gap.
+    const originals = [...setA.children];
+    const fill = Math.max(window.innerWidth, window.screen.width) + 100;
+    for (let i = 0; i < 3 && setA.scrollWidth < fill; i++) {
+      originals.forEach((n) => setA.append(n.cloneNode(true)));
+    }
     const setB = setA.cloneNode(true);
     setB.setAttribute('aria-hidden', 'true');
     $$('button', setB).forEach((b) => { b.tabIndex = -1; });
-    track.append(setA, setB);
-    host.append(track);
+    track.append(setB);
     // Same speed on every screen size
     const sync = () => track.style.setProperty('--dur', `${Math.max(20, setA.scrollWidth / pxPerSec)}s`);
     sync();
@@ -355,24 +362,18 @@ const CONFIG = {
 
   const shotsHost = $('[data-screens]');
   if (shotsHost && CONFIG.screens && CONFIG.screens.length) {
-    const COL_H = 560; // stack screenshots into columns about this tall (at 280px wide)
     buildMarquee(shotsHost, () => {
       const cols = [];
-      let col = null;
-      let used = 0;
       CONFIG.screens.forEach((s, i) => {
-        const h = 280 * (s.h / s.w);
-        if (!col || used + h > COL_H) {
-          col = document.createElement('div');
-          col.className = 'mc-shot-col';
-          cols.push(col);
-          used = 0;
+        if (!cols[s.col]) {
+          cols[s.col] = document.createElement('div');
+          cols[s.col].className = 'mc-shot-col';
         }
-        used += h + 12;
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'mc-shot';
         b.dataset.i = i;
+        b.style.background = s.bg;
         b.setAttribute('aria-label', `Open: ${s.alt}`);
         const img = document.createElement('img');
         img.src = CONFIG.screensDir + s.src;
@@ -382,7 +383,7 @@ const CONFIG = {
         img.loading = 'lazy';
         img.decoding = 'async';
         b.append(img);
-        col.append(b);
+        cols[s.col].append(b);
       });
       return cols;
     }, 28);
@@ -391,6 +392,7 @@ const CONFIG = {
       const img = new Image();
       img.src = CONFIG.screensDir + s.src;
       img.alt = s.alt;
+      img.style.background = s.bg;
       openLightbox(img);
     });
   }
