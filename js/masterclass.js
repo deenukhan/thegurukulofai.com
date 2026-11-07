@@ -25,23 +25,21 @@ const CONFIG = {
     final: '', finalPoster: '',   // the same clip, edited by Claude
   },
 
-  // "What people are saying" wall. Drop real screenshots in assets/images/masterclass/proof/
-  // and list them here with their pixel size (stops the page jumping while they load).
-  // TODO: placeholders until Deenu sends the originals.
-  screensDir: '../assets/images/masterclass/proof/',
+  // "What people are saying" wall: real comments, hosted on Bunny under masterclass/.
+  // List each with its pixel size, which stops the page jumping while they load.
+  screensDir: 'https://tgai-cdn-2.b-cdn.net/masterclass/',
   screens: [
-    { src: 'placeholder-01.svg', w: 800, h: 390, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-02.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-03.svg', w: 800, h: 356, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-04.svg', w: 800, h: 326, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-05.svg', w: 800, h: 250, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-06.svg', w: 800, h: 622, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-07.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-08.svg', w: 800, h: 568, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-09.svg', w: 800, h: 424, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-10.svg', w: 800, h: 190, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-11.svg', w: 800, h: 690, alt: 'Placeholder screenshot' },
-    { src: 'placeholder-12.svg', w: 800, h: 538, alt: 'Placeholder screenshot' },
+    { src: 'proof-sahil.webp', w: 640, h: 154, alt: 'sahilverma.ai: Deenu has helped me a lot with integrating AI into my video editing workflow. I have become 10x faster because of him.' },
+    { src: 'proof-abhay.webp', w: 640, h: 103, alt: 'abhaycreate: This is one of the most important reels I have seen, because it literally changed my video editing. Thanks sir.' },
+    { src: 'proof-farhan.webp', w: 640, h: 106, alt: 'farhannrakhangi: Deenu, honestly your workflow has helped me a lot, especially making the edits look much more premium.' },
+    { src: 'proof-rahul.webp', w: 640, h: 151, alt: 'socialcanvasbyrahul: This will save me countless hours while focusing more on content planning rather than editing videos.' },
+    { src: 'proof-fullstack.webp', w: 640, h: 81, alt: 'fullstackmodiji: This helped us a lot in our workflow. Gem video on Instagram. Thanks a lot.' },
+    { src: 'proof-rajhere.webp', w: 640, h: 149, alt: 'rajhere.in: This workflow is genuinely useful. Things that would normally require good editing skills can now be done by writing a prompt.' },
+    { src: 'proof-talkpro.webp', w: 640, h: 81, alt: 'talkprowithaman: This is very helpful bhai, thanks for sharing. Kaafi time save ho gaya.' },
+    { src: 'proof-tirth.webp', w: 640, h: 83, alt: 'tirthpatel00: Bye bye editors.' },
+    { src: 'proof-nandini.webp', w: 640, h: 83, alt: 'techwithnandini.ai: Amazing.' },
+    { src: 'proof-rishav.webp', w: 640, h: 81, alt: 'rishavbhaiyaa: crazyyyyyyyy' },
+    { src: 'proof-atul.webp', w: 640, h: 78, alt: 'atul.aicoach: AI ;)' },
   ],
 
   // "What they're making" strip. The list repeats until the strip is full.
@@ -355,43 +353,26 @@ const CONFIG = {
 
   const shotsHost = $('[data-screens]');
   if (shotsHost && CONFIG.screens && CONFIG.screens.length) {
-    const COL_H = 560; // stack screenshots into columns about this tall (at 280px wide)
-    buildMarquee(shotsHost, () => {
-      const cols = [];
-      let col = null;
-      let used = 0;
-      CONFIG.screens.forEach((s, i) => {
-        const h = 280 * (s.h / s.w);
-        if (!col || used + h > COL_H) {
-          col = document.createElement('div');
-          col.className = 'mc-shot-col';
-          cols.push(col);
-          used = 0;
-        }
-        used += h + 12;
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'mc-shot';
-        b.dataset.i = i;
-        b.setAttribute('aria-label', `Open: ${s.alt}`);
-        const img = document.createElement('img');
-        img.src = CONFIG.screensDir + s.src;
-        img.alt = s.alt;
-        img.width = s.w;
-        img.height = s.h;
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        b.append(img);
-        col.append(b);
-      });
-      return cols;
-    }, 28);
-    shotsHost.addEventListener('pick', (e) => {
-      const s = CONFIG.screens[e.detail];
-      const img = new Image();
+    CONFIG.screens.forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mc-shot';
+      b.setAttribute('aria-label', `Open comment from ${s.alt}`);
+      const img = document.createElement('img');
       img.src = CONFIG.screensDir + s.src;
       img.alt = s.alt;
-      openLightbox(img);
+      img.width = s.w;
+      img.height = s.h;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      b.append(img);
+      b.addEventListener('click', () => {
+        const big = new Image();
+        big.src = img.src;
+        big.alt = s.alt;
+        openLightbox(big);
+      });
+      shotsHost.append(b);
     });
   }
 

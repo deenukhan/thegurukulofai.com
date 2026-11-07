@@ -1134,16 +1134,24 @@
 @keyframes mc-slide { to { transform: translateX(-50%); } }
 
 /* Screenshots */
-.mc-shot-col { display: flex; flex-direction: column; gap: 12px; width: 280px; }
-.mc-shot-col:nth-child(even) { margin-top: 28px; }
+/* Comment wall: real Instagram comments, stacked like a masonry board */
+.mc-shots {
+  column-count: 3;
+  column-gap: 14px;
+  max-width: 1100px;
+  margin: clamp(32px, 4vw, 48px) auto 0;
+}
 .mc-shot {
   display: block;
-  padding: 0;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 10px 6px;
   border: 0;
-  background: none;
+  background: #191B1F;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(2, 60, 68, 0.08);
+  break-inside: avoid;
+  box-shadow: 0 10px 26px rgba(2, 60, 68, 0.14);
   cursor: zoom-in;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -1258,8 +1266,6 @@
 .mc-lightbox-x svg { width: 20px; height: 20px; stroke: var(--ink); stroke-width: 2; fill: none; stroke-linecap: round; }
 
 @media (max-width: 640px) {
-  .mc-shot-col { width: 220px; }
-  .mc-shot-col:nth-child(even) { margin-top: 20px; }
   .mc-reel { width: 150px; }
   .mc-reel-name { font-size: 15px; }
   .mc-social-foot { justify-content: center; text-align: center; }
@@ -1270,7 +1276,7 @@
   .mc-marquee { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-mask-image: none; mask-image: none; padding: 0 var(--mc-gutter) 8px; }
   .mc-track { animation: none; }
   .mc-set[aria-hidden] { display: none; }
-  .mc-shot-col, .mc-reel { scroll-snap-align: start; }
+  .mc-reel { scroll-snap-align: start; }
 }
 
 /* ==========================================================================
@@ -1432,6 +1438,14 @@
 .mc-ty-link { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--forest-mid); text-decoration: underline; }
 .mc-ty-foot { margin-top: 32px; font-size: 15px; line-height: 1.6; }
 .mc-ty-foot a { text-decoration: underline; }
+
+@media (max-width: 1000px) {
+  .mc-shots { column-count: 2; }
+}
+@media (max-width: 640px) {
+  .mc-shots { column-count: 1; }
+  .mc-shot { margin-bottom: 10px; }
+}
 
 /* Narrow cards: keep the centred label clear of the arrow */
 @media (max-width: 640px) {
