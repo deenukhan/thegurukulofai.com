@@ -686,6 +686,32 @@ const CONFIG = {
     io.observe(tl);
   });
 
+  /* ---------- Stats count up when they scroll into view ---------- */
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    $$('[data-count]').forEach((el) => {
+      const target = Number(el.dataset.count);
+      const finalText = el.textContent;
+      el.textContent = '0+';
+      const io = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const startedAt = performance.now();
+        const step = (now) => {
+          const p = Math.min(1, (now - startedAt) / 1800);
+          const eased = 1 - (1 - p) ** 3;
+          if (p < 1) {
+            el.textContent = `${Math.round(target * eased).toLocaleString('en-IN')}+`;
+            requestAnimationFrame(step);
+          } else {
+            el.textContent = finalText;
+          }
+        };
+        requestAnimationFrame(step);
+      }, { threshold: 0.5 });
+      io.observe(el);
+    });
+  }
+
   /* ---------- Scroll reveal (fires before the element reaches the screen) ---------- */
   const revealEls = $$('.mc-block > *, .mc-stats li, .mc-final > *, .mc-zig li');
   if ('IntersectionObserver' in window && !reduceMotion) {
