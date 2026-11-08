@@ -268,7 +268,8 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 - `create-order.php` sets the price and saves the buyer's details in the order notes, so unpaid
   checkouts are visible in the Razorpay dashboard for manual follow-up.
 - Coupon: set in the server config (`coupon`), never in this repo. It lowers the seat only, never expires, has
-  an optional `max_uses`, and the field shows only on `/masterclass/?coupon`. Remove the block from the config to switch it off.
+  an optional `max_uses`, and the field shows only on `/masterclass/?coupon`. The Apply button calls
+  `check-coupon.php`, which uses nothing up; a use is counted when the payment window opens. Remove the block from the config to switch it off.
 - Session dates roll by themselves: Fri 13 Nov 2026, then every Wednesday 3 PM IST from 18 Nov. Sales for a session
   close 15 minutes before it. The rule is in `rp_next_session` (`lib.php`, which decides) and `nextSession` (`js/masterclass.js`, display); change both
   together. Dates in `masterclass/index.html` are placeholders the script replaces, so never type a real date there.

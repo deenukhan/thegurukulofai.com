@@ -1469,6 +1469,26 @@
 .mc-pay-phone b { padding: 0 2px 0 14px; font-weight: 600; color: var(--ink); }
 .mc-pay-phone input { flex: 1; min-width: 0; min-height: 46px; padding: 10px 14px 10px 6px; border: 0; background: transparent; outline: none; }
 .mc-pay-phone input::placeholder { color: var(--slate); opacity: 0.6; }
+.mc-pay-coupon { display: flex; gap: 8px; }
+.mc-pay-coupon input { flex: 1; min-width: 0; padding: 10px 14px; }
+.mc-pay-coupon input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(53, 189, 200, 0.2); }
+.mc-pay-coupon button {
+  flex: none;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--forest);
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--forest);
+  cursor: pointer;
+}
+.mc-pay-coupon button:hover { background: var(--mc-aqua); }
+.mc-pay-coupon button:disabled { opacity: 0.6; cursor: wait; }
+.js-coupon.is-on small { font-weight: 600; color: var(--forest); }
+.js-coupon.is-bad small { color: #8A4B10; }
 
 .mc-pay .mc-bump { margin: 20px 0 0; }
 .mc-pay .mc-bump-body { color: var(--slate); }
