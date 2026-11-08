@@ -110,7 +110,7 @@ function rp_coupon_claim(array $config, string $code): array
     $coupon = is_array($config['coupon'] ?? null) ? $config['coupon'] : [];
     $real   = strtoupper(trim((string) ($coupon['code'] ?? '')));
     $max    = isset($coupon['max_uses']) ? (int) $coupon['max_uses'] : null;
-    $usable = strlen($real) >= 12 && !str_starts_with($real, 'PASTE') && ($max === null || $max > 0);
+    $usable = $real !== '' && !str_starts_with($real, 'PASTE') && ($max === null || $max > 0);
     if (!$usable || !hash_equals($real, strtoupper(trim($code)))) {
         rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
     }
