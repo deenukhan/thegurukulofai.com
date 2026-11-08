@@ -64,6 +64,7 @@ $sent = rp_send_emails($config, [
     'phone'      => rp_clean($notes['phone'] ?? ($payment['contact'] ?? ''), 20),
     'addon'      => ($notes['addon'] ?? '') === 'yes',
     'coupon'     => ($notes['coupon'] ?? '') === 'yes',
+    'session'    => rp_clean($notes['session'] ?? '', 120),
     'amount'     => (int) ($payment['amount'] ?? ($order['amount_paid'] ?? 0)),
     'payment_id' => $paymentId,
 ]);

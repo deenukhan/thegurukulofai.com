@@ -12,7 +12,8 @@ $config = rp_config();
 rp_cors($config);
 $input = rp_body();
 
-if (time() >= strtotime($config['sales_close_at'])) {
+// Optional off switch. Sessions themselves roll forward every week.
+if (!empty($config['sales_stop_at']) && time() >= strtotime($config['sales_stop_at'])) {
     rp_json(410, ['ok' => false, 'error' => 'sales_closed']);
 }
 
@@ -31,6 +32,14 @@ if (mb_strlen($name) < 2 || !filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_
 
 rp_rate_limit($config, 30, 600);
 
+// The page sends the session it is showing. If sales for that one have just
+// closed, tell the buyer before any order exists or a coupon is used.
+$session = rp_next_session();
+$shown = (int) ($input['session_at'] ?? 0);
+if ($shown !== 0 && $shown !== $session->getTimestamp()) {
+    rp_json(409, ['ok' => false, 'error' => 'session_moved', 'session_at' => $session->getTimestamp()]);
+}
+
 // A coupon lowers the seat only. The add-on always costs its full price.
 $seat  = (int) $config['price_paise'];
 $code  = rp_clean($input['coupon'] ?? '', 64);
@@ -48,6 +57,7 @@ $notes = [
     'email'   => $email,
     'phone'   => $phone,
     'addon'   => $addon ? 'yes' : 'no',
+    'session' => rp_session_when($session),
 ];
 if ($claim !== null) {
     $notes['coupon'] = 'yes'; // never the code itself
@@ -78,4 +88,6 @@ rp_json(200, [
     'order_id' => $order['id'],
     'amount'   => $amount,
     'phone'    => $phone,
+    'session_at'   => $session->getTimestamp(),
+    'session_when' => rp_session_when($session),
 ]);

@@ -150,6 +150,33 @@ function rp_coupon_commit(array $claim): void
     fclose($claim['file']);
 }
 
+/**
+ * The session a buyer who pays now will attend: one first session, then every
+ * Wednesday at 3 PM IST. Sales for a session close 15 minutes before it starts.
+ * The browser shows the same rule (js/masterclass.js), but this answer decides.
+ */
+function rp_next_session(?int $now = null): DateTimeImmutable
+{
+    $now ??= time();
+    $cutoff = 15 * 60;
+    $tz = new DateTimeZone('Asia/Kolkata');
+
+    $first = new DateTimeImmutable('2026-11-13 15:00:00', $tz);
+    if ($now < $first->getTimestamp() - $cutoff) {
+        return $first;
+    }
+    $next = new DateTimeImmutable('2026-11-18 15:00:00', $tz);
+    while ($now >= $next->getTimestamp() - $cutoff) {
+        $next = $next->modify('+7 days');
+    }
+    return $next;
+}
+
+function rp_session_when(DateTimeImmutable $session): string
+{
+    return $session->format('l, j F Y') . ', 3 PM to 6 PM IST';
+}
+
 function rp_body(): array
 {
     $raw = file_get_contents('php://input', false, null, 0, 8192);
@@ -296,7 +323,7 @@ function rp_send_emails(array $config, array $sale): bool
         '',
         'You are in. Your seat for the ' . $event['name'] . ' is confirmed.',
         '',
-        'When: ' . $event['when'],
+        'When: ' . ($sale['session'] !== '' ? $sale['session'] : ($event['when'] ?? 'We will confirm the date on WhatsApp')),
         'Where: Live on Zoom',
         '',
         'What to do now:',
@@ -327,6 +354,7 @@ function rp_send_emails(array $config, array $sale): bool
         'Phone: ' . $sale['phone'],
         'Add-on: ' . ($sale['addon'] ? 'Yes' : 'No'),
         'Coupon: ' . ($sale['coupon'] ? 'Yes' : 'No'),
+        'Session: ' . ($sale['session'] !== '' ? $sale['session'] : 'Not recorded'),
         'Amount: Rs ' . number_format($sale['amount'] / 100, 2),
         'Payment ID: ' . $sale['payment_id'],
         'Buyer email sent: ' . ($ok ? 'Yes' : 'NO, please send it by hand'),

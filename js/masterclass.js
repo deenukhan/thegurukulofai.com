@@ -1,10 +1,14 @@
 /* ==========================================================================
    MASTERCLASS — settings + page behaviour
-   Edit CONFIG for each batch. Everything on the page reads from it.
+   Everything on the page reads from CONFIG. The session date rolls forward by itself.
    ========================================================================== */
 
 const CONFIG = {
-  startISO: '2026-11-12T15:00:00+05:30', // start time, IST
+  // One first session, then every week at the same time. Sales for a session close
+  // cutoffMinutes before it starts. Keep in step with rp_next_session in api/razorpay/lib.php.
+  firstSessionISO: '2026-11-13T15:00:00+05:30',
+  weeklyFromISO: '2026-11-18T15:00:00+05:30',
+  cutoffMinutes: 15,
   durationHours: 3,
   platform: 'Live on Zoom',
 
@@ -72,8 +76,18 @@ const CONFIG = {
   const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 
   /* ---------- Dates and values from CONFIG ---------- */
-  const start = new Date(CONFIG.startISO);
-  const end = new Date(start.getTime() + CONFIG.durationHours * 3600 * 1000);
+  const CUTOFF = CONFIG.cutoffMinutes * 60000;
+  const WEEK = 7 * 86400000;
+  // The next session whose sales are still open.
+  const nextSession = (now = Date.now()) => {
+    const first = new Date(CONFIG.firstSessionISO).getTime();
+    if (now < first - CUTOFF) return new Date(first);
+    let at = new Date(CONFIG.weeklyFromISO).getTime();
+    if (now >= at - CUTOFF) at += Math.ceil((now - (at - CUTOFF) + 1) / WEEK) * WEEK;
+    return new Date(at);
+  };
+  let start;
+  let end;
   const ist = { timeZone: 'Asia/Kolkata' };
   const clock = (d, withMinutes) => {
     const s = d.toLocaleTimeString('en-US', { ...ist, hour: 'numeric', minute: '2-digit' });
@@ -87,8 +101,11 @@ const CONFIG = {
     oneToOnePrice: inr(CONFIG.oneToOnePrice),
     platform: CONFIG.platform,
     durationWords: `${CONFIG.durationHours} hours`,
+    year: new Date().toLocaleDateString('en-GB', { ...ist, year: 'numeric' }),
   };
-  if (!isNaN(start)) {
+  const setSession = (at) => {
+    start = at;
+    end = new Date(start.getTime() + CONFIG.durationHours * 3600 * 1000);
     const samePeriod = clock(start).slice(-2) === clock(end).slice(-2);
     values.date = start.toLocaleDateString('en-GB', { ...ist, day: 'numeric', month: 'long', year: 'numeric' });
     values.dateCompact = start.toLocaleDateString('en-GB', { ...ist, weekday: 'short', day: 'numeric', month: 'short' });
@@ -104,11 +121,24 @@ const CONFIG = {
       t.textContent = clock(at, true);
       t.dateTime = at.toISOString();
     });
-  }
-  $$('[data-mc]').forEach((el) => {
-    const v = values[el.dataset.mc];
-    if (v) el.textContent = v;
-  });
+    $$('[data-mc]').forEach((el) => {
+      const v = values[el.dataset.mc];
+      if (v) el.textContent = v;
+    });
+
+    // Keeps the search listing on the upcoming session.
+    const ld = $('#mc-event-ld');
+    if (ld) {
+      try {
+        const event = JSON.parse(ld.textContent);
+        event.startDate = start.toISOString();
+        event.endDate = end.toISOString();
+        ld.textContent = JSON.stringify(event);
+        ld.type = 'application/ld+json';
+      } catch (e) { /* the search listing is optional */ }
+    }
+  };
+  setSession(nextSession());
 
   /* ---------- Links (pass ad UTM tags through to checkout) ---------- */
   const withParams = (url) => {
@@ -200,10 +230,12 @@ const CONFIG = {
     };
     const trouble = {
       invalid_details: 'Please check your name, email and number.',
-      sales_closed: 'Seats for this batch have closed.',
+      sales_closed: 'Seats are closed for now.',
       too_many_attempts: 'Too many attempts. Please wait a few minutes and try again.',
       invalid_coupon: 'That coupon is not valid. Please check it, or clear the box to pay the full price.',
     };
+
+    let booked = {};
 
     // Razorpay already has the money by now, so never show the buyer a failure.
     // If this check can't finish, the thank-you page points them to their email.
@@ -219,7 +251,7 @@ const CONFIG = {
         if (data.ok) community = data.community_url || '';
       } catch (e) { /* the thank-you page handles a missing link */ }
       try {
-        sessionStorage.setItem('mc_paid', JSON.stringify({ community, addon }));
+        sessionStorage.setItem('mc_paid', JSON.stringify({ community, addon, when: booked.when, at: booked.at }));
       } catch (e) { /* private mode: same fallback */ }
       window.location.href = 'thank-you/';
     };
@@ -253,18 +285,24 @@ const CONFIG = {
         const r = await fetch(`${api}create-order.php`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...details, addon, utm, ...(coupon ? { coupon } : {}) }),
+          body: JSON.stringify({ ...details, addon, utm, session_at: Math.round(start.getTime() / 1000), ...(coupon ? { coupon } : {}) }),
         });
         data = await r.json();
       } catch (err) {
         data = { ok: false };
       }
       setBusy(false);
+      if (data.error === 'session_moved') {
+        setSession(new Date(data.session_at * 1000));
+        say(`Seats for that session have just closed. Your seat will be for ${values.dateFull} at ${values.timeStart} IST. Tap Pay to confirm.`, 'info');
+        return;
+      }
       if (!data.ok) {
         say(trouble[data.error] || "We couldn't start the payment. Please try again. If it keeps failing, see the Contact link at the bottom of this page.");
         return;
       }
 
+      booked = { when: data.session_when, at: data.session_at };
       const rzp = new window.Razorpay({
         key: data.key,
         order_id: data.order_id,
@@ -635,12 +673,9 @@ const CONFIG = {
   /* ---------- Countdown ---------- */
   const cd = $('[data-countdown]');
   if (cd) {
-    if (isNaN(start) || start <= new Date()) {
-      cd.hidden = true;
-    } else {
+    {
       const out = { d: $('[data-cd="d"]', cd), h: $('[data-cd="h"]', cd), m: $('[data-cd="m"]', cd), s: $('[data-cd="s"]', cd) };
       const pad = (n) => String(n).padStart(2, '0');
-      let timer;
       // The old number slides down and out while the new one drops in from the top.
       const roll = (el, value) => {
         const old = el.dataset.value;
@@ -653,16 +688,16 @@ const CONFIG = {
         el.innerHTML = `<i class="cd-out">${old}</i><i class="cd-in">${value}</i>`;
       };
       const tick = () => {
-        const ms = Math.max(0, start - new Date());
+        if (Date.now() >= start.getTime() - CUTOFF) setSession(nextSession());
+        const ms = Math.max(0, start.getTime() - Date.now());
         const t = Math.floor(ms / 1000);
         roll(out.d, pad(Math.floor(t / 86400)));
         roll(out.h, pad(Math.floor((t % 86400) / 3600)));
         roll(out.m, pad(Math.floor((t % 3600) / 60)));
         roll(out.s, pad(t % 60));
-        if (ms === 0) { cd.hidden = true; clearInterval(timer); }
       };
       tick();
-      timer = setInterval(tick, 1000);
+      setInterval(tick, 1000);
     }
   }
 

@@ -27,15 +27,15 @@ return [
     // Tags each order, so the webhook ignores payments for other products.
     'product' => 'masterclass-2026-11-12',
 
-    // No new orders after this moment.
-    'sales_close_at' => '2026-11-12T15:00:00+05:30',
+    // Optional off switch: no new orders after this moment. Leave it out to keep selling.
+    // Session dates roll forward by themselves (rp_next_session in lib.php).
+    // 'sales_stop_at' => '2027-01-01T00:00:00+05:30',
 
     // TODO: dummy link. Replace with the real WhatsApp community invite.
     'community_url' => 'https://chat.whatsapp.com/REPLACE_WITH_REAL_INVITE',
 
     'event' => [
         'name' => 'AI Video Editing Masterclass',
-        'when' => 'Thursday, 12 November 2026, 3 PM to 6 PM IST',
     ],
 
     'mail_from'   => 'deenu@thegurukulofai.com',
