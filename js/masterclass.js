@@ -190,6 +190,8 @@ const CONFIG = {
     payBox.addEventListener('click', (e) => { if (e.target === payBox && !busy) payBox.close(); });
     payBox.addEventListener('cancel', (e) => { if (busy) e.preventDefault(); });
 
+    if (query.has('coupon')) $('.js-coupon', payBox).hidden = false;
+
     const check = (d) => {
       if (d.name.length < 2) return ['name', 'Please enter your full name.'];
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return ['email', 'Please enter a valid email.'];
@@ -200,6 +202,7 @@ const CONFIG = {
       invalid_details: 'Please check your name, email and number.',
       sales_closed: 'Seats for this batch have closed.',
       too_many_attempts: 'Too many attempts. Please wait a few minutes and try again.',
+      invalid_coupon: 'That coupon is not valid. Please check it, or clear the box to pay the full price.',
     };
 
     // Razorpay already has the money by now, so never show the buyer a failure.
@@ -230,6 +233,7 @@ const CONFIG = {
         email: String(fields.get('email') || '').trim(),
         phone: String(fields.get('phone') || '').replace(/\D/g, '').replace(/^(?:91|0)(?=\d{10}$)/, ''),
       };
+      const coupon = String(fields.get('coupon') || '').trim();
       const problem = check(details);
       if (problem) {
         say(problem[1]);
@@ -249,7 +253,7 @@ const CONFIG = {
         const r = await fetch(`${api}create-order.php`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...details, addon, utm }),
+          body: JSON.stringify({ ...details, addon, utm, ...(coupon ? { coupon } : {}) }),
         });
         data = await r.json();
       } catch (err) {

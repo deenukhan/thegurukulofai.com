@@ -1442,6 +1442,7 @@
 
 .mc-pay-fields { display: grid; gap: 14px; margin-top: 20px; }
 .mc-pay-field { display: block; }
+.mc-pay-field[hidden] { display: none; }
 .mc-pay-field > span:first-child {
   display: block;
   margin-bottom: 6px;

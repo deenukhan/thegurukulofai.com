@@ -64,13 +64,13 @@ function rp_cors(array $config): void
  * many Indian mobile users share one address. If the counter cannot be written,
  * the buyer is let through: a sale matters more than the limit.
  */
-function rp_rate_limit(array $config, int $max, int $seconds): void
+function rp_rate_limit(array $config, int $max, int $seconds, string $bucket = ''): void
 {
     $dir = dirname($config['sent_dir']) . '/razorpay-rate';
     if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
         return;
     }
-    $path = $dir . '/' . hash('sha256', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $path = $dir . '/' . hash('sha256', $bucket . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     $file = @fopen($path, 'c+');
     if ($file === false || !flock($file, LOCK_EX)) {
         return;
@@ -97,6 +97,57 @@ function rp_rate_limit(array $config, int $max, int $seconds): void
     if ($count > $max) {
         rp_json(429, ['ok' => false, 'error' => 'too_many_attempts']);
     }
+}
+
+/**
+ * Checks a coupon. The code lives only in the private config and never expires.
+ * With max_uses set, a lock is held until the order exists so uses cannot race
+ * past the cap, and a broken counter refuses the coupon. Without max_uses there
+ * is no limit. Every failure gives the same answer.
+ */
+function rp_coupon_claim(array $config, string $code): array
+{
+    $coupon = is_array($config['coupon'] ?? null) ? $config['coupon'] : [];
+    $real   = strtoupper(trim((string) ($coupon['code'] ?? '')));
+    $max    = isset($coupon['max_uses']) ? (int) $coupon['max_uses'] : null;
+    $usable = strlen($real) >= 12 && !str_starts_with($real, 'PASTE') && ($max === null || $max > 0);
+    if (!$usable || !hash_equals($real, strtoupper(trim($code)))) {
+        rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
+    }
+
+    $seat = min((int) $config['price_paise'], max(100, (int) ($coupon['seat_paise'] ?? $config['price_paise'])));
+    if ($max === null) {
+        return ['seat_paise' => $seat, 'file' => null, 'used' => 0];
+    }
+
+    // Named after the code, so a new code starts with a fresh count.
+    $dir  = dirname($config['sent_dir']) . '/razorpay-coupon';
+    $file = (is_dir($dir) || @mkdir($dir, 0700, true) || is_dir($dir))
+        ? @fopen($dir . '/' . hash('sha256', $real), 'c+') : false;
+    if ($file === false || !flock($file, LOCK_EX)) {
+        error_log('razorpay coupon: cannot open the use counter');
+        rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
+    }
+    $used = (int) trim((string) stream_get_contents($file));
+    if ($used >= $max) {
+        rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
+    }
+
+    return ['seat_paise' => $seat, 'file' => $file, 'used' => $used];
+}
+
+/** Counts the use once the order exists, so a Razorpay failure does not burn one. */
+function rp_coupon_commit(array $claim): void
+{
+    if ($claim['file'] === null) {
+        return;
+    }
+    rewind($claim['file']);
+    ftruncate($claim['file'], 0);
+    fwrite($claim['file'], (string) ($claim['used'] + 1));
+    fflush($claim['file']);
+    flock($claim['file'], LOCK_UN);
+    fclose($claim['file']);
 }
 
 function rp_body(): array
@@ -275,6 +326,7 @@ function rp_send_emails(array $config, array $sale): bool
         'Email: ' . $sale['email'],
         'Phone: ' . $sale['phone'],
         'Add-on: ' . ($sale['addon'] ? 'Yes' : 'No'),
+        'Coupon: ' . ($sale['coupon'] ? 'Yes' : 'No'),
         'Amount: Rs ' . number_format($sale['amount'] / 100, 2),
         'Payment ID: ' . $sale['payment_id'],
         'Buyer email sent: ' . ($ok ? 'Yes' : 'NO, please send it by hand'),

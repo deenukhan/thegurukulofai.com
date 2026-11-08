@@ -31,7 +31,16 @@ if (mb_strlen($name) < 2 || !filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_
 
 rp_rate_limit($config, 30, 600);
 
-$amount = (int) $config['price_paise'] + ($addon ? (int) $config['addon_paise'] : 0);
+// A coupon lowers the seat only. The add-on always costs its full price.
+$seat  = (int) $config['price_paise'];
+$code  = rp_clean($input['coupon'] ?? '', 64);
+$claim = null;
+if ($code !== '') {
+    rp_rate_limit($config, 10, 600, 'coupon:');
+    $claim = rp_coupon_claim($config, $code);
+    $seat  = $claim['seat_paise'];
+}
+$amount = $seat + ($addon ? (int) $config['addon_paise'] : 0);
 
 $notes = [
     'product' => $config['product'],
@@ -40,6 +49,9 @@ $notes = [
     'phone'   => $phone,
     'addon'   => $addon ? 'yes' : 'no',
 ];
+if ($claim !== null) {
+    $notes['coupon'] = 'yes'; // never the code itself
+}
 foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as $key) {
     $value = rp_clean($input['utm'][$key] ?? '', 100);
     if ($value !== '') {
@@ -55,6 +67,9 @@ $order = rp_create_order($config, [
 ]);
 if ($order === null) {
     rp_json(502, ['ok' => false, 'error' => 'order_failed']);
+}
+if ($claim !== null) {
+    rp_coupon_commit($claim);
 }
 
 rp_json(200, [
