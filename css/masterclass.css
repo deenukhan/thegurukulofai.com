@@ -139,7 +139,7 @@
   position: relative;
   overflow: hidden;
   text-align: center;
-  padding: clamp(112px, 11vw, 136px) var(--mc-gutter) clamp(56px, 7vw, 88px);
+  padding: 92px var(--mc-gutter) clamp(56px, 7vw, 88px);
   background: linear-gradient(180deg, var(--white) 35%, var(--paper-blue));
   border: 1px solid var(--mc-line);
 }
