@@ -1,0 +1,94 @@
+/* Preview only: the hero ideas shown with ?option= in the page address. Remove once one is chosen. */
+.mc-opt-bar {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(2, 60, 68, 0.3);
+}
+.mc-opt-bar span { padding: 0 8px; white-space: nowrap; }
+.mc .mc-opt-bar a,
+.mc-opt-bar a {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+/* 1. Before and after inside the hero */
+.opt-1 .mc-ba { display: none; }
+.opt-1 .mc-hero-media { display: flex; justify-content: center; }
+@media (min-width: 901px) {
+  .opt-1 .mc-hero { text-align: left; }
+  .opt-1 .mc-hero-inner { max-width: 1140px; flex-direction: row; align-items: center; gap: clamp(32px, 5vw, 72px); }
+  .opt-1 .mc-hero-text { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+  .opt-1 .mc-hero h1 { font-size: clamp(38px, 4.4vw, 64px); }
+  .opt-1 .mc-hero-media { flex: 0 0 auto; }
+  .opt-1 .mc-hero .mc-count { min-width: 0; width: 100%; }
+}
+@media (max-width: 900px) {
+  .opt-1 .mc-hero-text { display: contents; }
+  .opt-1 .mc-hero-inner > * { order: 1; }
+  .opt-1 .mc-hero-media { order: 2; width: 100%; margin-top: 24px; }
+  .opt-1 .mc-hero .mc-count { order: 3; }
+  .opt-1 .mc-hero-media .mc-wipe { width: 100%; max-width: 320px; }
+}
+
+/* 2. Rotating word */
+.mc-word-wrap { white-space: nowrap; }
+.mc-word {
+  position: relative;
+  display: inline-block;
+  height: 1.14em;
+  overflow: hidden;
+  vertical-align: bottom;
+  color: var(--teal);
+  font-style: italic;
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mc-word i { display: block; font-style: italic; white-space: nowrap; }
+.mc-word .in { animation: mcWordIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.mc-word .out { position: absolute; top: 0; left: 0; animation: mcWordOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+@keyframes mcWordIn { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes mcWordOut { to { transform: translateY(100%); } }
+
+/* 3. Timeline in the hero */
+.tl--hero { width: 100%; max-width: 620px; margin: 24px auto 0; text-align: left; }
+.tl--hero .tl-foot, .tl--hero .tl-status { display: none; }
+
+/* 5. Staged entrance */
+@media (prefers-reduced-motion: no-preference) {
+  .opt-5 .mc-hero-inner > *,
+  .opt-5 .mc-hero-text > * { animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .opt-5 .mc-hero-inner > *:nth-child(2), .opt-5 .mc-hero-text > *:nth-child(2) { animation-delay: 0.12s; }
+  .opt-5 .mc-hero-inner > *:nth-child(3), .opt-5 .mc-hero-text > *:nth-child(3) { animation-delay: 0.24s; }
+  .opt-5 .mc-hero-inner > *:nth-child(4), .opt-5 .mc-hero-text > *:nth-child(4) { animation-delay: 0.36s; }
+  .opt-5 .mc-hero-inner > *:nth-child(5), .opt-5 .mc-hero-text > *:nth-child(5) { animation-delay: 0.48s; }
+  .opt-5 .mc-hero-inner > *:nth-child(6), .opt-5 .mc-hero-text > *:nth-child(6) { animation-delay: 0.6s; }
+  .opt-5 .mc-hero-inner > *:nth-child(7), .opt-5 .mc-hero-text > *:nth-child(7) { animation-delay: 0.72s; }
+  .opt-5 .mc-hero-media { animation: mcStage 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+}
+@keyframes mcStage { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+
+/* 6. Moving background and a stronger glow */
+.opt-6 .mc-hero-bg { opacity: 0.2; }
+.opt-6 .mc-hero::after { background: radial-gradient(closest-side, rgba(53, 189, 200, 0.5), transparent 75%); }
+@media (prefers-reduced-motion: no-preference) {
+  .opt-6 .mc-hero-bg { animation: mcDrift 22s ease-in-out infinite alternate; }
+}
+@keyframes mcDrift { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.14) translate(-1.5%, 1%); } }

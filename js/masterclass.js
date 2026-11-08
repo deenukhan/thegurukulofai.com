@@ -463,6 +463,42 @@ const CONFIG = {
     });
   }
 
+  /* ---------- Photo and video wall ---------- */
+  const aura = $('.mc-aura-grid');
+  if (aura) {
+    const clips = $$('video', aura);
+    if ('IntersectionObserver' in window && !reduceMotion && !(navigator.connection && navigator.connection.saveData)) {
+      const seen = new IntersectionObserver((entries) => entries.forEach(({ target: v, isIntersecting }) => {
+        if (isIntersecting) {
+          if (!v.src) v.src = v.dataset.src;
+          v.play().catch(() => {});
+        } else if (v.src) {
+          v.pause();
+        }
+      }), { threshold: 0.25 });
+      clips.forEach((v) => seen.observe(v));
+    }
+    aura.addEventListener('click', (e) => {
+      const tile = e.target.closest('.mc-aura-tile');
+      if (!tile) return;
+      if (tile.dataset.video) {
+        const vid = document.createElement('video');
+        vid.src = tile.dataset.video;
+        vid.controls = true;
+        vid.playsInline = true;
+        vid.autoplay = true;
+        vid.className = 'is-reel';
+        openLightbox(vid);
+        vid.play().catch(() => {});
+      } else {
+        const img = new Image();
+        img.src = tile.dataset.image;
+        img.alt = tile.getAttribute('aria-label').replace(/^Open: /, '');
+        openLightbox(img);
+      }
+    });
+  }
+
   /* ---------- Before / after wipe ---------- */
   const wipe = $('[data-wipe]');
   if (wipe) {
@@ -548,8 +584,7 @@ const CONFIG = {
   }
 
   /* ---------- Timeline animation (plays when scrolled into view) ---------- */
-  const tl = $('.tl');
-  if (tl && !reduceMotion && 'IntersectionObserver' in window) {
+  if (!reduceMotion && 'IntersectionObserver' in window) $$('.tl').forEach((tl) => {
     $$('.tl-row', tl).forEach((row, r) => {
       $$('.clip', row).forEach((clip, i) => clip.style.setProperty('--d', 700 + r * 220 + i * 60));
     });
@@ -571,7 +606,7 @@ const CONFIG = {
       setTimeout(type, 200);
     }, { threshold: 0.35 });
     io.observe(tl);
-  }
+  });
 
   /* ---------- Scroll reveal (fires before the element reaches the screen) ---------- */
   const revealEls = $$('.mc-block > *, .mc-stats li, .mc-final > *, .mc-zig li');
