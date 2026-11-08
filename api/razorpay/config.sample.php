@@ -16,6 +16,14 @@ return [
     'price_paise' => 149900,
     'addon_paise' => 49900,
 
+    // Optional. Lowers the seat price only; the add-on stays full price.
+    // Leave this out to switch coupons off. Razorpay's minimum is 100 paise.
+    // It never expires. To cap it, add 'max_uses' => 100; a new code starts a fresh count.
+    'coupon' => [
+        'code'       => 'PASTE_A_LONG_RANDOM_CODE_HERE',
+        'seat_paise' => 100,
+    ],
+
     // Tags each order, so the webhook ignores payments for other products.
     'product' => 'masterclass-2026-11-12',
 

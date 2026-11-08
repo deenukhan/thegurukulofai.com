@@ -267,6 +267,8 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
   `api/razorpay/config.sample.php`.
 - `create-order.php` sets the price and saves the buyer's details in the order notes, so unpaid
   checkouts are visible in the Razorpay dashboard for manual follow-up.
+- Coupon: set in the server config (`coupon`), never in this repo. It lowers the seat only, never expires, has
+  an optional `max_uses`, and the field shows only on `/masterclass/?coupon`. Remove the block from the config to switch it off.
 - `verify.php` checks the payment signature and returns the WhatsApp community link for the
   thank-you page. The link is never in the public page source.
 - `webhook.php` is the source of truth. It handles `order.paid`, ignores other products (the
