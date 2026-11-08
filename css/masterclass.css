@@ -28,7 +28,7 @@
 .mc h2 em { color: var(--teal); }
 .mc-block--aqua h2 em { color: var(--forest-mid); }
 
-.mc a:not(.mc-cta):not(.mc-logo):not(.mc-more):not(.mc-opt-bar a) {
+.mc a:not(.mc-cta):not(.mc-logo):not(.mc-more) {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -163,6 +163,22 @@
   inset: 0;
   background: radial-gradient(60% 55% at 50% 40%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 80%);
 }
+/* The hero appears one piece at a time on load */
+@media (prefers-reduced-motion: no-preference) {
+  .mc-hero-inner > * { animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .mc-hero-inner > *:nth-child(2) { animation-delay: 0.12s; }
+  .mc-hero-inner > *:nth-child(3) { animation-delay: 0.24s; }
+  .mc-hero-inner > *:nth-child(4) { animation-delay: 0.36s; }
+  .mc-hero-inner > *:nth-child(5) { animation-delay: 0.48s; }
+  .mc-hero-inner > *:nth-child(6) { animation-delay: 0.6s; }
+  .mc-hero-inner > *:nth-child(7) { animation-delay: 0.72s; }
+  /* The hero button keeps its pulse after it arrives */
+  .mc-hero-inner > .mc-cta {
+    animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both, mcBarPulse 2.2s ease-in-out 1.2s infinite;
+  }
+  .mc-hero-inner > .mc-cta:hover { animation: none; }
+}
+@keyframes mcStage { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 /* The home hero's breathing teal glow, on a light card */
 .mc-hero::after {
   content: "";
@@ -1081,14 +1097,16 @@
   transition: background-color var(--ease-base), color var(--ease-base), box-shadow var(--ease-base);
 }
 .mc-more svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mc-more svg { transition: transform var(--ease-base); }
+.mc-more.is-open svg { transform: rotate(180deg); }
 .mc a.mc-more:hover, .mc-more:hover { background: var(--forest); color: var(--white); box-shadow: 0 8px 24px rgba(53, 189, 200, 0.3); }
 @media (max-width: 1000px) {
   .mc-aura-grid { grid-template-columns: repeat(3, 1fr); }
-  .mc-aura-grid li:last-child { grid-column: 2; }
+  .mc-aura-grid:not(.is-open) li:last-child { grid-column: 2; }
 }
 @media (max-width: 640px) {
   .mc-aura-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .mc-aura-grid li:last-child { grid-column: auto; }
+  .mc-aura-grid:not(.is-open) li:last-child { grid-column: auto; }
   .mc-aura-cap { font-size: 11px; }
 }
 

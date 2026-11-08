@@ -466,18 +466,18 @@ const CONFIG = {
   /* ---------- Photo and video wall ---------- */
   const aura = $('.mc-aura-grid');
   if (aura) {
-    const clips = $$('video', aura);
-    if ('IntersectionObserver' in window && !reduceMotion && !(navigator.connection && navigator.connection.saveData)) {
-      const seen = new IntersectionObserver((entries) => entries.forEach(({ target: v, isIntersecting }) => {
-        if (isIntersecting) {
-          if (!v.src) v.src = v.dataset.src;
-          v.play().catch(() => {});
-        } else if (v.src) {
-          v.pause();
-        }
-      }), { threshold: 0.25 });
-      clips.forEach((v) => seen.observe(v));
-    }
+    const GALLERY_CDN = 'https://tgai-cdn-2.b-cdn.net/gallery/';
+    const canAutoplay = 'IntersectionObserver' in window && !reduceMotion && !(navigator.connection && navigator.connection.saveData);
+    const seen = canAutoplay ? new IntersectionObserver((entries) => entries.forEach(({ target: v, isIntersecting }) => {
+      if (isIntersecting) {
+        if (!v.src) v.src = v.dataset.src;
+        v.play().catch(() => {});
+      } else if (v.src) {
+        v.pause();
+      }
+    }), { threshold: 0.25 }) : null;
+    if (seen) $$('video', aura).forEach((v) => seen.observe(v));
+
     aura.addEventListener('click', (e) => {
       const tile = e.target.closest('.mc-aura-tile');
       if (!tile) return;
@@ -496,6 +496,84 @@ const CONFIG = {
         img.alt = tile.getAttribute('aria-label').replace(/^Open: /, '');
         openLightbox(img);
       }
+    });
+
+    // "See my full journey" opens every gallery photo and video right here on the page.
+    const makeTile = (item) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mc-aura-tile';
+      const base = `../assets/gallery/${item.s}-800`;
+      const cap = document.createElement('span');
+      cap.className = 'mc-aura-cap';
+      cap.textContent = item.c;
+      if (item.v) {
+        b.dataset.video = GALLERY_CDN + item.v;
+        b.setAttribute('aria-label', `Play: ${item.c}`);
+        const v = document.createElement('video');
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.preload = 'none';
+        v.poster = `${base}.webp`;
+        v.dataset.src = GALLERY_CDN + item.l;
+        const play = document.createElement('span');
+        play.className = 'mc-aura-play';
+        play.setAttribute('aria-hidden', 'true');
+        play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>';
+        b.append(v, play, cap);
+        if (seen) seen.observe(v);
+      } else {
+        b.dataset.image = `../assets/gallery/${item.s}-1400.webp`;
+        b.setAttribute('aria-label', `Open: ${item.c}`);
+        const pic = document.createElement('picture');
+        const src = document.createElement('source');
+        src.srcset = `${base}.avif`;
+        src.type = 'image/avif';
+        const img = document.createElement('img');
+        img.src = `${base}.webp`;
+        img.alt = item.c;
+        img.width = item.w;
+        img.height = item.h;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        pic.append(src, img);
+        b.append(pic, cap);
+      }
+      li.append(b);
+      return li;
+    };
+
+    const more = $('[data-more]');
+    let extras = null;
+    let isOpen = false;
+    if (more) more.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!extras) {
+        try {
+          const r = await fetch('../js/masterclass-gallery.json?v=1');
+          extras = (await r.json()).map(makeTile);
+        } catch (err) {
+          window.location.href = more.href;
+          return;
+        }
+      }
+      isOpen = !isOpen;
+      if (isOpen) {
+        aura.append(...extras);
+      } else {
+        extras.forEach((li) => {
+          const v = $('video', li);
+          if (v && v.src) v.pause();
+          li.remove();
+        });
+        more.closest('.mc-aura').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      aura.classList.toggle('is-open', isOpen);
+      more.classList.toggle('is-open', isOpen);
+      more.setAttribute('aria-expanded', String(isOpen));
+      $('span', more).textContent = isOpen ? 'Show less' : 'See my full journey';
     });
   }
 
