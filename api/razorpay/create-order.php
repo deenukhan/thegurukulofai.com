@@ -42,7 +42,7 @@ if ($shown !== 0 && $shown !== $session->getTimestamp()) {
 
 // A coupon lowers the seat only. The add-on always costs its full price.
 $seat  = (int) $config['price_paise'];
-$code  = rp_clean($input['coupon'] ?? '', 64);
+$code  = rp_clean($input['coupon'] ?? '', 1000);
 $claim = null;
 if ($code !== '') {
     rp_rate_limit($config, 10, 600, 'coupon:');
