@@ -172,11 +172,12 @@
   .mc-hero-inner > *:nth-child(5) { animation-delay: 0.48s; }
   .mc-hero-inner > *:nth-child(6) { animation-delay: 0.6s; }
   .mc-hero-inner > *:nth-child(7) { animation-delay: 0.72s; }
-  /* The hero button keeps its pulse after it arrives */
+  /* The hero button keeps its pulse after it arrives. Hover only drops the pulse:
+     clearing the entrance too would replay it, and the button would vanish on mouse-out. */
   .mc-hero-inner > .mc-cta {
-    animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both, mcBarPulse 2.2s ease-in-out 1.2s infinite;
+    animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards, mcBarPulse 2.2s ease-in-out 1.2s infinite;
   }
-  .mc-hero-inner > .mc-cta:hover { animation: none; }
+  .mc-hero-inner > .mc-cta:hover { animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards; }
 }
 @keyframes mcStage { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 /* The home hero's breathing teal glow, on a light card */
