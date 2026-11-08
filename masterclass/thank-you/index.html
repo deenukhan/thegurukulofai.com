@@ -20,7 +20,7 @@
     <a href="/" class="mc-ty-logo"><img src="../../assets/images/masterclass/logo-tgai-102.webp" alt="The Gurukul of AI" width="117" height="36"></a>
 
     <h1>You're <em>in.</em></h1>
-    <p class="mc-ty-lede">Your seat for the AI Video Editing Masterclass is confirmed. Thursday, 12 November 2026, 3 PM to 6 PM IST, live on Zoom.</p>
+    <p class="mc-ty-lede">Your seat for the AI Video Editing Masterclass is confirmed.<span id="ty-when"> Your date and time are in your confirmation email.</span></p>
 
     <ol class="mc-ty-steps">
       <li class="is-main">
@@ -35,7 +35,7 @@
       <li>
         <h2>2. Save the date</h2>
         <p>Block 3 hours so nothing clashes.</p>
-        <a class="mc-ty-link" target="_blank" rel="noopener noreferrer" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=AI%20Video%20Editing%20Masterclass&dates=20261112T093000Z/20261112T123000Z&details=Live%20on%20Zoom.%20The%20link%20will%20be%20shared%20in%20the%20WhatsApp%20community.">Add to Google Calendar</a>
+        <a class="mc-ty-link" target="_blank" rel="noopener noreferrer" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=AI%20Video%20Editing%20Masterclass&dates=20261113T093000Z/20261113T123000Z&details=Live%20on%20Zoom.%20The%20link%20will%20be%20shared%20in%20the%20WhatsApp%20community.">Add to Google Calendar</a>
       </li>
       <li>
         <h2>3. Get ready</h2>
@@ -61,6 +61,16 @@
         document.getElementById('ty-community-fallback').hidden = true;
       }
       if (paid.addon) document.getElementById('ty-addon').hidden = false;
+      if (paid.when) document.getElementById('ty-when').textContent = ' ' + paid.when + ', live on Zoom.';
+      var cal = document.querySelector('.mc-ty-link');
+      if (paid.at) {
+        var stamp = function (d) { return d.toISOString().replace(/[-:]|\.\d{3}/g, ''); };
+        var from = new Date(paid.at * 1000);
+        var to = new Date(from.getTime() + 3 * 3600 * 1000);
+        cal.href = cal.href.replace(/dates=[^&]+/, 'dates=' + stamp(from) + '/' + stamp(to));
+      } else {
+        cal.remove();
+      }
     })();
   </script>
 </body>

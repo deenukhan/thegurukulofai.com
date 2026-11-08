@@ -269,6 +269,9 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
   checkouts are visible in the Razorpay dashboard for manual follow-up.
 - Coupon: set in the server config (`coupon`), never in this repo. It lowers the seat only, never expires, has
   an optional `max_uses`, and the field shows only on `/masterclass/?coupon`. Remove the block from the config to switch it off.
+- Session dates roll by themselves: Fri 13 Nov 2026, then every Wednesday 3 PM IST from 18 Nov. Sales for a session
+  close 15 minutes before it. The rule is in `rp_next_session` (`lib.php`, which decides) and `nextSession` (`js/masterclass.js`, display); change both
+  together. Dates in `masterclass/index.html` are placeholders the script replaces, so never type a real date there.
 - `verify.php` checks the payment signature and returns the WhatsApp community link for the
   thank-you page. The link is never in the public page source.
 - `webhook.php` is the source of truth. It handles `order.paid`, ignores other products (the
