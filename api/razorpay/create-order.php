@@ -29,6 +29,8 @@ if (mb_strlen($name) < 2 || !filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_
     rp_json(422, ['ok' => false, 'error' => 'invalid_details']);
 }
 
+rp_rate_limit($config, 30, 600);
+
 $amount = (int) $config['price_paise'] + ($addon ? (int) $config['addon_paise'] : 0);
 
 $notes = [

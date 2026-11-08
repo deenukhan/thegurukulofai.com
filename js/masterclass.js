@@ -199,6 +199,7 @@ const CONFIG = {
     const trouble = {
       invalid_details: 'Please check your name, email and number.',
       sales_closed: 'Seats for this batch have closed.',
+      too_many_attempts: 'Too many attempts. Please wait a few minutes and try again.',
     };
 
     // Razorpay already has the money by now, so never show the buyer a failure.

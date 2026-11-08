@@ -13,6 +13,10 @@ function rp_config(): array
     if (!is_file($path)) {
         rp_json(503, ['ok' => false, 'error' => 'not_configured']);
     }
+    // Never show PHP errors to visitors; keep them in a private log instead.
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+    ini_set('error_log', dirname($path) . '/razorpay-errors.log');
     $config = require $path;
     if (!is_array($config) || empty($config['key_id']) || empty($config['key_secret'])) {
         rp_json(503, ['ok' => false, 'error' => 'not_configured']);
@@ -52,6 +56,46 @@ function rp_cors(array $config): void
     }
     if ($origin !== '' && !in_array($origin, $allowed, true)) {
         rp_json(403, ['ok' => false, 'error' => 'origin_not_allowed']);
+    }
+}
+
+/**
+ * Stops one address from creating orders in bulk. The limit is generous because
+ * many Indian mobile users share one address. If the counter cannot be written,
+ * the buyer is let through: a sale matters more than the limit.
+ */
+function rp_rate_limit(array $config, int $max, int $seconds): void
+{
+    $dir = dirname($config['sent_dir']) . '/razorpay-rate';
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+        return;
+    }
+    $path = $dir . '/' . hash('sha256', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $file = @fopen($path, 'c+');
+    if ($file === false || !flock($file, LOCK_EX)) {
+        return;
+    }
+    $now = time();
+    [$start, $count] = array_map('intval', explode(' ', trim((string) stream_get_contents($file)) . ' 0 0'));
+    if ($now - $start >= $seconds) {
+        [$start, $count] = [$now, 0];
+    }
+    $count++;
+    rewind($file);
+    ftruncate($file, 0);
+    fwrite($file, $start . ' ' . $count);
+    flock($file, LOCK_UN);
+    fclose($file);
+
+    if (random_int(1, 100) === 1) {
+        foreach (glob($dir . '/*') ?: [] as $old) {
+            if ($now - (int) @filemtime($old) > 3600) {
+                @unlink($old);
+            }
+        }
+    }
+    if ($count > $max) {
+        rp_json(429, ['ok' => false, 'error' => 'too_many_attempts']);
     }
 }
 

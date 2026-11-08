@@ -13,7 +13,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     rp_json(405, ['ok' => false]);
 }
 
-$raw = file_get_contents('php://input') ?: '';
+// Finish the work even if Razorpay hangs up, and refuse absurdly large bodies.
+ignore_user_abort(true);
+$raw = file_get_contents('php://input', false, null, 0, 262144) ?: '';
 $signature = $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ?? '';
 $expected = hash_hmac('sha256', $raw, $config['webhook_secret']);
 if ($signature === '' || !hash_equals($expected, $signature)) {
@@ -45,9 +47,16 @@ if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
 $marker = $dir . '/' . $paymentId;
 $handle = @fopen($marker, 'x'); // fails if another delivery already claimed this payment
 if ($handle === false) {
-    rp_json(200, ['ok' => true, 'ignored' => 'already_sent']);
+    // An empty marker means an earlier run claimed the payment but never finished.
+    clearstatcache(true, $marker);
+    $abandoned = @filesize($marker) === 0 && time() - (int) @filemtime($marker) > 300;
+    if (!$abandoned) {
+        rp_json(200, ['ok' => true, 'ignored' => 'already_sent']);
+    }
+    touch($marker);
+} else {
+    fclose($handle);
 }
-fclose($handle);
 
 $sent = rp_send_emails($config, [
     'name'       => rp_clean($notes['name'] ?? 'there', 80),
@@ -63,4 +72,5 @@ if (!$sent) {
     unlink($marker);
     rp_json(500, ['ok' => false, 'error' => 'mail_failed']);
 }
+file_put_contents($marker, 'sent');
 rp_json(200, ['ok' => true]);
