@@ -26,7 +26,7 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"></noscript>
 
   <link rel="stylesheet" href="../css/base.css?v=37">
-  <link rel="stylesheet" href="../css/masterclass.css?v=44">
+  <link rel="stylesheet" href="../css/masterclass.css?v=45">
   <script type="text/plain" id="mc-event-ld">
   {
     "@context": "https://schema.org",
@@ -517,7 +517,7 @@
           <p class="mc-pay-order-name">Live masterclass seat</p>
           <p class="mc-pay-order-when"><span data-mc="dateCompact">Every Wed</span> · <span data-mc="timeCompact">3–6 PM IST</span> · Zoom</p>
         </div>
-        <p class="mc-pay-order-price">₹<span data-mc="price">1,499</span></p>
+        <p class="mc-pay-order-price">₹<span class="js-seat">1,499</span></p>
       </div>
 
       <div class="mc-pay-fields">
@@ -539,11 +539,14 @@
           <small>We'll use this for class updates.</small>
         </label>
         <!-- Only shown on /masterclass/?coupon. The code itself is checked on the server. -->
-        <label class="mc-pay-field js-coupon" hidden>
+        <div class="mc-pay-field js-coupon" hidden>
           <span>Coupon code</span>
-          <input type="text" name="coupon" autocomplete="off" autocapitalize="off" spellcheck="false">
-          <small>Your discount shows on the next step.</small>
-        </label>
+          <span class="mc-pay-coupon">
+            <input type="text" name="coupon" aria-label="Coupon code" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button type="button" class="js-coupon-apply">Apply</button>
+          </span>
+          <small class="js-coupon-note" role="status">Enter your code, then tap Apply.</small>
+        </div>
       </div>
 
       <label class="mc-bump">
@@ -571,6 +574,6 @@
     </form>
   </dialog>
 
-  <script src="../js/masterclass.js?v=29"></script>
+  <script src="../js/masterclass.js?v=30"></script>
 </body>
 </html>

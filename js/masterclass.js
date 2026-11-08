@@ -154,8 +154,11 @@ const CONFIG = {
   // The tick box appears in the pricing card and in the pop-up. They stay in step.
   const bumps = $$('.js-bump');
   let addon = false;
+  let couponSeat = null; // from the Apply button, for display. The server sets the real price.
   const showTotals = () => {
-    $$('.js-total').forEach((t) => { t.textContent = inr(CONFIG.price + (addon ? CONFIG.bumpPrice : 0)); });
+    const seat = couponSeat === null ? CONFIG.price : couponSeat;
+    $$('.js-seat').forEach((t) => { t.textContent = inr(seat); });
+    $$('.js-total').forEach((t) => { t.textContent = inr(seat + (addon ? CONFIG.bumpPrice : 0)); });
   };
   const syncBump = (on) => {
     addon = on;
@@ -220,7 +223,67 @@ const CONFIG = {
     payBox.addEventListener('click', (e) => { if (e.target === payBox && !busy) payBox.close(); });
     payBox.addEventListener('cancel', (e) => { if (busy) e.preventDefault(); });
 
-    if (query.has('coupon')) $('.js-coupon', payBox).hidden = false;
+    // Coupon box: only shown on /masterclass/?coupon. The server decides; this shows the result.
+    const couponBox = $('.js-coupon', payBox);
+    const couponInput = $('input', couponBox);
+    const couponButton = $('.js-coupon-apply', couponBox);
+    const couponNote = $('.js-coupon-note', couponBox);
+    const couponHint = couponNote.textContent;
+    let couponApplied = '';
+    if (query.has('coupon')) couponBox.hidden = false;
+
+    const showCoupon = (text, state) => {
+      couponNote.textContent = text;
+      couponBox.classList.toggle('is-on', state === 'on');
+      couponBox.classList.toggle('is-bad', state === 'bad');
+    };
+    const clearCoupon = (text, state) => {
+      couponApplied = '';
+      couponSeat = null;
+      showTotals();
+      showCoupon(text || couponHint, state);
+    };
+    const applyCoupon = async () => {
+      const code = couponInput.value.trim();
+      if (!code) {
+        clearCoupon('Enter your code first.', 'bad');
+        return;
+      }
+      couponButton.disabled = true;
+      couponButton.textContent = 'Checking';
+      let data;
+      try {
+        const r = await fetch(`${api}check-coupon.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coupon: code }),
+        });
+        data = await r.json();
+      } catch (e) {
+        data = { ok: false, error: 'network' };
+      }
+      couponButton.disabled = false;
+      couponButton.textContent = 'Apply';
+      if (!data.ok) {
+        const why = {
+          invalid_coupon: 'That coupon is not valid.',
+          too_many_attempts: 'Too many attempts. Please wait a few minutes and try again.',
+        };
+        clearCoupon(why[data.error] || "We couldn't check that coupon. Please try again.", 'bad');
+        return;
+      }
+      couponApplied = code;
+      couponSeat = data.seat_paise / 100;
+      showTotals();
+      showCoupon(`Coupon applied. Your seat is now ₹${inr(couponSeat)}.`, 'on');
+    };
+    couponButton.addEventListener('click', applyCoupon);
+    couponInput.addEventListener('input', () => clearCoupon());
+    couponInput.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      applyCoupon();
+    });
 
     const check = (d) => {
       if (d.name.length < 2) return ['name', 'Please enter your full name.'];
@@ -273,6 +336,13 @@ const CONFIG = {
         return;
       }
 
+      // A typed code is checked first, so nobody pays without seeing the price.
+      if (coupon && coupon !== couponApplied) {
+        say('');
+        await applyCoupon();
+        return;
+      }
+
       say('');
       setBusy(true, 'Opening secure payment...');
       let data;
@@ -298,6 +368,7 @@ const CONFIG = {
         return;
       }
       if (!data.ok) {
+        if (data.error === 'invalid_coupon') clearCoupon('That coupon is not valid.', 'bad');
         say(trouble[data.error] || "We couldn't start the payment. Please try again. If it keeps failing, see the Contact link at the bottom of this page.");
         return;
       }

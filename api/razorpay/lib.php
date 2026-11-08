@@ -103,9 +103,10 @@ function rp_rate_limit(array $config, int $max, int $seconds, string $bucket = '
  * Checks a coupon. The code lives only in the private config and never expires.
  * With max_uses set, a lock is held until the order exists so uses cannot race
  * past the cap, and a broken counter refuses the coupon. Without max_uses there
- * is no limit. Every failure gives the same answer.
+ * is no limit. Every failure gives the same answer. With $reserve false it only
+ * checks, for the Apply button, and holds nothing.
  */
-function rp_coupon_claim(array $config, string $code): array
+function rp_coupon_claim(array $config, string $code, bool $reserve = true): array
 {
     $coupon = is_array($config['coupon'] ?? null) ? $config['coupon'] : [];
     $real   = strtoupper(trim((string) ($coupon['code'] ?? '')));
@@ -133,6 +134,11 @@ function rp_coupon_claim(array $config, string $code): array
         rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
     }
 
+    if (!$reserve) {
+        flock($file, LOCK_UN);
+        fclose($file);
+        return ['seat_paise' => $seat, 'file' => null, 'used' => $used];
+    }
     return ['seat_paise' => $seat, 'file' => $file, 'used' => $used];
 }
 
