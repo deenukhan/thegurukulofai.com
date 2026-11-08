@@ -3,12 +3,25 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # One address for the site: send www to the main domain.
+  RewriteCond %{HTTP_HOST} ^www\.thegurukulofai\.com$ [NC]
+  RewriteRule ^(.*)$ https://thegurukulofai.com/$1 [R=301,L]
+
   # Repo files that deploy with the site but are not for visitors.
   RewriteRule ^(CLAUDE\.md|package(-lock)?\.json|eleventy\.config\.js|\.gitignore)$ - [R=404,L]
   RewriteRule ^(scripts|blog-src|\.claude)(/|$) - [R=404,L]
 
   # The gallery moved from /gallery.html to /gallery/ — keep old links alive.
   RewriteRule ^gallery\.html$ /gallery/ [R=301,L]
+</IfModule>
+
+# Browser security rules for every page.
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 </IfModule>
 
 # Some servers send AVIF as plain text, so name the type here.

@@ -28,7 +28,7 @@
 .mc h2 em { color: var(--teal); }
 .mc-block--aqua h2 em { color: var(--forest-mid); }
 
-.mc a:not(.mc-cta):not(.mc-logo) {
+.mc a:not(.mc-cta):not(.mc-logo):not(.mc-more) {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -163,6 +163,23 @@
   inset: 0;
   background: radial-gradient(60% 55% at 50% 40%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 80%);
 }
+/* The hero appears one piece at a time on load */
+@media (prefers-reduced-motion: no-preference) {
+  .mc-hero-inner > * { animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .mc-hero-inner > *:nth-child(2) { animation-delay: 0.12s; }
+  .mc-hero-inner > *:nth-child(3) { animation-delay: 0.24s; }
+  .mc-hero-inner > *:nth-child(4) { animation-delay: 0.36s; }
+  .mc-hero-inner > *:nth-child(5) { animation-delay: 0.48s; }
+  .mc-hero-inner > *:nth-child(6) { animation-delay: 0.6s; }
+  .mc-hero-inner > *:nth-child(7) { animation-delay: 0.72s; }
+  /* The hero button keeps its pulse after it arrives. Hover only drops the pulse:
+     clearing the entrance too would replay it, and the button would vanish on mouse-out. */
+  .mc-hero-inner > .mc-cta {
+    animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards, mcBarPulse 2.2s ease-in-out 1.2s infinite;
+  }
+  .mc-hero-inner > .mc-cta:hover { animation: mcStage 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards; }
+}
+@keyframes mcStage { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 /* The home hero's breathing teal glow, on a light card */
 .mc-hero::after {
   content: "";
@@ -412,6 +429,7 @@
   box-shadow: 0 14px 30px rgba(2, 60, 68, 0.08);
 }
 .mc-stats strong {
+  font-variant-numeric: tabular-nums;
   display: block;
   font-size: clamp(34px, 4.4vw, 52px);
   font-weight: 700;
@@ -1017,6 +1035,81 @@
   .mc-bar .mc-cta { position: relative; flex: 1; justify-content: center; margin-left: 0; min-height: 56px; padding: 0 52px; font-size: 14px; }
   .mc-bar .mc-cta i { position: absolute; right: 8px; width: 40px; height: 40px; top: 50%; margin: 0; transform: translateY(-50%); }
   .mc-faq details p { padding-right: 0; }
+}
+
+/* ---------- Photo and video wall (from the gallery) ---------- */
+.mc-aura { max-width: 1100px; margin: clamp(32px, 4vw, 48px) auto 0; text-align: center; }
+.mc-aura-title { font-size: clamp(24px, 2.6vw, 34px); font-weight: 700; letter-spacing: -0.03em; color: var(--ink); }
+.mc-aura-title em { color: var(--teal); }
+.mc-aura-grid { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 24px 0 0; padding: 0; }
+.mc-aura-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--mist);
+  cursor: zoom-in;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.mc-aura-tile:hover, .mc-aura-tile:focus-visible { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(53, 189, 200, 0.3); outline: none; }
+.mc-aura-tile video, .mc-aura-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mc-aura-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 10px 10px;
+  background: linear-gradient(transparent, rgba(9, 23, 23, 0.82));
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+}
+.mc-aura-play {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+}
+.mc-aura-play svg { width: 14px; height: 14px; fill: var(--forest); }
+.mc a.mc-more, .mc-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px 22px;
+  border: 1.5px solid var(--forest);
+  border-radius: 999px;
+  color: var(--forest);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color var(--ease-base), color var(--ease-base), box-shadow var(--ease-base);
+}
+.mc-more svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mc-more svg { transition: transform var(--ease-base); }
+.mc-more.is-open svg { transform: rotate(180deg); }
+.mc a.mc-more:hover, .mc-more:hover { background: var(--forest); color: var(--white); box-shadow: 0 8px 24px rgba(53, 189, 200, 0.3); }
+@media (max-width: 1000px) {
+  .mc-aura-grid { grid-template-columns: repeat(3, 1fr); }
+  .mc-aura-grid:not(.is-open) li:last-child { grid-column: 2; }
+}
+@media (max-width: 640px) {
+  .mc-aura-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .mc-aura-grid:not(.is-open) li:last-child { grid-column: auto; }
+  .mc-aura-cap { font-size: 11px; }
 }
 
 /* ---------- Before / after wipe ---------- */

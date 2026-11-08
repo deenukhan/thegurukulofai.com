@@ -199,6 +199,7 @@ const CONFIG = {
     const trouble = {
       invalid_details: 'Please check your name, email and number.',
       sales_closed: 'Seats for this batch have closed.',
+      too_many_attempts: 'Too many attempts. Please wait a few minutes and try again.',
     };
 
     // Razorpay already has the money by now, so never show the buyer a failure.
@@ -463,6 +464,120 @@ const CONFIG = {
     });
   }
 
+  /* ---------- Photo and video wall ---------- */
+  const aura = $('.mc-aura-grid');
+  if (aura) {
+    const GALLERY_CDN = 'https://tgai-cdn-2.b-cdn.net/gallery/';
+    const canAutoplay = 'IntersectionObserver' in window && !reduceMotion && !(navigator.connection && navigator.connection.saveData);
+    const seen = canAutoplay ? new IntersectionObserver((entries) => entries.forEach(({ target: v, isIntersecting }) => {
+      if (isIntersecting) {
+        if (!v.src) v.src = v.dataset.src;
+        v.play().catch(() => {});
+      } else if (v.src) {
+        v.pause();
+      }
+    }), { threshold: 0.25 }) : null;
+    if (seen) $$('video', aura).forEach((v) => seen.observe(v));
+
+    aura.addEventListener('click', (e) => {
+      const tile = e.target.closest('.mc-aura-tile');
+      if (!tile) return;
+      if (tile.dataset.video) {
+        const vid = document.createElement('video');
+        vid.src = tile.dataset.video;
+        vid.controls = true;
+        vid.playsInline = true;
+        vid.autoplay = true;
+        vid.className = 'is-reel';
+        openLightbox(vid);
+        vid.play().catch(() => {});
+      } else {
+        const img = new Image();
+        img.src = tile.dataset.image;
+        img.alt = tile.getAttribute('aria-label').replace(/^Open: /, '');
+        openLightbox(img);
+      }
+    });
+
+    // "See my full journey" opens every gallery photo and video right here on the page.
+    const makeTile = (item) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mc-aura-tile';
+      const base = `../assets/gallery/${item.s}-800`;
+      const cap = document.createElement('span');
+      cap.className = 'mc-aura-cap';
+      cap.textContent = item.c;
+      if (item.v) {
+        b.dataset.video = GALLERY_CDN + item.v;
+        b.setAttribute('aria-label', `Play: ${item.c}`);
+        const v = document.createElement('video');
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.preload = 'none';
+        v.poster = `${base}.webp`;
+        v.dataset.src = GALLERY_CDN + item.l;
+        const play = document.createElement('span');
+        play.className = 'mc-aura-play';
+        play.setAttribute('aria-hidden', 'true');
+        play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>';
+        b.append(v, play, cap);
+        if (seen) seen.observe(v);
+      } else {
+        b.dataset.image = `../assets/gallery/${item.s}-1400.webp`;
+        b.setAttribute('aria-label', `Open: ${item.c}`);
+        const pic = document.createElement('picture');
+        const src = document.createElement('source');
+        src.srcset = `${base}.avif`;
+        src.type = 'image/avif';
+        const img = document.createElement('img');
+        img.src = `${base}.webp`;
+        img.alt = item.c;
+        img.width = item.w;
+        img.height = item.h;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        pic.append(src, img);
+        b.append(pic, cap);
+      }
+      li.append(b);
+      return li;
+    };
+
+    const more = $('[data-more]');
+    let extras = null;
+    let isOpen = false;
+    if (more) more.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!extras) {
+        try {
+          const r = await fetch('../js/masterclass-gallery.json?v=1');
+          extras = (await r.json()).map(makeTile);
+        } catch (err) {
+          window.location.href = more.href;
+          return;
+        }
+      }
+      isOpen = !isOpen;
+      if (isOpen) {
+        aura.append(...extras);
+      } else {
+        extras.forEach((li) => {
+          const v = $('video', li);
+          if (v && v.src) v.pause();
+          li.remove();
+        });
+        more.closest('.mc-aura').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      aura.classList.toggle('is-open', isOpen);
+      more.classList.toggle('is-open', isOpen);
+      more.setAttribute('aria-expanded', String(isOpen));
+      $('span', more).textContent = isOpen ? 'Show less' : 'See my full journey';
+    });
+  }
+
   /* ---------- Before / after wipe ---------- */
   const wipe = $('[data-wipe]');
   if (wipe) {
@@ -548,8 +663,7 @@ const CONFIG = {
   }
 
   /* ---------- Timeline animation (plays when scrolled into view) ---------- */
-  const tl = $('.tl');
-  if (tl && !reduceMotion && 'IntersectionObserver' in window) {
+  if (!reduceMotion && 'IntersectionObserver' in window) $$('.tl').forEach((tl) => {
     $$('.tl-row', tl).forEach((row, r) => {
       $$('.clip', row).forEach((clip, i) => clip.style.setProperty('--d', 700 + r * 220 + i * 60));
     });
@@ -571,6 +685,32 @@ const CONFIG = {
       setTimeout(type, 200);
     }, { threshold: 0.35 });
     io.observe(tl);
+  });
+
+  /* ---------- Stats count up when they scroll into view ---------- */
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    $$('[data-count]').forEach((el) => {
+      const target = Number(el.dataset.count);
+      const finalText = el.textContent;
+      el.textContent = '0+';
+      const io = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const startedAt = performance.now();
+        const step = (now) => {
+          const p = Math.min(1, (now - startedAt) / 1800);
+          const eased = 1 - (1 - p) ** 3;
+          if (p < 1) {
+            el.textContent = `${Math.round(target * eased).toLocaleString('en-IN')}+`;
+            requestAnimationFrame(step);
+          } else {
+            el.textContent = finalText;
+          }
+        };
+        requestAnimationFrame(step);
+      }, { threshold: 0.5 });
+      io.observe(el);
+    });
   }
 
   /* ---------- Scroll reveal (fires before the element reaches the screen) ---------- */
