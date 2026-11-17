@@ -81,6 +81,7 @@ if ($order === null) {
 if ($claim !== null) {
     rp_coupon_commit($claim);
 }
+rp_meta_remember($config, $order['id'], rp_clean($input['fbclid'] ?? '', 500));
 
 rp_json(200, [
     'ok'       => true,

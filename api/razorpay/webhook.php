@@ -75,4 +75,16 @@ if (!$sent) {
     rp_json(500, ['ok' => false, 'error' => 'mail_failed']);
 }
 file_put_contents($marker, 'sent');
-rp_json(200, ['ok' => true]);
+if (!rp_meta_enabled($config)) {
+    rp_json(200, ['ok' => true]);
+}
+
+// Razorpay gets its answer first, so a slow Meta can never cause a retry.
+rp_json_early(200, ['ok' => true]);
+$meta = rp_meta_purchase($config, (string) ($order['id'] ?? ''), $paymentId, [
+    'name'   => $notes['name'] ?? '',
+    'email'  => $notes['email'] ?? ($payment['email'] ?? ''),
+    'phone'  => $notes['phone'] ?? '',
+    'amount' => (int) ($payment['amount'] ?? ($order['amount_paid'] ?? 0)),
+]);
+file_put_contents($marker, 'sent meta:' . ($meta ? 'ok' : 'failed'));

@@ -370,3 +370,176 @@ function rp_send_emails(array $config, array $sale): bool
 
     return $ok;
 }
+
+/* ---------- Meta Conversions API ----------
+ * The server's copy of each Purchase. The browser Pixel (js/meta-pixel.js) sends
+ * the same event with the same ID, and Meta keeps one. This copy still arrives
+ * when an ad blocker stops the Pixel. Nothing here may block a sale or an email.
+ */
+
+function rp_meta_enabled(array $config): bool
+{
+    $meta = $config['meta'] ?? null;
+    if (!is_array($meta)) {
+        return false;
+    }
+    foreach (['pixel_id', 'access_token'] as $key) {
+        $value = (string) ($meta[$key] ?? '');
+        if ($value === '' || str_starts_with($value, 'PASTE')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function rp_meta_dir(array $config): string
+{
+    return dirname($config['sent_dir']) . '/razorpay-meta';
+}
+
+/**
+ * Keeps the buyer's ad click details for this order until Razorpay confirms payment.
+ * The webhook comes from Razorpay, not the buyer, so these can't be read then.
+ */
+function rp_meta_remember(array $config, string $orderId, string $fbclid): void
+{
+    $orderId = preg_replace('/[^A-Za-z0-9_]/', '', $orderId);
+    if ($orderId === '' || !rp_meta_enabled($config)) {
+        return;
+    }
+    $dir = rp_meta_dir($config);
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+        return;
+    }
+
+    $cookie = static fn(string $name): string => preg_match('/^fb\.\d\.\d+\.[A-Za-z0-9_.\-]+$/', (string) ($_COOKIE[$name] ?? ''))
+        ? substr((string) $_COOKIE[$name], 0, 500) : '';
+    $fbc = $cookie('_fbc');
+    if ($fbc === '' && preg_match('/^[A-Za-z0-9_\-]+$/', $fbclid)) {
+        $fbc = 'fb.1.' . (int) (microtime(true) * 1000) . '.' . $fbclid;
+    }
+
+    // Only a page on this site counts as where the sale happened. No query string.
+    $url = 'https://thegurukulofai.com/masterclass/';
+    $ref = parse_url((string) ($_SERVER['HTTP_REFERER'] ?? ''));
+    if (in_array($ref['host'] ?? '', ['thegurukulofai.com', 'www.thegurukulofai.com'], true) && !empty($ref['path'])) {
+        $url = 'https://thegurukulofai.com' . preg_replace('#[^A-Za-z0-9/_\-.]#', '', $ref['path']);
+    }
+
+    @file_put_contents($dir . '/' . $orderId, json_encode([
+        'fbp' => $cookie('_fbp'),
+        'fbc' => $fbc,
+        'ip'  => rp_clean($_SERVER['REMOTE_ADDR'] ?? '', 64),
+        'ua'  => rp_clean($_SERVER['HTTP_USER_AGENT'] ?? '', 500),
+        'url' => $url,
+    ]), LOCK_EX);
+    @chmod($dir . '/' . $orderId, 0600);
+
+    // Unpaid checkouts leave files behind; clear anything older than a week.
+    if (random_int(1, 50) === 1) {
+        foreach (glob($dir . '/*') ?: [] as $old) {
+            if (time() - (int) @filemtime($old) > 7 * 86400) {
+                @unlink($old);
+            }
+        }
+    }
+}
+
+/** Sends the response now and keeps running, so slow work can't hold the caller. */
+function rp_json_early(int $status, array $body): void
+{
+    ignore_user_abort(true);
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode($body, JSON_UNESCAPED_SLASHES);
+    if (function_exists('litespeed_finish_request')) {
+        litespeed_finish_request();
+    } elseif (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        while (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        flush();
+    }
+}
+
+/** Meta wants matching details lowercased, trimmed and SHA-256 hashed. */
+function rp_meta_hash(string $value): string
+{
+    $value = mb_strtolower(trim($value));
+    return $value === '' ? '' : hash('sha256', $value);
+}
+
+function rp_meta_purchase(array $config, string $orderId, string $paymentId, array $buyer): bool
+{
+    $meta = $config['meta'];
+    $orderId = preg_replace('/[^A-Za-z0-9_]/', '', $orderId);
+    $saved = [];
+    $file = $orderId === '' ? '' : rp_meta_dir($config) . '/' . $orderId;
+    if ($file !== '' && is_file($file)) {
+        $saved = json_decode((string) @file_get_contents($file), true) ?: [];
+    }
+
+    $parts = preg_split('/\s+/', trim(preg_replace('/[^\p{L}\s]/u', '', (string) $buyer['name'])) ?: '', -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $phone = preg_replace('/\D+/', '', (string) $buyer['phone']);
+    $user = array_filter([
+        'em'                => array_values(array_filter([rp_meta_hash((string) $buyer['email'])])),
+        'ph'                => strlen($phone) === 10 ? [hash('sha256', '91' . $phone)] : [],
+        'fn'                => isset($parts[0]) ? rp_meta_hash($parts[0]) : '',
+        'ln'                => count($parts) > 1 ? rp_meta_hash($parts[count($parts) - 1]) : '',
+        'country'           => rp_meta_hash('in'),
+        'external_id'       => rp_meta_hash((string) $buyer['email']),
+        'fbp'               => (string) ($saved['fbp'] ?? ''),
+        'fbc'               => (string) ($saved['fbc'] ?? ''),
+        'client_ip_address' => (string) ($saved['ip'] ?? ''),
+        'client_user_agent' => (string) ($saved['ua'] ?? ''),
+    ]);
+
+    $body = [
+        'data' => [[
+            'event_name'       => 'Purchase',
+            'event_time'       => time(),
+            'event_id'         => 'purchase_' . $paymentId,
+            'action_source'    => 'website',
+            'event_source_url' => (string) ($saved['url'] ?? 'https://thegurukulofai.com/masterclass/'),
+            'user_data'        => $user,
+            'custom_data'      => [
+                'currency'     => 'INR',
+                'value'        => round(((int) $buyer['amount']) / 100, 2),
+                'content_name' => 'AI Video Editing Masterclass',
+                'content_ids'  => ['ai-video-editing-masterclass'],
+                'content_type' => 'product',
+            ],
+        ]],
+        'access_token' => (string) $meta['access_token'],
+    ];
+    if (!empty($meta['test_event_code'])) {
+        $body['test_event_code'] = (string) $meta['test_event_code'];
+    }
+
+    $base = rtrim($config['meta']['graph_base'] ?? 'https://graph.facebook.com', '/');
+    $version = preg_replace('/[^v0-9.]/', '', (string) ($meta['graph_version'] ?? 'v25.0')) ?: 'v25.0';
+    $pixel = preg_replace('/\D+/', '', (string) $meta['pixel_id']);
+    $ch = curl_init($base . '/' . $version . '/' . $pixel . '/events');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_SLASHES),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $ok = $response !== false && $status >= 200 && $status < 300;
+    if (!$ok) {
+        // Meta's error text, never the token.
+        error_log('meta purchase ' . $paymentId . ' failed: HTTP ' . $status . ' ' . substr(str_replace((string) $meta['access_token'], '***', (string) $response), 0, 300));
+    }
+    if ($file !== '') {
+        @unlink($file);
+    }
+    return $ok;
+}

@@ -140,6 +140,19 @@ const CONFIG = {
   };
   setSession(nextSession());
 
+  /* ---------- Meta Pixel (js/meta-pixel.js). Values are for ad reporting only. ---------- */
+  const meta = (name, data, eventId) => {
+    if (!window.mcMeta) return;
+    window.mcMeta.track(name, {
+      currency: 'INR',
+      content_name: 'AI Video Editing Masterclass',
+      content_ids: ['ai-video-editing-masterclass'],
+      content_type: 'product',
+      ...data,
+    }, eventId);
+  };
+  meta('ViewContent', { value: CONFIG.price });
+
   /* ---------- Links (pass ad UTM tags through to checkout) ---------- */
   const withParams = (url) => {
     if (!url) return url;
@@ -211,9 +224,14 @@ const CONFIG = {
       }
     };
 
+    let checkoutSeen = false;
     const openPay = () => {
       say('');
       if (!payBox.open) payBox.showModal();
+      if (!checkoutSeen) {
+        checkoutSeen = true;
+        meta('InitiateCheckout', { value: CONFIG.price });
+      }
       loadRazorpay().catch(() => {});
     };
     $$('a.mc-cta[href="#pricing"], .js-pay').forEach((a) => {
@@ -314,7 +332,10 @@ const CONFIG = {
         if (data.ok) community = data.community_url || '';
       } catch (e) { /* the thank-you page handles a missing link */ }
       try {
-        sessionStorage.setItem('mc_paid', JSON.stringify({ community, addon, when: booked.when, at: booked.at }));
+        sessionStorage.setItem('mc_paid', JSON.stringify({
+          community, addon, when: booked.when, at: booked.at,
+          payment_id: response.razorpay_payment_id, value: booked.value,
+        }));
       } catch (e) { /* private mode: same fallback */ }
       window.location.href = 'thank-you/';
     };
@@ -355,7 +376,11 @@ const CONFIG = {
         const r = await fetch(`${api}create-order.php`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...details, addon, utm, session_at: Math.round(start.getTime() / 1000), ...(coupon ? { coupon } : {}) }),
+          body: JSON.stringify({
+            ...details, addon, utm, session_at: Math.round(start.getTime() / 1000),
+            ...(coupon ? { coupon } : {}),
+            ...(query.get('fbclid') ? { fbclid: query.get('fbclid') } : {}),
+          }),
         });
         data = await r.json();
       } catch (err) {
@@ -373,7 +398,7 @@ const CONFIG = {
         return;
       }
 
-      booked = { when: data.session_when, at: data.session_at };
+      booked = { when: data.session_when, at: data.session_at, value: data.amount / 100 };
       const rzp = new window.Razorpay({
         key: data.key,
         order_id: data.order_id,
@@ -395,6 +420,7 @@ const CONFIG = {
       });
       // A modal <dialog> sits above everything, so it must close first or Razorpay's window is hidden behind it.
       payBox.close();
+      meta('AddPaymentInfo', { value: data.amount / 100 });
       rzp.open();
     });
   }
