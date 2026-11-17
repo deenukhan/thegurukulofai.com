@@ -49,6 +49,16 @@ return [
         'password' => 'PASTE_MAILBOX_PASSWORD_HERE',
     ],
 
+    // Optional. Meta Conversions API: the server's copy of each Purchase.
+    // pixel_id must match PIXEL_ID in js/meta-pixel.js. Leave this block out to switch it off.
+    // test_event_code: from Events Manager > Test events, only while testing. Remove it after.
+    'meta' => [
+        'pixel_id'        => 'PASTE_PIXEL_ID_HERE',
+        'access_token'    => 'PASTE_ACCESS_TOKEN_HERE',
+        'test_event_code' => '',
+        'graph_version'   => 'v25.0',
+    ],
+
     // Marker files that stop a buyer being emailed twice.
     'sent_dir' => __DIR__ . '/razorpay-sent',
 ];

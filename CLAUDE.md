@@ -192,7 +192,7 @@ scripts/
 ## Technical Rules
 
 - No frameworks — vanilla HTML/CSS/JS only
-- External dependency: Google Fonts only (exception: Razorpay `checkout.js`, loaded only on the masterclass page when the pop-up opens)
+- External dependency: Google Fonts only (exceptions: Razorpay `checkout.js`, loaded only on the masterclass page when the pop-up opens; Meta's `fbevents.js`, loaded by `js/meta-pixel.js` on the masterclass and thank-you pages only)
 - Semantic HTML: `nav`, `section`, `footer`, `h1`–`h3`, `p`, `ul`, `a`
 - Smooth scroll + `scroll-padding-top: 90px` on `html`
 - Target browsers: Chrome, Safari, Firefox
@@ -280,6 +280,14 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 - A modal `<dialog>` sits above Razorpay's window, so the pop-up must close before `rzp.open()`.
 - Emails go through the `mail_from` mailbox over SMTP (`smtp` in the server config). PHP `mail()` is
   only the backup: it fails DMARC here, because the sender is a shared Hostinger address.
+- **Meta Pixel + Conversions API.** `js/meta-pixel.js` sends PageView, ViewContent, InitiateCheckout (pop-up opens),
+  AddPaymentInfo (Razorpay opens) and Purchase (thank-you page). It only reports from the live domain, never from localhost.
+  The server sends its own Purchase from `webhook.php` (`rp_meta_purchase` in `lib.php`) with the same event ID,
+  `purchase_<payment id>`, so Meta keeps one. `create-order.php` saves the buyer's `_fbp`/`_fbc` cookies, IP and browser
+  for the order in a private folder next to `sent_dir`, and the webhook deletes them after sending. The Pixel ID lives in
+  `js/meta-pixel.js` and in the server config's `meta` block, so change both together. The access token lives only in
+  the server config. Leave out the `meta` block, or leave a `PASTE` value, and the server sends nothing.
+  `test_event_code` sends server events to Events Manager > Test events only, so remove it after testing.
 - No WhatsApp automation for now. Reminders and the Zoom link go out by hand in the community.
 - Media goes to Bunny under `masterclass/` with `scripts/bunny-upload-masterclass.sh`. It needs a
   local `.env`, which is gitignored.
