@@ -157,8 +157,8 @@ function rp_coupon_commit(array $claim): void
 }
 
 /**
- * The session a buyer who pays now will attend: one first session, then every
- * Wednesday at 3 PM IST. Sales for a session close 15 minutes before it starts.
+ * The session a buyer who pays now will attend: every Sunday at 3 PM IST, from
+ * Sunday 22 Nov 2026. Sales for a session close 15 minutes before it starts.
  * The browser shows the same rule (js/masterclass.js), but this answer decides.
  */
 function rp_next_session(?int $now = null): DateTimeImmutable
@@ -167,11 +167,11 @@ function rp_next_session(?int $now = null): DateTimeImmutable
     $cutoff = 15 * 60;
     $tz = new DateTimeZone('Asia/Kolkata');
 
-    $first = new DateTimeImmutable('2026-11-13 15:00:00', $tz);
+    $first = new DateTimeImmutable('2026-11-22 15:00:00', $tz);
     if ($now < $first->getTimestamp() - $cutoff) {
         return $first;
     }
-    $next = new DateTimeImmutable('2026-11-18 15:00:00', $tz);
+    $next = new DateTimeImmutable('2026-11-29 15:00:00', $tz);
     while ($now >= $next->getTimestamp() - $cutoff) {
         $next = $next->modify('+7 days');
     }

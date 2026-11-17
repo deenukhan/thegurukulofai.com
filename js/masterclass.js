@@ -6,8 +6,8 @@
 const CONFIG = {
   // One first session, then every week at the same time. Sales for a session close
   // cutoffMinutes before it starts. Keep in step with rp_next_session in api/razorpay/lib.php.
-  firstSessionISO: '2026-11-13T15:00:00+05:30',
-  weeklyFromISO: '2026-11-18T15:00:00+05:30',
+  firstSessionISO: '2026-11-22T15:00:00+05:30',
+  weeklyFromISO: '2026-11-29T15:00:00+05:30',
   cutoffMinutes: 15,
   durationHours: 3,
   platform: 'Live on Zoom',
@@ -420,7 +420,8 @@ const CONFIG = {
       });
       // A modal <dialog> sits above everything, so it must close first or Razorpay's window is hidden behind it.
       payBox.close();
-      meta('AddPaymentInfo', { value: data.amount / 100 });
+      // One ID per order, so Meta can drop a repeat of the same event.
+      meta('AddPaymentInfo', { value: data.amount / 100 }, `payinfo_${data.order_id}`);
       rzp.open();
     });
   }
