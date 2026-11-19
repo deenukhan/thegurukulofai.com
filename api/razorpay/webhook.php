@@ -5,8 +5,12 @@
  * The Razorpay account also serves other products, so anything that is not this
  * batch is acknowledged and ignored. Razorpay retries on failure, so a marker
  * file makes sure each buyer is emailed once.
+ *
+ * It also keeps the contact store current: order.paid marks the booking paid,
+ * and payment.failed marks a failed try. Neither can hold up the buyer's email.
  */
 require __DIR__ . '/lib.php';
+require __DIR__ . '/store.php';
 
 $config = rp_config();
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -23,7 +27,18 @@ if ($signature === '' || !hash_equals($expected, $signature)) {
 }
 
 $event = json_decode($raw, true);
-if (!is_array($event) || ($event['event'] ?? '') !== 'order.paid') {
+$type = is_array($event) ? (string) ($event['event'] ?? '') : '';
+
+// A failed try. The payment carries no product note, so only an order already in
+// the contact store is touched: other products on this account never match.
+if ($type === 'payment.failed') {
+    $failed = $event['payload']['payment']['entity'] ?? [];
+    $orderId = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($failed['order_id'] ?? ''));
+    $reason = rp_clean($failed['error_description'] ?? ($failed['error_reason'] ?? 'Payment failed'), 200);
+    $known = tg_mark_failed($config, $orderId, $reason);
+    rp_json(200, ['ok' => true, 'recorded' => $known]);
+}
+if ($type !== 'order.paid') {
     rp_json(200, ['ok' => true, 'ignored' => 'event']);
 }
 
@@ -38,6 +53,16 @@ $paymentId = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($payment['id'] ?? '')
 if ($paymentId === '') {
     rp_json(400, ['ok' => false, 'error' => 'no_payment']);
 }
+
+// The contact store first: it is quick, it can never fail the webhook, and it
+// runs on every delivery, so a retry repairs a booking an earlier run missed.
+tg_record_order($config, $order, 'paid', [
+    'payment_id' => $paymentId,
+    'amount'     => (int) ($payment['amount'] ?? ($order['amount_paid'] ?? 0)),
+    'paid_at'    => (int) ($payment['created_at'] ?? time()),
+    'email'      => $payment['email'] ?? '',
+    'source'     => 'webhook',
+]);
 
 $dir = $config['sent_dir'];
 if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {

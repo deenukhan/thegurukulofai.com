@@ -59,6 +59,25 @@ return [
         'graph_version'   => 'v25.0',
     ],
 
+    // The contact store: every lead and buyer, in MySQL on this same server.
+    // Create the database and user in hPanel > Databases > Management, then paste them here.
+    // Leave this block out, or leave a PASTE value, and checkout works exactly as before.
+    'db' => [
+        'host'     => 'localhost',
+        'name'     => 'PASTE_DATABASE_NAME_HERE',     // looks like u886151741_something
+        'user'     => 'PASTE_DATABASE_USER_HERE',     // looks like u886151741_something
+        'password' => 'PASTE_DATABASE_PASSWORD_HERE',
+        // Unpaid leads who did not tick the offers box are deleted after this many days.
+        // Must match the privacy policy. Leave it out to keep everyone.
+        'keep_unpaid_days' => 90,
+    ],
+
+    // The private admin page at /api/admin/. Only the password's hash goes here,
+    // never the password. Make the hash on your own computer (see the setup steps).
+    'admin' => [
+        'password_hash' => 'PASTE_PASSWORD_HASH_HERE',
+    ],
+
     // Marker files that stop a buyer being emailed twice.
     'sent_dir' => __DIR__ . '/razorpay-sent',
 ];

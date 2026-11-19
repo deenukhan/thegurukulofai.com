@@ -230,6 +230,27 @@ function rp_create_order(array $config, array $order): ?array
     return is_array($decoded) && !empty($decoded['id']) ? $decoded : null;
 }
 
+/** Reads from Razorpay's API, for example orders/order_X. Returns the decoded body, or null. */
+function rp_api_get(array $config, string $path, array $query = []): ?array
+{
+    $url = rp_api_base($config) . '/' . ltrim($path, '/') . ($query ? '?' . http_build_query($query) : '');
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_USERPWD        => $config['key_id'] . ':' . $config['key_secret'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    if ($response === false || $status < 200 || $status >= 300) {
+        error_log('razorpay GET ' . strtok($path, '?') . ' failed: HTTP ' . $status);
+        return null;
+    }
+    $decoded = json_decode($response, true);
+    return is_array($decoded) ? $decoded : null;
+}
+
 /**
  * Sends one plain-text email. It goes through the mailbox when the config has a
  * password, because PHP mail() fails DMARC here and risks the spam folder.

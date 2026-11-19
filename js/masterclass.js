@@ -378,6 +378,9 @@ const CONFIG = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...details, addon, utm, session_at: Math.round(start.getTime() / 1000),
+            // Which consent wording was shown, and the optional offers box (unticked by default).
+            consent: form.dataset.consent || '',
+            marketing: Boolean(form.elements.marketing && form.elements.marketing.checked),
             ...(coupon ? { coupon } : {}),
             ...(query.get('fbclid') ? { fbclid: query.get('fbclid') } : {}),
           }),

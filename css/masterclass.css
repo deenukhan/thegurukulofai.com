@@ -1490,6 +1490,22 @@
 .js-coupon.is-on small { font-weight: 600; color: var(--forest); }
 .js-coupon.is-bad small { color: #8A4B10; }
 
+/* Optional offers opt-in: quiet on purpose, and never ticked for the buyer. */
+.mc-pay-optin {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--slate);
+  cursor: pointer;
+}
+.mc-pay-optin input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--forest-mid); cursor: pointer; }
+.mc-pay-optin input:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.mc-pay-legal { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--slate); }
+.mc-pay-legal a { color: var(--forest-mid); text-decoration: underline; }
+
 .mc-pay .mc-bump { margin: 20px 0 0; }
 .mc-pay .mc-bump-body { color: var(--slate); }
 .mc-pay-total {

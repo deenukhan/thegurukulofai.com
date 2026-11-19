@@ -7,6 +7,7 @@
  * even if the buyer never pays.
  */
 require __DIR__ . '/lib.php';
+require __DIR__ . '/store.php';
 
 $config = rp_config();
 rp_cors($config);
@@ -21,6 +22,9 @@ $name  = rp_clean($input['name'] ?? '', 80);
 $email = rp_clean($input['email'] ?? '', 120);
 $phone = preg_replace('/\D+/', '', (string) ($input['phone'] ?? ''));
 $addon = ($input['addon'] ?? false) === true;
+// Which wording the pop-up showed, and whether the optional offers box was ticked.
+$consent = in_array($input['consent'] ?? '', TG_CONSENT_VERSIONS, true) ? (string) $input['consent'] : null;
+$offers = $consent !== null && ($input['marketing'] ?? false) === true;
 
 // Indian numbers: accept 10 digits, or 12 with a leading 91.
 if (strlen($phone) === 12 && str_starts_with($phone, '91')) {
@@ -58,23 +62,49 @@ $notes = [
     'phone'   => $phone,
     'addon'   => $addon ? 'yes' : 'no',
     'session' => rp_session_when($session),
+    'session_at' => (string) $session->getTimestamp(),
 ];
+if ($consent !== null) {
+    $notes['consent'] = $consent . ($offers ? ' offers' : '');
+}
 if ($claim !== null) {
     $notes['coupon'] = 'yes'; // never the code itself
 }
+$utm = [];
 foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as $key) {
     $value = rp_clean($input['utm'][$key] ?? '', 100);
     if ($value !== '') {
-        $notes[$key] = $value;
+        $notes[$key] = $utm[$key] = $value;
     }
 }
 
+// The lead is saved before Razorpay is called, so it survives a Razorpay outage.
+// If the database is off or down this returns null and the sale carries on.
+$bookingId = tg_save_lead($config, [
+    'product'         => $config['product'],
+    'name'            => $name,
+    'email'           => $email,
+    'phone'           => $phone,
+    'addon'           => $addon,
+    'coupon'          => $claim !== null,
+    'amount'          => $amount,
+    'session_at'      => $session->getTimestamp(),
+    'utm'             => $utm,
+    'consent_version' => $consent,
+    'marketing'       => $offers,
+]);
+if ($bookingId !== null) {
+    $notes['ref'] = (string) $bookingId; // lets the webhook find this lead if the order id never got saved
+}
+
+// Razorpay allows at most 15 notes. This sends 15 at most: keep it that way.
 $order = rp_create_order($config, [
     'amount'   => $amount,
     'currency' => 'INR',
     'receipt'  => 'mc-' . bin2hex(random_bytes(8)),
     'notes'    => $notes,
 ]);
+tg_attach_order($config, $bookingId, $order['id'] ?? null);
 if ($order === null) {
     rp_json(502, ['ok' => false, 'error' => 'order_failed']);
 }
