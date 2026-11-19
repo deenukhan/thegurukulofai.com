@@ -112,8 +112,9 @@ for ($skip = 0, $page = 0; $page < 200; $page++, $skip += 100) {
             $extra['reason'] = 'Tried to pay; payment not completed';
         }
         if ($status === 'paid') {
-            // Ask Razorpay for the payment only when the booking still lacks it.
-            $have = $pdo->prepare("SELECT 1 FROM bookings WHERE order_id = ? AND status = 'paid' AND payment_id IS NOT NULL");
+            // Ask Razorpay for the payment only when the booking still lacks it (or its session date).
+            $have = $pdo->prepare("SELECT 1 FROM bookings WHERE order_id = ? AND status = 'paid' AND payment_id IS NOT NULL
+                AND session_at IS NOT NULL");
             $have->execute([(string) $order['id']]);
             if ($have->fetchColumn()) {
                 $counts['unchanged']++;

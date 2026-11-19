@@ -238,6 +238,23 @@ function tg_audit(array $config, string $actor, string $action, string $detail =
 }
 
 /** IST "Y-m-d H:i:s" for a Unix time, as the DATETIME columns expect. */
+/**
+ * Orders made before 19 Nov 2026 kept the session only as text, such as
+ * "Sunday, 22 November 2026, 3 PM to 6 PM IST". Returns its start as a Unix
+ * time (3 PM IST), or 0 if the text does not look like that.
+ */
+function tg_session_from_text(string $text): int
+{
+    if (!preg_match('/^([A-Z][a-z]+), (\d{1,2} [A-Z][a-z]+ \d{4}), 3 PM to 6 PM IST$/', trim($text), $m)) {
+        return 0;
+    }
+    $day = DateTimeImmutable::createFromFormat('!j F Y H:i', $m[2] . ' 15:00', new DateTimeZone('Asia/Kolkata'));
+    if ($day === false || $day->format('l') !== $m[1] || $day->format('j F Y') !== $m[2]) {
+        return 0;
+    }
+    return $day->getTimestamp();
+}
+
 function tg_ist(int $unix): string
 {
     return (new DateTimeImmutable('@' . $unix))->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('Y-m-d H:i:s');
@@ -371,7 +388,7 @@ function tg_record_order(array $config, array $order, string $status, array $ext
     $source = $extra['source'] ?? 'webhook';
     $createdAt = (int) ($order['created_at'] ?? time());
     [$consent, $marketing] = tg_parse_consent((string) ($notes['consent'] ?? ''));
-    $sessionAt = (int) ($notes['session_at'] ?? 0);
+    $sessionAt = (int) ($notes['session_at'] ?? 0) ?: tg_session_from_text((string) ($notes['session'] ?? ''));
     $paymentId = isset($extra['payment_id']) ? preg_replace('/[^A-Za-z0-9_]/', '', (string) $extra['payment_id']) : '';
     $amount = $status === 'paid'
         ? (int) ($extra['amount'] ?? ($order['amount_paid'] ?? ($order['amount'] ?? 0)))
@@ -391,11 +408,11 @@ function tg_record_order(array $config, array $order, string $status, array $ext
             'at'              => tg_ist($createdAt),
         ]);
 
-        $find = $pdo->prepare('SELECT id, status, payment_id, order_id FROM bookings WHERE order_id = ? FOR UPDATE');
+        $find = $pdo->prepare('SELECT id, status, payment_id, order_id, session_at FROM bookings WHERE order_id = ? FOR UPDATE');
         $find->execute([$orderId]);
         $row = $find->fetch();
         if (!$row && ctype_digit((string) ($notes['ref'] ?? ''))) {
-            $find = $pdo->prepare('SELECT id, status, payment_id, order_id FROM bookings
+            $find = $pdo->prepare('SELECT id, status, payment_id, order_id, session_at FROM bookings
                 WHERE id = ? AND order_id IS NULL AND contact_id = ? FOR UPDATE');
             $find->execute([(int) $notes['ref'], $contactId]);
             $row = $find->fetch();
@@ -430,6 +447,14 @@ function tg_record_order(array $config, array $order, string $status, array $ext
             return 'added';
         }
 
+        // A booking saved without its session date (an order from before the date
+        // was kept as a number) gets it now, so its reminders can be planned.
+        $fillSession = $row['session_at'] === null && $sessionAt > 0;
+        if ($fillSession) {
+            $pdo->prepare('UPDATE bookings SET session_at = ? WHERE id = ? AND session_at IS NULL')
+                ->execute([tg_ist($sessionAt), $row['id']]);
+        }
+
         $current = TG_STATUS_RANK[$row['status']] ?? 0;
         $wanted  = TG_STATUS_RANK[$status] ?? 0;
         $fillPayment = $status === 'paid' && $paymentId !== '' && $row['payment_id'] === null;
@@ -445,7 +470,7 @@ function tg_record_order(array $config, array $order, string $status, array $ext
             // Same or weaker news, but a gap to fill: the order id or the payment id.
             $pdo->prepare('UPDATE bookings SET order_id = ?, payment_id = COALESCE(payment_id, ?) WHERE id = ?')
                 ->execute([$orderId, $fillPayment ? $paymentId : null, $row['id']]);
-        } else {
+        } elseif (!$fillSession) {
             $pdo->commit();
             return 'unchanged';
         }
