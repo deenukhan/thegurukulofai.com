@@ -233,9 +233,10 @@ function rp_create_order(array $config, array $order): ?array
 /**
  * Sends one plain-text email. It goes through the mailbox when the config has a
  * password, because PHP mail() fails DMARC here and risks the spam folder.
- * mail() stays as the backup, so a buyer still hears from us if SMTP is down.
+ * mail() is the backup only for notes to Deenu ($fallback). Buyer emails pass
+ * false: mail() claims success even when the email ends up binned.
  */
-function rp_mail(array $config, string $to, string $subject, string $body, ?string &$route = null): bool
+function rp_mail(array $config, string $to, string $subject, string $body, ?string &$route = null, bool $fallback = true): bool
 {
     $from = $config['mail_from'];
     $subject = mb_encode_mimeheader($subject, 'UTF-8', 'B');
@@ -252,6 +253,12 @@ function rp_mail(array $config, string $to, string $subject, string $body, ?stri
         if ($failure === null) {
             $route = 'SMTP';
             return true;
+        }
+        if (!$fallback) {
+            // mail() reports success even when Gmail later bins or refuses the email,
+            // so a buyer email that misses SMTP is treated as not sent.
+            $route = 'not sent, SMTP failed: ' . $failure;
+            return false;
         }
         $route = 'PHP mail(), because SMTP failed: ' . $failure;
     }
@@ -320,8 +327,11 @@ function rp_smtp_reply($socket): int
     return 0;
 }
 
-/** Sends the buyer's confirmation and a sale note to Deenu. True if the buyer's mail was accepted. */
-function rp_send_emails(array $config, array $sale): bool
+/**
+ * Sends the buyer's confirmation. True only if the mail server accepted it.
+ * There is no mail() backup here: Razorpay retries the webhook instead.
+ */
+function rp_send_buyer_email(array $config, array $sale, ?string &$route = null): bool
 {
     $event = $config['event'];
     $lines = [
@@ -351,10 +361,13 @@ function rp_send_emails(array $config, array $sale): bool
     $lines[] = 'The Gurukul of AI';
 
     $subject = 'You are in: ' . $event['name'];
-    $ok = rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines), $route);
+    return rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines), $route, false);
+}
 
-    $note = [
-        'New masterclass seat',
+/** The buyer's details, as they appear in every note to Deenu. */
+function rp_sale_lines(array $sale): array
+{
+    return [
         'Name: ' . $sale['name'],
         'Email: ' . $sale['email'],
         'Phone: ' . $sale['phone'],
@@ -363,12 +376,48 @@ function rp_send_emails(array $config, array $sale): bool
         'Session: ' . ($sale['session'] !== '' ? $sale['session'] : 'Not recorded'),
         'Amount: Rs ' . number_format($sale['amount'] / 100, 2),
         'Payment ID: ' . $sale['payment_id'],
-        'Buyer email sent: ' . ($ok ? 'Yes' : 'NO, please send it by hand'),
-        'Sent through: ' . $route,
     ];
-    rp_mail($config, $config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note));
+}
 
-    return $ok;
+/** Tells Deenu about a sale whose buyer email went out. $tries counts the deliveries it took. */
+function rp_send_sale_note(array $config, array $sale, string $route, int $tries): void
+{
+    $note = array_merge(['New masterclass seat'], rp_sale_lines($sale), [
+        'Buyer email sent: Yes' . ($tries > 1 ? ', on try ' . $tries . ' (the first tries failed)' : ''),
+        'Sent through: ' . $route,
+    ]);
+    rp_mail($config, $config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note));
+}
+
+/** Warns Deenu once that a buyer's email is late and Razorpay will retry it. */
+function rp_send_delay_note(array $config, array $sale, string $route): void
+{
+    $note = array_merge([
+        'A buyer paid, but their confirmation email has NOT gone out yet.',
+        '',
+        'Razorpay will retry automatically for up to 24 hours. When it works,',
+        'you will get the usual "New seat" email for this buyer.',
+        'If that has not arrived within an hour, send them the WhatsApp link by hand.',
+        '',
+    ], rp_sale_lines($sale), [
+        'Reason: ' . $route,
+    ]);
+    rp_mail($config, $config['mail_notify'], 'ACTION: email not sent yet to ' . $sale['name'], implode("\r\n", $note));
+}
+
+/** Counts failed deliveries for a payment, so the warning goes out once. Returns the new count. */
+function rp_mail_failures(array $config, string $paymentId, bool $add): int
+{
+    $dir = dirname($config['sent_dir']) . '/razorpay-mailfail';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0700, true);
+    }
+    $file = $dir . '/' . $paymentId;
+    $count = (int) @file_get_contents($file);
+    if ($add) {
+        @file_put_contents($file, (string) ++$count, LOCK_EX);
+    }
+    return $count;
 }
 
 /* ---------- Meta Conversions API ----------

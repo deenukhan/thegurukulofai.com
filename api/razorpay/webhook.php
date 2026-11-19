@@ -58,7 +58,7 @@ if ($handle === false) {
     fclose($handle);
 }
 
-$sent = rp_send_emails($config, [
+$sale = [
     'name'       => rp_clean($notes['name'] ?? 'there', 80),
     'email'      => rp_clean($notes['email'] ?? ($payment['email'] ?? ''), 120),
     'phone'      => rp_clean($notes['phone'] ?? ($payment['contact'] ?? ''), 20),
@@ -67,20 +67,29 @@ $sent = rp_send_emails($config, [
     'session'    => rp_clean($notes['session'] ?? '', 120),
     'amount'     => (int) ($payment['amount'] ?? ($order['amount_paid'] ?? 0)),
     'payment_id' => $paymentId,
-]);
+];
 
-if (!$sent) {
-    // Let Razorpay retry rather than losing the email.
+if (!rp_send_buyer_email($config, $sale, $route)) {
+    // Razorpay retries a failed delivery for up to 24 hours, so the buyer still
+    // gets a trusted email once the mail server answers again.
     unlink($marker);
-    rp_json(500, ['ok' => false, 'error' => 'mail_failed']);
+    $failures = rp_mail_failures($config, $paymentId, true);
+    rp_json_early(500, ['ok' => false, 'error' => 'mail_failed']);
+    if ($failures === 1) {
+        rp_send_delay_note($config, $sale, $route);
+    }
+    exit;
 }
 file_put_contents($marker, 'sent');
-if (!rp_meta_enabled($config)) {
-    rp_json(200, ['ok' => true]);
-}
+$tries = rp_mail_failures($config, $paymentId, false) + 1;
+@unlink(dirname($config['sent_dir']) . '/razorpay-mailfail/' . $paymentId);
 
-// Razorpay gets its answer first, so a slow Meta can never cause a retry.
+// Razorpay gets its answer first, so a slow note or a slow Meta can never cause a retry.
 rp_json_early(200, ['ok' => true]);
+rp_send_sale_note($config, $sale, $route, $tries);
+if (!rp_meta_enabled($config)) {
+    exit;
+}
 $meta = rp_meta_purchase($config, (string) ($order['id'] ?? ''), $paymentId, [
     'name'   => $notes['name'] ?? '',
     'email'  => $notes['email'] ?? ($payment['email'] ?? ''),
