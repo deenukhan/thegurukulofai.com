@@ -70,10 +70,11 @@ function tg_db_enabled(array $config): bool
 /**
  * Creates the tables on first use, so the only setup is an empty database.
  * A marker file next to the config skips this on every later request.
+ * Version 2 (Phase 2) adds the outbox and the join and stop fields on bookings.
  */
 function tg_db_migrate(PDO $pdo, array $config): void
 {
-    $version = 1;
+    $version = 2;
     $marker = dirname($config['sent_dir']) . '/razorpay-db-v' . $version . '-'
         . substr(hash('sha256', ($config['db']['host'] ?? 'localhost') . '/' . $config['db']['name']), 0, 12);
     if (is_file($marker)) {
@@ -138,7 +139,88 @@ function tg_db_migrate(PDO $pdo, array $config): void
         KEY idx_at (at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // ---- Version 2: reminders ----
+    $columns = [
+        'join_token'       => "CHAR(24) NULL COMMENT 'Personal /join/?t= link, also used to stop reminders'",
+        'join_clicks'      => "INT UNSIGNED NOT NULL DEFAULT 0",
+        'first_join_at'    => "DATETIME NULL",
+        'reminders_off_at' => "DATETIME NULL COMMENT 'Buyer asked for no more reminders for this session'",
+    ];
+    foreach ($columns as $name => $definition) {
+        $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $has->execute(['bookings', $name]);
+        if ((int) $has->fetchColumn() === 0) {
+            tg_db_alter($pdo, "ALTER TABLE bookings ADD COLUMN {$name} {$definition}");
+        }
+    }
+    $index = $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'bookings' AND INDEX_NAME = 'uniq_join_token'")->fetchColumn();
+    if ((int) $index === 0) {
+        tg_db_alter($pdo, 'ALTER TABLE bookings ADD UNIQUE KEY uniq_join_token (join_token)');
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS outbox (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        dedupe_key VARCHAR(120) NOT NULL COMMENT 'One row per message ever, e.g. email:live:b12:202611221500',
+        channel VARCHAR(10) NOT NULL DEFAULT 'email',
+        template VARCHAR(30) NOT NULL,
+        booking_id INT UNSIGNED NULL,
+        to_addr VARCHAR(120) NOT NULL,
+        due_at DATETIME NOT NULL COMMENT 'IST',
+        expires_at DATETIME NOT NULL COMMENT 'Never sent after this, IST',
+        status VARCHAR(10) NOT NULL DEFAULT 'queued' COMMENT 'queued, sending, sent, failed, expired, cancelled',
+        tries TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        next_try_at DATETIME NULL,
+        last_error VARCHAR(255) NULL,
+        sent_at DATETIME NULL,
+        alerted_at DATETIME NULL COMMENT 'Deenu was told it failed',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_dedupe (dedupe_key),
+        KEY idx_due (status, due_at),
+        KEY idx_booking (booking_id),
+        CONSTRAINT fk_outbox_booking FOREIGN KEY (booking_id) REFERENCES bookings (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
     @file_put_contents($marker, (string) time());
+}
+
+/** Runs one schema change, ignoring "already there" when two requests race. */
+function tg_db_alter(PDO $pdo, string $sql): void
+{
+    try {
+        $pdo->exec($sql);
+    } catch (PDOException $e) {
+        $code = (int) ($e->errorInfo[1] ?? 0);
+        if (!in_array($code, [1060, 1061], true)) { // duplicate column, duplicate key name
+            throw $e;
+        }
+    }
+}
+
+/** A fresh personal token for the join and stop links. */
+function tg_new_token(): string
+{
+    return bin2hex(random_bytes(12));
+}
+
+/** The paid booking's personal token, for the confirmation email's join link. */
+function tg_join_token(array $config, string $orderId): ?string
+{
+    $pdo = tg_db($config);
+    if ($pdo === null || $orderId === '') {
+        return null;
+    }
+    try {
+        $find = $pdo->prepare("SELECT join_token FROM bookings WHERE order_id = ? AND status = 'paid'");
+        $find->execute([$orderId]);
+        $token = $find->fetchColumn();
+        return is_string($token) && $token !== '' ? $token : null;
+    } catch (Throwable $e) {
+        error_log('contact store: token lookup failed: ' . $e->getMessage());
+        return null;
+    }
 }
 
 function tg_audit(array $config, string $actor, string $action, string $detail = ''): void
@@ -322,8 +404,8 @@ function tg_record_order(array $config, array $order, string $status, array $ext
         if (!$row) {
             $pdo->prepare("INSERT INTO bookings
                     (contact_id, order_id, payment_id, product, status, session_at, addon, coupon, amount_paise,
-                     utm_source, utm_medium, utm_campaign, utm_content, fail_reason, source, created_at, paid_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                     utm_source, utm_medium, utm_campaign, utm_content, fail_reason, source, created_at, paid_at, join_token)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 ->execute([
                     $contactId,
                     $orderId,
@@ -342,6 +424,7 @@ function tg_record_order(array $config, array $order, string $status, array $ext
                     $source,
                     tg_ist($createdAt),
                     $paidAt,
+                    $status === 'paid' ? tg_new_token() : null,
                 ]);
             $pdo->commit();
             return 'added';
@@ -352,8 +435,9 @@ function tg_record_order(array $config, array $order, string $status, array $ext
         $fillPayment = $status === 'paid' && $paymentId !== '' && $row['payment_id'] === null;
         if ($wanted > $current && $status === 'paid') {
             $pdo->prepare("UPDATE bookings SET status = 'paid', order_id = ?, payment_id = COALESCE(payment_id, ?),
-                    amount_paise = ?, paid_at = COALESCE(paid_at, ?), fail_reason = NULL WHERE id = ?")
-                ->execute([$orderId, $paymentId !== '' ? $paymentId : null, $amount, $paidAt, $row['id']]);
+                    amount_paise = ?, paid_at = COALESCE(paid_at, ?), fail_reason = NULL,
+                    join_token = COALESCE(join_token, ?) WHERE id = ?")
+                ->execute([$orderId, $paymentId !== '' ? $paymentId : null, $amount, $paidAt, tg_new_token(), $row['id']]);
         } elseif ($wanted > $current) {
             $pdo->prepare('UPDATE bookings SET status = ?, order_id = ?, fail_reason = COALESCE(fail_reason, ?) WHERE id = ?')
                 ->execute([$status, $orderId, $status === 'failed' ? $reason : null, $row['id']]);
@@ -421,5 +505,61 @@ function tg_known_order(array $config, string $orderId): ?bool
     } catch (Throwable $e) {
         error_log('contact store: lookup failed: ' . $e->getMessage());
         return null;
+    }
+}
+
+/**
+ * A paid booking found by its personal token, for the join and stop pages.
+ * Returns the row, false when no paid booking has this token, or null when the
+ * store can't say (switched off or down).
+ */
+function tg_booking_by_token(array $config, string $token)
+{
+    $pdo = tg_db($config);
+    if ($pdo === null) {
+        return null;
+    }
+    try {
+        $find = $pdo->prepare("SELECT b.id, b.session_at, b.reminders_off_at, c.name FROM bookings b
+            JOIN contacts c ON c.id = b.contact_id WHERE b.join_token = ? AND b.status = 'paid'");
+        $find->execute([$token]);
+        return $find->fetch() ?: false;
+    } catch (Throwable $e) {
+        error_log('contact store: token lookup failed: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/** Counts a click on a buyer's join link. A click means "probably attended". */
+function tg_log_join(array $config, int $bookingId): void
+{
+    $pdo = tg_db($config);
+    if ($pdo === null) {
+        return;
+    }
+    try {
+        $pdo->prepare('UPDATE bookings SET join_clicks = join_clicks + 1, first_join_at = COALESCE(first_join_at, ?) WHERE id = ?')
+            ->execute([tg_ist(rp_now($config)), $bookingId]);
+    } catch (Throwable $e) {
+        error_log('contact store: join click not logged: ' . $e->getMessage());
+    }
+}
+
+/** Stops reminder emails for one booking and cancels any already queued. */
+function tg_stop_reminders(array $config, int $bookingId): bool
+{
+    $pdo = tg_db($config);
+    if ($pdo === null) {
+        return false;
+    }
+    try {
+        $at = tg_ist(rp_now($config));
+        $pdo->prepare('UPDATE bookings SET reminders_off_at = COALESCE(reminders_off_at, ?) WHERE id = ?')->execute([$at, $bookingId]);
+        $pdo->prepare("UPDATE outbox SET status = 'cancelled', last_error = 'Buyer stopped reminders'
+            WHERE booking_id = ? AND status = 'queued'")->execute([$bookingId]);
+        return true;
+    } catch (Throwable $e) {
+        error_log('contact store: stop failed: ' . $e->getMessage());
+        return false;
     }
 }

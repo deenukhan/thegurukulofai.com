@@ -30,7 +30,8 @@ function rp_json(int $status, array $body): void
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     echo json_encode($body, JSON_UNESCAPED_SLASHES);
-    exit;
+    // From cron, an error must show as a failed run, not a quiet success.
+    exit(PHP_SAPI === 'cli' && $status >= 400 ? 1 : 0);
 }
 
 /** Browser requests only. Local preview is allowed in test mode only. */
@@ -157,6 +158,18 @@ function rp_coupon_commit(array $claim): void
 }
 
 /**
+ * The current time. A throwaway test config may set `test_now` to move the clock,
+ * but only with test keys, so the live site always uses the real time.
+ */
+function rp_now(array $config): int
+{
+    if (isset($config['test_now']) && str_starts_with((string) ($config['key_id'] ?? ''), 'rzp_test_')) {
+        return (int) $config['test_now'];
+    }
+    return time();
+}
+
+/**
  * The session a buyer who pays now will attend: every Sunday at 3 PM IST, from
  * Sunday 22 Nov 2026. Sales for a session close 15 minutes before it starts.
  * The browser shows the same rule (js/masterclass.js), but this answer decides.
@@ -256,21 +269,42 @@ function rp_api_get(array $config, string $path, array $query = []): ?array
  * password, because PHP mail() fails DMARC here and risks the spam folder.
  * mail() is the backup only for notes to Deenu ($fallback). Buyer emails pass
  * false: mail() claims success even when the email ends up binned.
+ *
+ * $extra may add 'headers' (lines such as List-Unsubscribe) and 'attachments'
+ * (each ['name' => ..., 'type' => ..., 'content' => ...]).
  */
-function rp_mail(array $config, string $to, string $subject, string $body, ?string &$route = null, bool $fallback = true): bool
+function rp_mail(array $config, string $to, string $subject, string $body, ?string &$route = null, bool $fallback = true, array $extra = []): bool
 {
     $from = $config['mail_from'];
     $subject = mb_encode_mimeheader($subject, 'UTF-8', 'B');
-    $headers = [
+    $headers = array_merge([
         'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
         'From: The Gurukul of AI <' . $from . '>',
         'Reply-To: ' . $from,
-    ];
+    ], array_map(static fn($h) => rp_clean($h, 900), $extra['headers'] ?? []));
+
+    $attachments = $extra['attachments'] ?? [];
+    if ($attachments) {
+        $boundary = 'tg-' . bin2hex(random_bytes(12));
+        $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundary . '"';
+        $raw = "--{$boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n"
+            . quoted_printable_encode($body) . "\r\n";
+        foreach ($attachments as $file) {
+            $name = preg_replace('/[^A-Za-z0-9._-]/', '', (string) $file['name']);
+            $raw .= "--{$boundary}\r\nContent-Type: {$file['type']}; name=\"{$name}\"\r\n"
+                . "Content-Disposition: attachment; filename=\"{$name}\"\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+                . rtrim(chunk_split(base64_encode((string) $file['content']), 76, "\r\n")) . "\r\n";
+        }
+        $raw .= "--{$boundary}--";
+    } else {
+        $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+        $headers[] = 'Content-Transfer-Encoding: quoted-printable';
+        $raw = quoted_printable_encode($body);
+    }
 
     $route = 'PHP mail(), no SMTP password set';
     if (!empty($config['smtp']['password'])) {
-        $failure = rp_smtp_send($config['smtp'], $from, $to, $subject, $body, $headers);
+        $failure = rp_smtp_send($config['smtp'], $from, $to, $subject, $raw, $headers);
         if ($failure === null) {
             $route = 'SMTP';
             return true;
@@ -283,14 +317,14 @@ function rp_mail(array $config, string $to, string $subject, string $body, ?stri
         }
         $route = 'PHP mail(), because SMTP failed: ' . $failure;
     }
-    return mail($to, $subject, $body, implode("\r\n", $headers), '-f' . $from);
+    return mail($to, $subject, $raw, implode("\r\n", $headers), '-f' . $from);
 }
 
 /**
  * Talks to the mail server directly and returns why it failed, or null if the mail was accepted.
  * Short timeouts, because Razorpay gives a webhook 5 seconds.
  */
-function rp_smtp_send(array $smtp, string $from, string $to, string $subject, string $body, array $headers): ?string
+function rp_smtp_send(array $smtp, string $from, string $to, string $subject, string $raw, array $headers): ?string
 {
     $socket = @stream_socket_client($smtp['host'] . ':' . $smtp['port'], $errno, $error, 4);
     if ($socket === false) {
@@ -307,7 +341,7 @@ function rp_smtp_send(array $smtp, string $from, string $to, string $subject, st
             'Subject: ' . $subject,
         ],
         $headers,
-        ['Content-Transfer-Encoding: quoted-printable', '', quoted_printable_encode($body)]
+        ['', $raw]
     );
     $data = preg_replace('/^\./m', '..', implode("\r\n", $message));
 
@@ -354,6 +388,13 @@ function rp_smtp_reply($socket): int
  */
 function rp_send_buyer_email(array $config, array $sale, ?string &$route = null): bool
 {
+    $mail = rp_buyer_email($config, $sale);
+    return rp_mail($config, $sale['email'], $mail['subject'], $mail['body'], $route, false, $mail['extra']);
+}
+
+/** The buyer's confirmation: subject, body and the calendar invite, without sending it. */
+function rp_buyer_email(array $config, array $sale): array
+{
     $event = $config['event'];
     $lines = [
         'Hi ' . $sale['name'] . ',',
@@ -369,6 +410,15 @@ function rp_send_buyer_email(array $config, array $sale, ?string &$route = null)
         '2. Keep a laptop ready, and a paid Claude plan (Pro or higher).',
         '',
     ];
+    if (!empty($sale['join_url'])) {
+        // The join link carries the Zoom room now; the community is for updates.
+        $lines[9] = '   We share updates there too.';
+        array_splice($lines, 6, 0, [
+            '',
+            'Your personal join link: ' . $sale['join_url'],
+            'It opens the Zoom room on the day. Please keep it to yourself.',
+        ]);
+    }
     if ($sale['addon']) {
         $lines[] = 'You also added the recording + The AI Editor’s Vault. We will send them after the session.';
         $lines[] = '';
@@ -376,13 +426,20 @@ function rp_send_buyer_email(array $config, array $sale, ?string &$route = null)
     $lines[] = 'Amount paid: Rs ' . number_format($sale['amount'] / 100, 2);
     $lines[] = 'Payment ID: ' . $sale['payment_id'];
     $lines[] = '';
-    $lines[] = 'Questions? Reply to this email, or message us on WhatsApp: +91 83838 40943';
+    if (!empty($sale['ics'])) {
+        $lines[] = 'The calendar invite is attached. Open it to add the session to your calendar.';
+        $lines[] = '';
+    }
+    $lines[] = 'Questions? Reply to this email, or message us on WhatsApp: ' . ($config['support_whatsapp'] ?? '+91 83838 40943');
     $lines[] = '';
     $lines[] = 'Deenu Khan';
     $lines[] = 'The Gurukul of AI';
 
     $subject = 'You are in: ' . $event['name'];
-    return rp_mail($config, $sale['email'], $subject, implode("\r\n", $lines), $route, false);
+    $extra = empty($sale['ics']) ? [] : ['attachments' => [
+        ['name' => 'masterclass.ics', 'type' => 'text/calendar; charset=UTF-8; method=PUBLISH', 'content' => $sale['ics']],
+    ]];
+    return ['subject' => $subject, 'body' => implode("\r\n", $lines), 'extra' => $extra];
 }
 
 /** The buyer's details, as they appear in every note to Deenu. */

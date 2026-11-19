@@ -14,7 +14,7 @@ rp_cors($config);
 $input = rp_body();
 
 // Optional off switch. Sessions themselves roll forward every week.
-if (!empty($config['sales_stop_at']) && time() >= strtotime($config['sales_stop_at'])) {
+if (!empty($config['sales_stop_at']) && rp_now($config) >= strtotime($config['sales_stop_at'])) {
     rp_json(410, ['ok' => false, 'error' => 'sales_closed']);
 }
 
@@ -38,7 +38,7 @@ rp_rate_limit($config, 30, 600);
 
 // The page sends the session it is showing. If sales for that one have just
 // closed, tell the buyer before any order exists or a coupon is used.
-$session = rp_next_session();
+$session = rp_next_session(rp_now($config));
 $shown = (int) ($input['session_at'] ?? 0);
 if ($shown !== 0 && $shown !== $session->getTimestamp()) {
     rp_json(409, ['ok' => false, 'error' => 'session_moved', 'session_at' => $session->getTimestamp()]);

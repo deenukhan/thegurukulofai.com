@@ -11,6 +11,7 @@
  */
 require __DIR__ . '/lib.php';
 require __DIR__ . '/store.php';
+require __DIR__ . '/emails.php';
 
 $config = rp_config();
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -93,6 +94,12 @@ $sale = [
     'amount'     => (int) ($payment['amount'] ?? ($order['amount_paid'] ?? 0)),
     'payment_id' => $paymentId,
 ];
+
+// The buyer's personal join link, and a calendar invite for the session they paid for.
+$token = tg_join_token($config, preg_replace('/[^A-Za-z0-9_]/', '', (string) ($order['id'] ?? '')));
+$sale['join_url'] = $token !== null ? tg_join_url($config, $token) : '';
+$sessionUnix = (int) ($notes['session_at'] ?? 0);
+$sale['ics'] = $sessionUnix > 0 ? tg_ics($config, $sessionUnix, $paymentId, $sale['join_url'] ?: null) : '';
 
 if (!rp_send_buyer_email($config, $sale, $route)) {
     // Razorpay retries a failed delivery for up to 24 hours, so the buyer still

@@ -78,6 +78,20 @@ return [
         'password_hash' => 'PASTE_PASSWORD_HASH_HERE',
     ],
 
+    // Reminder emails (Phase 2). The Zoom link lives ONLY here. Buyers get a personal
+    // /join/?t=... link that sends them on to it, so it can change at any time.
+    // Until a real https://...zoom.us link is pasted, the join page says the room isn't open yet.
+    'zoom' => [
+        'join_url' => 'PASTE_ZOOM_INVITE_LINK_HERE',
+    ],
+    // Shown in every buyer email and on the join pages. Never the personal number.
+    'support_whatsapp' => '+91 83838 40943',
+    // Most emails sent per 5-minute run, and a short pause between them.
+    'outbox' => [
+        'max_per_run' => 60,
+        'pause_ms'    => 200,
+    ],
+
     // Marker files that stop a buyer being emailed twice.
     'sent_dir' => __DIR__ . '/razorpay-sent',
 ];
