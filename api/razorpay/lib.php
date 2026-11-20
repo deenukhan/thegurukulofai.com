@@ -6,10 +6,15 @@
  * by the website. See config.sample.php for the file to create on the server.
  */
 
+/** Where the private config file is. TGAI_CONFIG lets local tests point at a throwaway one. */
+function rp_config_path(): string
+{
+    return getenv('TGAI_CONFIG') ?: dirname(__DIR__, 3) . '/private/razorpay-config.php';
+}
+
 function rp_config(): array
 {
-    // TGAI_CONFIG lets local tests point at a throwaway config.
-    $path = getenv('TGAI_CONFIG') ?: dirname(__DIR__, 3) . '/private/razorpay-config.php';
+    $path = rp_config_path();
     if (!is_file($path)) {
         rp_json(503, ['ok' => false, 'error' => 'not_configured']);
     }
@@ -20,6 +25,44 @@ function rp_config(): array
     $config = require $path;
     if (!is_array($config) || empty($config['key_id']) || empty($config['key_secret'])) {
         rp_json(503, ['ok' => false, 'error' => 'not_configured']);
+    }
+    return rp_apply_settings($config);
+}
+
+/**
+ * The few settings Deenu can change from the dashboard's Settings page. Each one is
+ * a dotted path into the config. Secrets, prices and the schedule are never here.
+ */
+const RP_DASHBOARD_SETTINGS = ['zoom.join_url', 'community_url', 'coupon.paused', 'coupon.max_uses'];
+
+function rp_settings_path(array $config): string
+{
+    return dirname((string) $config['sent_dir']) . '/razorpay-settings.json';
+}
+
+/** Dashboard changes, read from a private JSON file (never PHP, so nothing in it can run). */
+function rp_settings_read(array $config): array
+{
+    if (empty($config['sent_dir'])) {
+        return [];
+    }
+    $saved = json_decode((string) @file_get_contents(rp_settings_path($config)), true);
+    return is_array($saved) ? array_intersect_key($saved, array_flip(RP_DASHBOARD_SETTINGS)) : [];
+}
+
+/** Lays the dashboard's changes over the config file. A dashboard value wins. */
+function rp_apply_settings(array $config): array
+{
+    foreach (rp_settings_read($config) as $name => $value) {
+        [$block, $key] = array_pad(explode('.', $name, 2), 2, null);
+        if ($key === null) {
+            $config[$block] = $value;
+            continue;
+        }
+        if (!is_array($config[$block] ?? null)) {
+            $config[$block] = [];
+        }
+        $config[$block][$key] = $value;
     }
     return $config;
 }
@@ -112,7 +155,7 @@ function rp_coupon_claim(array $config, string $code, bool $reserve = true): arr
     $coupon = is_array($config['coupon'] ?? null) ? $config['coupon'] : [];
     $real   = strtoupper(trim((string) ($coupon['code'] ?? '')));
     $max    = isset($coupon['max_uses']) ? (int) $coupon['max_uses'] : null;
-    $usable = $real !== '' && !str_starts_with($real, 'PASTE') && ($max === null || $max > 0);
+    $usable = $real !== '' && !str_starts_with($real, 'PASTE') && empty($coupon['paused']) && ($max === null || $max > 0);
     if (!$usable || !hash_equals($real, strtoupper(trim($code)))) {
         rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
     }
@@ -460,15 +503,29 @@ function rp_sale_lines(array $sale): array
 /** Tells Deenu about a sale whose buyer email went out. $tries counts the deliveries it took. */
 function rp_send_sale_note(array $config, array $sale, string $route, int $tries): void
 {
+    $note = rp_sale_note($sale, $route, $tries);
+    rp_mail($config, $config['mail_notify'], $note['subject'], $note['body']);
+}
+
+/** The "New seat" note, without sending it (the dashboard previews it). */
+function rp_sale_note(array $sale, string $route, int $tries): array
+{
     $note = array_merge(['New masterclass seat'], rp_sale_lines($sale), [
         'Buyer email sent: Yes' . ($tries > 1 ? ', on try ' . $tries . ' (the first tries failed)' : ''),
         'Sent through: ' . $route,
     ]);
-    rp_mail($config, $config['mail_notify'], 'New seat: ' . $sale['name'], implode("\r\n", $note));
+    return ['subject' => 'New seat: ' . $sale['name'], 'body' => implode("\r\n", $note)];
 }
 
 /** Warns Deenu once that a buyer's email is late and Razorpay will retry it. */
 function rp_send_delay_note(array $config, array $sale, string $route): void
+{
+    $note = rp_delay_note($sale, $route);
+    rp_mail($config, $config['mail_notify'], $note['subject'], $note['body']);
+}
+
+/** The "email not sent yet" warning, without sending it (the dashboard previews it). */
+function rp_delay_note(array $sale, string $route): array
 {
     $note = array_merge([
         'A buyer paid, but their confirmation email has NOT gone out yet.',
@@ -480,7 +537,7 @@ function rp_send_delay_note(array $config, array $sale, string $route): void
     ], rp_sale_lines($sale), [
         'Reason: ' . $route,
     ]);
-    rp_mail($config, $config['mail_notify'], 'ACTION: email not sent yet to ' . $sale['name'], implode("\r\n", $note));
+    return ['subject' => 'ACTION: email not sent yet to ' . $sale['name'], 'body' => implode("\r\n", $note)];
 }
 
 /** Counts failed deliveries for a payment, so the warning goes out once. Returns the new count. */

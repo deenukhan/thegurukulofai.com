@@ -153,6 +153,15 @@ const CONFIG = {
   };
   meta('ViewContent', { value: CONFIG.price });
 
+  /* ---------- Funnel counts for the private dashboard (day totals only, live site only) ---------- */
+  const count = (step) => {
+    if (window.location.hostname !== 'thegurukulofai.com' || !navigator.sendBeacon) return;
+    try { navigator.sendBeacon('/api/razorpay/track.php', step); } catch (e) { /* never block the page */ }
+  };
+  try {
+    if (!sessionStorage.getItem('mc_counted')) { sessionStorage.setItem('mc_counted', '1'); count('view'); }
+  } catch (e) { count('view'); }
+
   /* ---------- Links (pass ad UTM tags through to checkout) ---------- */
   const withParams = (url) => {
     if (!url) return url;
@@ -231,6 +240,7 @@ const CONFIG = {
       if (!checkoutSeen) {
         checkoutSeen = true;
         meta('InitiateCheckout', { value: CONFIG.price });
+        count('popup');
       }
       loadRazorpay().catch(() => {});
     };

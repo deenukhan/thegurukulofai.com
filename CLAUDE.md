@@ -299,6 +299,51 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
 
 ---
 
+## Masterclass Dashboard (`api/admin/`)
+
+Dashboard at `/api/admin/`. Sign-in is the admin password (hash in the private config's `admin`
+block). **Two-step sign-in is built but switched off** (Deenu's call, 21 Nov 2026): it turns on
+only with `'two_step' => true` in that `admin` block (`ADMIN_TWO_STEP` in `index.php`). When on,
+sign-in also needs a 6-digit code from an authenticator app (`lib/totp.php`, key in the
+`admin_auth` table, 8 one-time backup codes), every settings change needs a fresh code, and
+password-only sessions are sent back to sign in. The first sign-in after switching it on sets it
+up, so Deenu should be the one to do it. Lost phone and backup codes: empty the `admin_auth`
+table in phpMyAdmin and sign in again to set it up afresh. Health shows an info line while it is off.
+
+**What it can change (and nothing else):**
+- **Settings page:** the Zoom link, the WhatsApp community link, and the coupon (pause, use limit).
+  Each change is checked (plus a fresh authenticator code when two-step is on), logged in `setting_changes` and `audit`,
+  and can be undone from the history. Values are saved to the private `razorpay-settings.json`,
+  which `rp_config()` lays over the config file (`rp_apply_settings` in `lib.php`), so every
+  script sees them at once. The allowed names are `RP_DASHBOARD_SETTINGS` in `lib.php`.
+  Prices, the schedule, email wording and secrets are deliberately not editable: change them in code.
+- **Add-on delivered:** marks a buyer's recording + Vault as sent (`bookings.addon_sent_at`), one
+  at a time or a whole past session. Unsent ones from past sessions show as a health warning.
+- **Resend confirmation:** rebuilds the buyer's email exactly as the webhook does and sends it; it
+  then counts as sent, so a late Razorpay retry won't send a second copy. Asks to confirm first.
+- CSV downloads (logged) and WhatsApp chat links.
+
+**Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
+and one file `api/admin/views/<key>.php` that returns a closure giving `body` (and optionally
+`title`, `intro`, `actions`, `back`). Build pages only from `lib/ui.php` parts (KPIs, cards, tables,
+pills, column chart, bars, facts, chips, checks, mail preview, `ui_post` forms), so every page looks
+the same. Every change goes through `lib/actions.php` (POST, page token, audit, message, back).
+
+- **Layout rule:** one row of four KPIs, then cards on a six-column grid sized `third`, `half`,
+  `two-thirds` or `full`. Styles live only in `api/admin/admin.css` (bump `ADMIN_CSS_VERSION` in
+  `index.php` when it changes). No JavaScript: the chart tooltips are pure CSS.
+- **Health checks** (Overview, System health, the menu badge) are all in `admin_checks` in
+  `lib/checks.php`. Add a new check there and it appears everywhere.
+- **Data it reads:** the contact store; the webhook's sent markers (confirmation and Meta status per
+  payment); `razorpay-worker.last` (the 5-minute task's heartbeat); the coupon counter; the private
+  error log; Razorpay payouts (whole account, cached 15 minutes); Meta ad spend (cached 30 minutes,
+  only when `meta.ad_account_id` and a read-only `meta.ads_token` are in the private config).
+- **Funnel counts:** `js/masterclass.js` sends `view` (once per browser visit) and `popup` to
+  `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
+- **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
+  and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
+- Schema version 4. `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+
 ## Still To Do
 1. Add Google Analytics
 2. Update OG image for social sharing (`assets/og-image.jpg`)

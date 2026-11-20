@@ -28,6 +28,9 @@ if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
 $sum = tg_outbox_run($config, rp_now($config));
 flock($lock, LOCK_UN);
 
+// The dashboard reads this to tell whether the cron job is still running.
+@file_put_contents(dirname($config['sent_dir']) . '/razorpay-worker.last', json_encode(['at' => time()] + $sum), LOCK_EX);
+
 if (isset($sum['error'])) {
     fwrite(STDERR, $sum['error'] . " Check the db block in the private config.\n");
     exit(1);

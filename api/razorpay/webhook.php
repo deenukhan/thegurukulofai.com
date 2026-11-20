@@ -64,6 +64,11 @@ tg_record_order($config, $order, 'paid', [
     'email'      => $payment['email'] ?? '',
     'source'     => 'webhook',
 ]);
+// Razorpay's fee for the dashboard. When it is missing here, the nightly check fills it in.
+if (isset($payment['fee']) && is_numeric($payment['fee'])) {
+    tg_record_money($config, $paymentId, (int) $payment['fee'],
+        is_numeric($payment['tax'] ?? null) ? (int) $payment['tax'] : null, null);
+}
 
 $dir = $config['sent_dir'];
 if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {

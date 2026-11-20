@@ -57,6 +57,10 @@ return [
         'access_token'    => 'PASTE_ACCESS_TOKEN_HERE',
         'test_event_code' => '',
         'graph_version'   => 'v25.0',
+        // Optional, for the dashboard's Ads page: spend, cost per seat and return on ad spend.
+        // A system user token with only the ads_read permission. Leave out to hide spend.
+        'ad_account_id'   => 'PASTE_AD_ACCOUNT_ID_HERE',
+        'ads_token'       => 'PASTE_READ_ONLY_ADS_TOKEN_HERE',
     ],
 
     // The contact store: every lead and buyer, in MySQL on this same server.
@@ -76,6 +80,9 @@ return [
     // never the password. Make the hash on your own computer (see the setup steps).
     'admin' => [
         'password_hash' => 'PASTE_PASSWORD_HASH_HERE',
+        // Two-step sign-in: true asks for a code from an authenticator app at sign-in
+        // and on every settings change. Leave it out (or false) for password only.
+        // 'two_step' => true,
     ],
 
     // Reminder emails (Phase 2). The Zoom link lives ONLY here. Buyers get a personal

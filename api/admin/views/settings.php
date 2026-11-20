@@ -1,0 +1,131 @@
+<?php
+/**
+ * Settings: the few things that change often. Each change takes effect at once and
+ * can be undone from the history. With two-step sign-in on, each also needs a code.
+ */
+require_once dirname(__DIR__) . '/lib/settings.php';
+
+return static function (array $d): array {
+    $pdo = $d['pdo'];
+    $config = $d['config'];
+    $defs = admin_setting_defs();
+
+    $source = static function (string $from): string {
+        return $from === 'dashboard' ? ui_pill('Set here', 'info') : ui_pill('From the config file', 'neutral');
+    };
+    $reset = static function (string $name, string $from): string {
+        if ($from !== 'dashboard') {
+            return '';
+        }
+        return '<details class="reset"><summary>Use the config file value instead</summary>'
+            . ui_post('setting_reset', ['name' => $name], ui_code_input(), 'Switch back', 'quiet', 'inline') . '</details>';
+    };
+
+    // ---- Zoom ----
+    [$zoom, $zoomFrom] = admin_setting($config, 'zoom.join_url');
+    $zoomOk = tg_zoom_url(['zoom' => ['join_url' => (string) $zoom]]) !== null;
+    $next = rp_next_session($d['now']);
+    $live = admin_session_live($d['now']);
+    $zoomBody = ui_facts([
+        ['In use', $zoomOk ? '<span class="value-link">' . h((string) $zoom) . '</span>' : ui_pill('Not set', 'bad')],
+        ['Comes from', $source($zoomFrom)],
+        ['Used by', 'Every buyer\'s personal join link and reminder'],
+    ])
+        . ($live ? '<p class="notice notice-bad">' . icon('alert') . 'A session is live now. Changing the link would send late joiners to a different room.</p>'
+            : '<p class="notice">' . icon('info') . 'Change it after a session ends, ready for ' . h($next->format('D j M')) . '. Never during one.</p>')
+        . ui_post('setting_save', [],
+            ui_field('New Zoom link', 'values[zoom.join_url]', 'type="url" required placeholder="https://us06web.zoom.us/j/…" autocomplete="off"')
+            . ($live ? '<label class="tick"><input type="checkbox" name="live_ok" value="1"> I know a session is live and still want to change it</label>' : '')
+            . ui_code_input(), 'Save Zoom link', 'primary', 'stack')
+        . $reset('zoom.join_url', $zoomFrom);
+    $zoomCard = ui_card('Zoom link', $zoomBody, ['sub' => 'Changes weekly. Buyers never see this link, only their personal join link.']);
+
+    // ---- Community ----
+    [$community, $communityFrom] = admin_setting($config, 'community_url');
+    $communityOk = is_string($community) && preg_match('~^https://chat\.whatsapp\.com/~', $community) && !str_contains($community, 'REPLACE');
+    $communityBody = ui_facts([
+        ['In use', $communityOk ? '<span class="value-link">' . h($community) . '</span>' : ui_pill('Not set', 'bad')],
+        ['Comes from', $source($communityFrom)],
+        ['Used by', 'Payment confirmation email and thank-you page'],
+    ])
+        . ui_post('setting_save', [],
+            ui_field('New invite link', 'values[community_url]', 'type="url" required placeholder="https://chat.whatsapp.com/…" autocomplete="off"')
+            . ui_code_input(), 'Save community link', 'primary', 'stack')
+        . $reset('community_url', $communityFrom);
+    $communityCard = ui_card('WhatsApp community link', $communityBody, ['sub' => 'Where every buyer goes after paying.']);
+
+    // ---- Coupon ----
+    $coupon = admin_coupon($config);
+    if ($coupon === null) {
+        $couponCard = ui_card('Coupon', ui_empty('No coupon in the config file', 'Add a coupon block to the private config first. The code itself is never shown or changed here.'));
+    } else {
+        [$paused, $pausedFrom] = admin_setting($config, 'coupon.paused');
+        [$max, $maxFrom] = admin_setting($config, 'coupon.max_uses');
+        $couponBody = ui_facts([
+            ['Status', $paused ? ui_pill('Paused', 'warn') : ui_pill('On', 'good')],
+            ['Used', h(num($coupon['used'])) . ($max !== null ? ' of ' . h(num((int) $max)) : ' · no limit')],
+            ['Seat price with it', h(money($coupon['seat_paise']))],
+            ['Comes from', $source($pausedFrom === 'dashboard' || $maxFrom === 'dashboard' ? 'dashboard' : 'config')],
+        ])
+            . ui_post('setting_save', [],
+                '<label class="field"><span>Coupon</span><select name="values[coupon.paused]">'
+                . '<option value="0"' . ($paused ? '' : ' selected') . '>On: people can use it</option>'
+                . '<option value="1"' . ($paused ? ' selected' : '') . '>Paused: nobody can use it</option></select></label>'
+                . ui_field('Use limit', 'values[coupon.max_uses]', 'type="number" min="0" max="10000" required value="' . h((string) ($max ?? $coupon['used'])) . '"',
+                    'Uses so far stay counted. Set it above ' . $coupon['used'] . ' to allow more.')
+                . ui_code_input(), 'Save coupon', 'primary', 'stack')
+            . $reset('coupon', $pausedFrom === 'dashboard' || $maxFrom === 'dashboard' ? 'dashboard' : 'config');
+        $couponCard = ui_card('Coupon', $couponBody, ['sub' => 'Pause it, or change how many times it can be used.']);
+    }
+
+    // ---- Two-step sign-in ----
+    if (!ADMIN_TWO_STEP) {
+        $securityCard = ui_card('Sign-in security', ui_facts([
+            ['Two-step sign-in', ui_pill('Off', 'neutral') . ' <span class="muted">password only</span>'],
+            ['Signs out after', '30 minutes idle'],
+        ]) . '<p class="notice">' . icon('info') . '<span>To turn it on, add <code>\'two_step\' => true</code> to the admin block of the private config. The next sign-in then sets it up with your phone.</span></p>');
+    } else {
+        $auth = totp_record($pdo);
+        $left = count(json_decode((string) ($auth['backup_codes'] ?? '[]'), true) ?: []);
+        $securityBody = ui_facts([
+            ['Two-step sign-in', ui_pill('On', 'good') . ' <span class="muted">since ' . h(when($auth['enabled_at'] ?? null, 'j M Y')) . '</span>'],
+            ['Backup codes left', $left <= 2 ? ui_pill((string) $left, 'warn') : h((string) $left)],
+            ['Signs out after', '30 minutes idle'],
+        ])
+            . '<details class="reset"><summary>Make new backup codes</summary>'
+            . ui_post('backup_codes_new', [], '<p class="muted small">The old codes stop working.</p>' . ui_code_input(), 'Make new codes', 'quiet', 'stack') . '</details>'
+            . '<p class="notice">' . icon('info') . 'Lost your phone and your backup codes? In hPanel, open phpMyAdmin and empty the admin_auth table. The next sign-in sets it up again.</p>';
+        $securityCard = ui_card('Sign-in security', $securityBody);
+    }
+
+    // ---- History ----
+    $changes = rows($pdo, 'SELECT * FROM setting_changes ORDER BY id DESC LIMIT 50');
+    $show = static function (string $name, ?string $json) use ($defs): string {
+        if ($json === null) {
+            return '<span class="muted">Config file value</span>';
+        }
+        $text = $defs[$name]['show'](json_decode($json, true));
+        return '<span class="clip value-link" title="' . h($text) . '">' . h($text) . '</span>';
+    };
+    $undoId = (int) ($_GET['undo'] ?? 0);
+    $list = [];
+    foreach ($changes as $c) {
+        if (!isset($defs[$c['name']])) {
+            continue;
+        }
+        $undo = $c['id'] == $undoId
+            ? ui_post('setting_undo', ['id' => $c['id']], ui_code_input(), 'Undo now', 'primary', 'inline')
+            : ui_button('Undo', admin_url(['view' => 'settings', 'undo' => $c['id']]) . '#history', 'quiet');
+        $list[] = [h(when($c['at'], 'j M, g:i A')), h($defs[$c['name']]['label']), $show($c['name'], $c['old_value']), $show($c['name'], $c['new_value']), $undo];
+    }
+    $history = ui_card('Change history', '<div id="history"></div>' . ui_table(
+        [['When', 'muted nowrap'], ['Setting', ''], ['Was', ''], ['Now', ''], ['', 'num']],
+        $list, ['empty' => 'No changes yet. Everything comes from the config file.']
+    ), ['wide' => true, 'flush' => true, 'sub' => 'Undo puts back the value from before that change.']);
+
+    return [
+        'intro' => 'The few things that change often. Each change is live at once' . (ADMIN_TWO_STEP ? ' and needs a code from your authenticator app.' : '.'),
+        'body'  => ui_grid($zoomCard, $communityCard, $couponCard, $securityCard, $history)
+            . '<p class="page-note">Prices, the session day and email wording stay in code on purpose: they change rarely and break expensively. Ask Claude to change them.</p>',
+    ];
+};

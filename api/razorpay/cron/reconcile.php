@@ -138,6 +138,49 @@ for ($skip = 0, $page = 0; $page < 200; $page++, $skip += 100) {
     }
 }
 
+// Fees and refunds for the dashboard. A paid booking with no fee yet gets one.
+// A refund on any of our payments in this window refreshes that payment's total.
+$money = 0;
+if (!$dry && $pdo !== null) {
+    $check = [];
+    try {
+        $missing = $pdo->prepare("SELECT payment_id FROM bookings WHERE product = ? AND status = 'paid'
+            AND payment_id IS NOT NULL AND fee_paise IS NULL ORDER BY id DESC LIMIT 300");
+        $missing->execute([$config['product']]);
+        $check = $missing->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Throwable $e) {
+        error_log('reconcile: fee lookup failed: ' . $e->getMessage());
+        $counts['error']++;
+    }
+    for ($skip = 0, $page = 0; $page < 50; $page++, $skip += 100) {
+        $refunds = rp_api_get($config, 'refunds', ['from' => $from, 'to' => time(), 'count' => 100, 'skip' => $skip]);
+        $items = is_array($refunds['items'] ?? null) ? $refunds['items'] : [];
+        foreach ($items as $refund) {
+            $check[] = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($refund['payment_id'] ?? ''));
+        }
+        if (count($items) < 100) {
+            break;
+        }
+    }
+    $known = $pdo->prepare('SELECT 1 FROM bookings WHERE payment_id = ? AND product = ?');
+    foreach (array_unique(array_filter($check)) as $paymentId) {
+        $known->execute([$paymentId, $config['product']]);
+        if (!$known->fetchColumn()) {
+            continue; // another product's refund on the shared account
+        }
+        $payment = rp_api_get($config, 'payments/' . rawurlencode($paymentId));
+        if ($payment === null) {
+            $counts['error']++;
+            continue;
+        }
+        tg_record_money($config, $paymentId,
+            is_numeric($payment['fee'] ?? null) ? (int) $payment['fee'] : null,
+            is_numeric($payment['tax'] ?? null) ? (int) $payment['tax'] : null,
+            (int) ($payment['amount_refunded'] ?? 0));
+        $money++;
+    }
+}
+
 // Retention: unpaid leads who never ticked the offers box, older than the limit.
 $deleted = 0;
 if (!$dry && $keepDays > 0) {
@@ -165,6 +208,9 @@ $lines = [
 ];
 if (!$dry) {
     $lines[] = "Store: {$counts['added']} added, {$counts['updated']} updated, {$counts['unchanged']} already right, {$counts['error']} errors.";
+}
+if ($money > 0) {
+    $lines[] = "Fees or refunds refreshed for {$money} payments.";
 }
 if ($tooOld > 0) {
     $lines[] = "{$tooOld} unpaid orders were older than {$keepDays} days and were not added back.";

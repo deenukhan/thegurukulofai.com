@@ -71,10 +71,12 @@ function tg_db_enabled(array $config): bool
  * Creates the tables on first use, so the only setup is an empty database.
  * A marker file next to the config skips this on every later request.
  * Version 2 (Phase 2) adds the outbox and the join and stop fields on bookings.
+ * Version 3 (dashboard) adds Razorpay fees and refunds, and the funnel's day counts.
+ * Version 4 (dashboard settings) adds two-step sign-in, the settings history and add-on delivery.
  */
 function tg_db_migrate(PDO $pdo, array $config): void
 {
-    $version = 2;
+    $version = 4;
     $marker = dirname($config['sent_dir']) . '/razorpay-db-v' . $version . '-'
         . substr(hash('sha256', ($config['db']['host'] ?? 'localhost') . '/' . $config['db']['name']), 0, 12);
     if (is_file($marker)) {
@@ -183,7 +185,87 @@ function tg_db_migrate(PDO $pdo, array $config): void
         CONSTRAINT fk_outbox_booking FOREIGN KEY (booking_id) REFERENCES bookings (id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // ---- Version 3: dashboard ----
+    $columns = [
+        'fee_paise'      => "INT UNSIGNED NULL COMMENT 'Razorpay fee for the payment, GST included'",
+        'tax_paise'      => "INT UNSIGNED NULL COMMENT 'The GST part of the fee'",
+        'refunded_paise' => "INT UNSIGNED NOT NULL DEFAULT 0",
+    ];
+    foreach ($columns as $name => $definition) {
+        $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $has->execute(['bookings', $name]);
+        if ((int) $has->fetchColumn() === 0) {
+            tg_db_alter($pdo, "ALTER TABLE bookings ADD COLUMN {$name} {$definition}");
+        }
+    }
+    // Day totals for the funnel: page visits and pop-up opens. No people, no addresses.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS events (
+        day DATE NOT NULL,
+        name VARCHAR(20) NOT NULL,
+        hits INT UNSIGNED NOT NULL DEFAULT 0,
+        PRIMARY KEY (day, name)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 4: dashboard settings ----
+    $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $has->execute(['bookings', 'addon_sent_at']);
+    if ((int) $has->fetchColumn() === 0) {
+        tg_db_alter($pdo, "ALTER TABLE bookings ADD COLUMN addon_sent_at DATETIME NULL COMMENT 'Recording and Vault sent to this buyer'");
+    }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_auth (
+        id TINYINT UNSIGNED NOT NULL PRIMARY KEY COMMENT 'Always 1: there is one admin',
+        totp_secret VARCHAR(64) NOT NULL COMMENT 'Base32 key for the authenticator app',
+        backup_codes TEXT NOT NULL COMMENT 'JSON list of hashed one-time codes',
+        last_step INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Last 30-second step used to sign in, so a code works once',
+        enabled_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS setting_changes (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        name VARCHAR(40) NOT NULL,
+        old_value VARCHAR(500) NULL COMMENT 'NULL: the config file value was in use',
+        new_value VARCHAR(500) NULL COMMENT 'NULL: back to the config file value',
+        ip VARCHAR(45) NULL,
+        KEY idx_at (at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
     @file_put_contents($marker, (string) time());
+}
+
+/** Adds one to today's count for a funnel step, such as a page visit. */
+function tg_count_event(array $config, string $name): void
+{
+    $pdo = tg_db($config);
+    if ($pdo === null) {
+        return;
+    }
+    try {
+        $pdo->prepare('INSERT INTO events (day, name, hits) VALUES (CURDATE(), ?, 1)
+            ON DUPLICATE KEY UPDATE hits = hits + 1')->execute([$name]);
+    } catch (Throwable $e) {
+        error_log('contact store: event not counted: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Saves what Razorpay kept and gave back for one payment: its fee (GST included),
+ * the GST part, and any refund. A null leaves that figure as it was.
+ */
+function tg_record_money(array $config, string $paymentId, ?int $fee, ?int $tax, ?int $refunded): void
+{
+    $pdo = tg_db($config);
+    if ($pdo === null || $paymentId === '') {
+        return;
+    }
+    try {
+        $pdo->prepare('UPDATE bookings SET fee_paise = COALESCE(?, fee_paise), tax_paise = COALESCE(?, tax_paise),
+                refunded_paise = COALESCE(?, refunded_paise) WHERE payment_id = ?')
+            ->execute([$fee, $tax, $refunded, $paymentId]);
+    } catch (Throwable $e) {
+        error_log('contact store: fee for ' . $paymentId . ' not saved: ' . $e->getMessage());
+    }
 }
 
 /** Runs one schema change, ignoring "already there" when two requests race. */
