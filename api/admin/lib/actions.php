@@ -17,7 +17,7 @@ function admin_flash(string $tone, string $text, array $extra = []): void
 function admin_back(): string
 {
     $back = (string) ($_POST['back'] ?? './');
-    return preg_match('~^\./(\?[^\s\\\\]*)?$~', $back) && !str_contains($back, '//') ? $back : './';
+    return preg_match('~^\./(\?[^\s#\\\\]*)?(#[A-Za-z0-9_-]{1,40})?$~', $back) && !str_contains($back, '//') ? $back : './';
 }
 
 function admin_done(): void

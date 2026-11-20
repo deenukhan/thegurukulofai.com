@@ -132,7 +132,7 @@ return static function (array $d): array {
             m_person($p) . '<small class="sub">' . h($p['email']) . '</small>',
             m_whatsapp((string) $p['phone']),
             (int) $p['paid'] > 0 ? ui_pill((int) $p['paid'] > 1 ? 'Buyer ×' . (int) $p['paid'] : 'Buyer', 'good') : ui_pill('Lead', 'neutral'),
-            h(money((int) $p['spent'])),
+            (int) $p['paid'] > 0 ? h(money((int) $p['spent'])) : '<span class="muted">—</span>',
             $p['email_unsub_at'] ? ui_pill('Unsubscribed', 'warn') : ($p['marketing_optin'] ? ui_pill('Yes', 'good') : '<span class="muted">No</span>'),
             h(when($p['last_at'] ?? $p['created_at'])),
         ];

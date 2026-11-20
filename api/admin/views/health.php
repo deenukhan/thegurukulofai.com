@@ -15,7 +15,7 @@ return static function (array $d): array {
         ['label' => 'Needs fixing', 'value' => h(num($count['bad'])), 'tone' => $count['bad'] ? 'bad' : null, 'note' => $count['bad'] ? 'Sales or emails are affected' : 'Nothing broken'],
         ['label' => 'Worth a look', 'value' => h(num($count['warn'])), 'tone' => $count['warn'] ? 'warn' : null, 'note' => $count['warn'] ? 'Not urgent' : 'Nothing'],
         ['label' => 'Working', 'value' => h(num($count['ok']))],
-        ['label' => 'Database', 'value' => 'Connected', 'note' => 'Version 3'],
+        ['label' => 'Database', 'value' => 'Connected', 'note' => 'Version ' . TG_DB_VERSION],
     ]);
 
     $cards = [];

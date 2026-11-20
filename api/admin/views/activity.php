@@ -44,9 +44,9 @@ return static function (array $d): array {
     $pager = '';
     if ($pages > 1) {
         $pager = '<nav class="pager" aria-label="Pages">'
-            . ($page > 1 ? ui_button('Newer', admin_url(['view' => 'activity', 'who' => $who, 'p' => $page - 1 > 1 ? $page - 1 : '']), 'quiet', 'back') : '<span></span>')
+            . ($page > 1 ? ui_button('Newer', admin_url(['view' => 'activity', 'who' => $who, 'p' => $page - 1 > 1 ? $page - 1 : '']) . '#f-who', 'quiet', 'back') : '<span></span>')
             . '<span class="muted">Page ' . $page . ' of ' . $pages . '</span>'
-            . ($page < $pages ? ui_button('Older', admin_url(['view' => 'activity', 'who' => $who, 'p' => $page + 1]), 'quiet', 'arrow') : '<span></span>')
+            . ($page < $pages ? ui_button('Older', admin_url(['view' => 'activity', 'who' => $who, 'p' => $page + 1]) . '#f-who', 'quiet', 'arrow') : '<span></span>')
             . '</nav>';
     }
 

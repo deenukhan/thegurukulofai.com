@@ -62,13 +62,14 @@ function ui_card(string $title, string $body, array $o = []): string
 {
     $size = !empty($o['wide']) ? 'full' : ($o['size'] ?? 'half');
     $classes = 'card size-' . $size . (!empty($o['flush']) ? ' flush' : '');
+    $id = !empty($o['id']) ? ' id="' . h($o['id']) . '"' : '';
     $head = '';
     if ($title !== '' || !empty($o['action'])) {
         $head = '<header class="card-head"><div><h2>' . h($title) . '</h2>'
             . (!empty($o['sub']) ? '<p>' . h($o['sub']) . '</p>' : '') . '</div>'
             . ($o['action'] ?? '') . '</header>';
     }
-    return '<section class="' . $classes . '">' . $head . '<div class="card-body">' . $body . '</div></section>';
+    return '<section class="' . $classes . '"' . $id . '>' . $head . '<div class="card-body">' . $body . '</div></section>';
 }
 
 /** Cards on a six-column grid (see ui_card sizes) that drops to one column on small screens. */
@@ -201,11 +202,12 @@ function ui_facts(array $pairs): string
 /** Filter chips: one link per option, the current one marked. $base holds the other query values. */
 function ui_chips(array $options, string $current, string $param, array $base): string
 {
-    $html = '<nav class="chips" aria-label="Filter">';
+    // Each link ends in #f-<param>, so the page reopens at these chips, not at the top.
+    $html = '<nav class="chips" id="f-' . h($param) . '" aria-label="Filter">';
     foreach ($options as $key => $label) {
         $on = (string) $key === $current;
         $html .= '<a class="chip' . ($on ? ' on' : '') . '"' . ($on ? ' aria-current="true"' : '')
-            . ' href="' . h(admin_url([$param => $key] + $base)) . '">' . h($label) . '</a>';
+            . ' href="' . h(admin_url([$param => $key] + $base)) . '#f-' . h($param) . '">' . h($label) . '</a>';
     }
     return $html . '</nav>';
 }
@@ -219,7 +221,7 @@ function ui_search(string $value, array $base, string $placeholder): string
             $hidden .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
         }
     }
-    return '<form class="search" method="get" role="search">' . $hidden . icon('search')
+    return '<form class="search" id="search" action="./#search" method="get" role="search">' . $hidden . icon('search')
         . '<input type="search" name="q" value="' . h($value) . '" placeholder="' . h($placeholder) . '" aria-label="' . h($placeholder) . '">'
         . '</form>';
 }
@@ -237,12 +239,13 @@ function ui_button(string $label, string $href, string $kind = 'quiet', string $
 function ui_checks(array $checks): string
 {
     $icons = ['ok' => 'check', 'warn' => 'alert', 'bad' => 'x', 'info' => 'info'];
+    $here = (string) ($_GET['view'] ?? '');
     $html = '<ul class="checks">';
     foreach ($checks as $c) {
         $html .= '<li class="check check-' . h($c['level']) . '">' . icon($icons[$c['level']] ?? 'info')
             . '<div><p class="check-title">' . h($c['title']) . '</p>'
             . ($c['detail'] !== '' ? '<p class="check-detail">' . h($c['detail']) . '</p>' : '') . '</div>'
-            . (!empty($c['view']) ? '<a class="check-link" href="' . h(admin_url(['view' => $c['view']])) . '">Open' . icon('arrow') . '</a>' : '')
+            . (!empty($c['view']) && $c['view'] !== $here ? '<a class="check-link" href="' . h(admin_url(['view' => $c['view']])) . '">Open' . icon('arrow') . '</a>' : '')
             . '</li>';
     }
     return $html . '</ul>';
@@ -265,20 +268,24 @@ function ui_mail(array $mail): string
 }
 
 /** The current page's address, so a change can come back to it. */
+/** This page's address, without one-time steps (a confirm box, a download), to come back to after a change. */
 function admin_here(): string
 {
-    return admin_url($_GET);
+    return admin_url(array_diff_key($_GET, ['undo' => 1, 'resend' => 1, 'export' => 1]));
 }
 
 /**
  * A small form that changes something. $inner holds its fields (html). It always
- * carries the page token and comes back to the current page.
+ * carries the page token and comes back to the current page. $hidden['#'] names the
+ * element id to come back to (a row or card), so the page doesn't jump to the top.
  */
 function ui_post(string $action, array $hidden, string $inner, string $button, string $kind = 'quiet', string $class = ''): string
 {
+    $anchor = (string) ($hidden['#'] ?? '');
+    unset($hidden['#']);
     $fields = '<input type="hidden" name="action" value="' . h($action) . '">'
         . '<input type="hidden" name="csrf" value="' . h(admin_token()) . '">'
-        . '<input type="hidden" name="back" value="' . h(admin_here()) . '">';
+        . '<input type="hidden" name="back" value="' . h(admin_here() . ($anchor !== '' ? '#' . $anchor : '')) . '">';
     foreach ($hidden as $k => $v) {
         $fields .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
     }

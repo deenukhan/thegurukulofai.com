@@ -74,9 +74,12 @@ function tg_db_enabled(array $config): bool
  * Version 3 (dashboard) adds Razorpay fees and refunds, and the funnel's day counts.
  * Version 4 (dashboard settings) adds two-step sign-in, the settings history and add-on delivery.
  */
+/** The table layout version. Raise it with every change below. */
+const TG_DB_VERSION = 4;
+
 function tg_db_migrate(PDO $pdo, array $config): void
 {
-    $version = 4;
+    $version = TG_DB_VERSION;
     $marker = dirname($config['sent_dir']) . '/razorpay-db-v' . $version . '-'
         . substr(hash('sha256', ($config['db']['host'] ?? 'localhost') . '/' . $config['db']['name']), 0, 12);
     if (is_file($marker)) {

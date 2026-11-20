@@ -13,12 +13,12 @@ return static function (array $d): array {
     $source = static function (string $from): string {
         return $from === 'dashboard' ? ui_pill('Set here', 'info') : ui_pill('From the config file', 'neutral');
     };
-    $reset = static function (string $name, string $from): string {
+    $reset = static function (string $name, string $from, string $anchor): string {
         if ($from !== 'dashboard') {
             return '';
         }
         return '<details class="reset"><summary>Use the config file value instead</summary>'
-            . ui_post('setting_reset', ['name' => $name], ui_code_input(), 'Switch back', 'quiet', 'inline') . '</details>';
+            . ui_post('setting_reset', ['name' => $name, '#' => $anchor], ui_code_input(), 'Switch back', 'quiet', 'inline') . '</details>';
     };
 
     // ---- Zoom ----
@@ -33,12 +33,12 @@ return static function (array $d): array {
     ])
         . ($live ? '<p class="notice notice-bad">' . icon('alert') . 'A session is live now. Changing the link would send late joiners to a different room.</p>'
             : '<p class="notice">' . icon('info') . 'Change it after a session ends, ready for ' . h($next->format('D j M')) . '. Never during one.</p>')
-        . ui_post('setting_save', [],
+        . ui_post('setting_save', ['#' => 'zoom'],
             ui_field('New Zoom link', 'values[zoom.join_url]', 'type="url" required placeholder="https://us06web.zoom.us/j/…" autocomplete="off"')
             . ($live ? '<label class="tick"><input type="checkbox" name="live_ok" value="1"> I know a session is live and still want to change it</label>' : '')
             . ui_code_input(), 'Save Zoom link', 'primary', 'stack')
-        . $reset('zoom.join_url', $zoomFrom);
-    $zoomCard = ui_card('Zoom link', $zoomBody, ['sub' => 'Changes weekly. Buyers never see this link, only their personal join link.']);
+        . $reset('zoom.join_url', $zoomFrom, 'zoom');
+    $zoomCard = ui_card('Zoom link', $zoomBody, ['id' => 'zoom', 'sub' => 'Changes weekly. Buyers never see this link, only their personal join link.']);
 
     // ---- Community ----
     [$community, $communityFrom] = admin_setting($config, 'community_url');
@@ -48,11 +48,11 @@ return static function (array $d): array {
         ['Comes from', $source($communityFrom)],
         ['Used by', 'Payment confirmation email and thank-you page'],
     ])
-        . ui_post('setting_save', [],
+        . ui_post('setting_save', ['#' => 'community'],
             ui_field('New invite link', 'values[community_url]', 'type="url" required placeholder="https://chat.whatsapp.com/…" autocomplete="off"')
             . ui_code_input(), 'Save community link', 'primary', 'stack')
-        . $reset('community_url', $communityFrom);
-    $communityCard = ui_card('WhatsApp community link', $communityBody, ['sub' => 'Where every buyer goes after paying.']);
+        . $reset('community_url', $communityFrom, 'community');
+    $communityCard = ui_card('WhatsApp community link', $communityBody, ['id' => 'community', 'sub' => 'Where every buyer goes after paying.']);
 
     // ---- Coupon ----
     $coupon = admin_coupon($config);
@@ -67,15 +67,15 @@ return static function (array $d): array {
             ['Seat price with it', h(money($coupon['seat_paise']))],
             ['Comes from', $source($pausedFrom === 'dashboard' || $maxFrom === 'dashboard' ? 'dashboard' : 'config')],
         ])
-            . ui_post('setting_save', [],
+            . ui_post('setting_save', ['#' => 'coupon'],
                 '<label class="field"><span>Coupon</span><select name="values[coupon.paused]">'
                 . '<option value="0"' . ($paused ? '' : ' selected') . '>On: people can use it</option>'
                 . '<option value="1"' . ($paused ? ' selected' : '') . '>Paused: nobody can use it</option></select></label>'
                 . ui_field('Use limit', 'values[coupon.max_uses]', 'type="number" min="0" max="10000" required value="' . h((string) ($max ?? $coupon['used'])) . '"',
                     'Uses so far stay counted. Set it above ' . $coupon['used'] . ' to allow more.')
                 . ui_code_input(), 'Save coupon', 'primary', 'stack')
-            . $reset('coupon', $pausedFrom === 'dashboard' || $maxFrom === 'dashboard' ? 'dashboard' : 'config');
-        $couponCard = ui_card('Coupon', $couponBody, ['sub' => 'Pause it, or change how many times it can be used.']);
+            . $reset('coupon', $pausedFrom === 'dashboard' || $maxFrom === 'dashboard' ? 'dashboard' : 'config', 'coupon');
+        $couponCard = ui_card('Coupon', $couponBody, ['id' => 'coupon', 'sub' => 'Pause it, or change how many times it can be used.']);
     }
 
     // ---- Two-step sign-in ----
@@ -83,7 +83,7 @@ return static function (array $d): array {
         $securityCard = ui_card('Sign-in security', ui_facts([
             ['Two-step sign-in', ui_pill('Off', 'neutral') . ' <span class="muted">password only</span>'],
             ['Signs out after', '30 minutes idle'],
-        ]) . '<p class="notice">' . icon('info') . '<span>To turn it on, add <code>\'two_step\' => true</code> to the admin block of the private config. The next sign-in then sets it up with your phone.</span></p>');
+        ]) . '<p class="notice">' . icon('info') . '<span>To turn it on, add <code>\'two_step\' => true</code> to the admin block of the private config. The next sign-in then sets it up with your phone.</span></p>', ['id' => 'security']);
     } else {
         $auth = totp_record($pdo);
         $left = count(json_decode((string) ($auth['backup_codes'] ?? '[]'), true) ?: []);
@@ -93,9 +93,9 @@ return static function (array $d): array {
             ['Signs out after', '30 minutes idle'],
         ])
             . '<details class="reset"><summary>Make new backup codes</summary>'
-            . ui_post('backup_codes_new', [], '<p class="muted small">The old codes stop working.</p>' . ui_code_input(), 'Make new codes', 'quiet', 'stack') . '</details>'
+            . ui_post('backup_codes_new', ['#' => 'security'], '<p class="muted small">The old codes stop working.</p>' . ui_code_input(), 'Make new codes', 'quiet', 'stack') . '</details>'
             . '<p class="notice">' . icon('info') . 'Lost your phone and your backup codes? In hPanel, open phpMyAdmin and empty the admin_auth table. The next sign-in sets it up again.</p>';
-        $securityCard = ui_card('Sign-in security', $securityBody);
+        $securityCard = ui_card('Sign-in security', $securityBody, ['id' => 'security']);
     }
 
     // ---- History ----
@@ -114,14 +114,14 @@ return static function (array $d): array {
             continue;
         }
         $undo = $c['id'] == $undoId
-            ? ui_post('setting_undo', ['id' => $c['id']], ui_code_input(), 'Undo now', 'primary', 'inline')
-            : ui_button('Undo', admin_url(['view' => 'settings', 'undo' => $c['id']]) . '#history', 'quiet');
-        $list[] = [h(when($c['at'], 'j M, g:i A')), h($defs[$c['name']]['label']), $show($c['name'], $c['old_value']), $show($c['name'], $c['new_value']), $undo];
+            ? ui_post('setting_undo', ['id' => $c['id'], '#' => 'history'], ui_code_input(), 'Undo now', 'primary', 'inline')
+            : ui_button('Undo', admin_url(['view' => 'settings', 'undo' => $c['id']]) . '#c' . (int) $c['id'], 'quiet');
+        $list[] = ['<span class="anchor" id="c' . (int) $c['id'] . '"></span>' . h(when($c['at'], 'j M, g:i A')), h($defs[$c['name']]['label']), $show($c['name'], $c['old_value']), $show($c['name'], $c['new_value']), $undo];
     }
-    $history = ui_card('Change history', '<div id="history"></div>' . ui_table(
+    $history = ui_card('Change history', ui_table(
         [['When', 'muted nowrap'], ['Setting', ''], ['Was', ''], ['Now', ''], ['', 'num']],
         $list, ['empty' => 'No changes yet. Everything comes from the config file.']
-    ), ['wide' => true, 'flush' => true, 'sub' => 'Undo puts back the value from before that change.']);
+    ), ['wide' => true, 'id' => 'history', 'flush' => true, 'sub' => 'Undo puts back the value from before that change.']);
 
     return [
         'intro' => 'The few things that change often. Each change is live at once' . (ADMIN_TWO_STEP ? ' and needs a code from your authenticator app.' : '.'),

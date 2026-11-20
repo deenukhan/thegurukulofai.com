@@ -279,7 +279,7 @@ function admin_checks(PDO $pdo, array $config, int $now): array
         $add('warn', 'Automatic tasks', 'The 5-minute email task has not reported yet',
             'Reminders and the 9 AM summary need this cron job in hPanel. It reports after its first run.');
     } elseif ($now - (int) $worker['at'] > 20 * 60) {
-        $add('bad', 'Automatic tasks', 'The 5-minute email task stopped', 'Last run ' . ago((int) $worker['at'], $now) . '. Check the cron job in hPanel.');
+        $add('bad', 'Automatic tasks', 'The 5-minute email task stopped', 'Last run ' . ago((int) $worker['at'], $now) . '. Check the cron job in hPanel.', 'health');
     } else {
         $add('ok', 'Automatic tasks', 'The 5-minute email task is running', 'Last run ' . ago((int) $worker['at'], $now) . '.');
     }

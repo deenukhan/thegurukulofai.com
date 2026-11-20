@@ -26,7 +26,7 @@ require __DIR__ . '/lib/actions.php';
 $config = rp_config();
 date_default_timezone_set('Asia/Kolkata'); // the store keeps IST times
 
-const ADMIN_CSS_VERSION = 7;
+const ADMIN_CSS_VERSION = 10;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -325,8 +325,16 @@ if (is_array($flash)) {
     if (!empty($flash['codes'])) {
         $codes = '<ol class="codes">' . implode('', array_map(static fn($c) => '<li><code>' . h($c) . '</code></li>', $flash['codes'])) . '</ol>';
     }
-    $flashHtml = '<div class="flash flash-' . h($flash['tone']) . '" role="status">' . icon($flash['tone'] === 'good' ? 'check' : 'alert')
-        . '<div><p>' . h($flash['text']) . '</p>' . $codes . '</div></div>';
+    // Backup codes stay in the page so they can't fade away. Other messages float at
+    // the bottom of the screen, so they are seen even when the page reopens part-way down.
+    // Good news fades on its own; a problem stays until closed (a CSS-only checkbox).
+    $flashHtml = $codes !== ''
+        ? '<div class="flash flash-' . h($flash['tone']) . '" role="status">' . icon('alert')
+            . '<div><p>' . h($flash['text']) . '</p>' . $codes . '</div></div>'
+        : '<input type="checkbox" id="toast-close" class="toast-close" hidden>'
+            . '<div class="flash toast flash-' . h($flash['tone']) . '" role="' . ($flash['tone'] === 'good' ? 'status' : 'alert') . '">'
+            . icon($flash['tone'] === 'good' ? 'check' : 'alert') . '<div><p>' . h($flash['text']) . '</p></div>'
+            . '<label for="toast-close" class="toast-x" aria-label="Close">' . icon('x') . '</label></div>';
 }
 
 $back = $page['back'] ? '<a class="back" href="' . h($page['back'][1]) . '">' . icon('back') . h($page['back'][0]) . '</a>' : '';

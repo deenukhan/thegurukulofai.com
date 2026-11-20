@@ -58,7 +58,7 @@ return static function (array $d): array {
                 ($c['failed'] ?? 0) + ($c['expired'] ?? 0) > 0 ? ui_pill((string) (($c['failed'] ?? 0) + ($c['expired'] ?? 0)), 'bad') : '<span class="muted">0</span>'];
         }
         $reminderCard = ui_card('Reminder emails', ui_table([['Email', ''], ['Sent', 'num'], ['Waiting', 'num'], ['Failed', 'num']], $reminders),
-            ['size' => 'third', 'flush' => true, 'sub' => 'For this session']);
+            ['wide' => true, 'flush' => true, 'sub' => 'For this session']);
 
         $list = [];
         $mark = static function (?string $status): string {
@@ -73,12 +73,12 @@ return static function (array $d): array {
         foreach ($buyers as $b) {
             $r = $sent[$b['id']] ?? [];
             $list[] = [
-                m_person($b) . '<small class="sub">' . h($b['email']) . '</small>',
+                '<span class="anchor" id="b' . (int) $b['id'] . '"></span>' . m_person($b) . '<small class="sub">' . h($b['email']) . '</small>',
                 m_whatsapp((string) $b['phone']),
                 (int) $b['addon'] === 1
                     ? ($b['addon_sent_at'] !== null
-                        ? ui_post('addon_sent', ['booking_id' => $b['id'], 'sent' => '0'], ui_pill('Add-on sent', 'good') . '<small class="sub">' . h(when($b['addon_sent_at'], 'j M')) . '</small>', 'Undo', 'link', 'row-action')
-                        : ui_post('addon_sent', ['booking_id' => $b['id'], 'sent' => '1'], ui_pill('Add-on', 'info'), 'Mark sent', 'link', 'row-action'))
+                        ? ui_post('addon_sent', ['booking_id' => $b['id'], 'sent' => '0', '#' => 'b' . (int) $b['id']], ui_pill('Add-on sent', 'good') . '<small class="sub">' . h(when($b['addon_sent_at'], 'j M')) . '</small>', 'Undo', 'link', 'row-action')
+                        : ui_post('addon_sent', ['booking_id' => $b['id'], 'sent' => '1', '#' => 'b' . (int) $b['id']], ui_pill('Add-on', 'info'), 'Mark sent', 'link', 'row-action'))
                     : '<span class="muted">Ticket</span>',
                 '<span class="marks">' . $mark($r['remind24'] ?? null) . $mark($r['remind3'] ?? null) . $mark($r['remind15'] ?? null) . $mark($r['live'] ?? null) . '</span>'
                     . ($b['reminders_off_at'] ? '<small class="sub">Stopped reminders</small>' : ''),
@@ -88,8 +88,8 @@ return static function (array $d): array {
         $buyerCard = ui_card('Buyers', ui_table(
             [['Buyer', ''], ['WhatsApp', 'nowrap'], ['Bought', ''], ['Reminders: day · 3 h · 15 min · live', 'nowrap'], ['Join link', '']],
             $list, ['empty' => 'No seats sold for this session yet.']
-        ), ['size' => 'two-thirds', 'flush' => true, 'sub' => count($buyers) . ' paid',
-            'action' => $past && $toSend > 0 ? ui_post('addon_sent_session', ['session_at' => $at], '', 'Mark all ' . $toSend . ' add-ons sent', 'quiet') : '']);
+        ), ['wide' => true, 'id' => 'buyers', 'flush' => true, 'sub' => count($buyers) . ' paid',
+            'action' => $past && $toSend > 0 ? ui_post('addon_sent_session', ['session_at' => $at, '#' => 'buyers'], '', 'Mark all ' . $toSend . ' add-ons sent', 'quiet') : '']);
 
         $title = (new DateTimeImmutable($at, ist()))->format('l, j F Y');
         return [
@@ -148,6 +148,6 @@ return static function (array $d): array {
     $body .= ui_grid(ui_card('All sessions', ui_table(
         [['Session', 'nowrap'], ['', ''], ['Seats', 'num'], ['Add-ons', 'num'], ['Revenue', 'num'], ['Reminders sent', 'num'], ['Opened join link', 'num']],
         $list
-    ), ['wide' => true, 'flush' => true, 'sub' => 'Every Sunday, 3 PM IST. Open one to see its buyers.']));
+    ), ['wide' => true, 'flush' => true, 'sub' => 'Open one to see its buyers, add-ons and reminders.']));
     return ['body' => $body];
 };
