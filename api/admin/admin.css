@@ -378,6 +378,41 @@ td form.inline .code-input { width: 120px; }
 .code { margin: 0; padding: 12px 14px; overflow-x: auto; background: #FBFAF8; border: 1px solid var(--line); border-radius: 10px; font: 12.5px/1.6 var(--mono); }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid var(--line-soft); }
 
+/* ---------- Coupons: choice chips, the make form, copyable links ---------- */
+.choice { margin: 0; padding: 0; border: 0; min-width: 0; }
+.choice legend { margin-bottom: 6px; padding: 0; font-size: 13px; font-weight: 600; }
+.choice-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice label { position: relative; }
+.choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.choice span {
+  display: inline-block; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--slate); font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.choice span:hover { border-color: var(--axis); color: var(--ink); }
+.choice input:checked + span { background: var(--ink); border-color: var(--ink); color: #fff; }
+.choice input:focus-visible + span { box-shadow: 0 0 0 3px rgba(62, 207, 207, 0.35); }
+form.make { display: flex; flex-direction: column; gap: 16px; }
+form.make .btn { align-self: flex-start; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+/* Show only the fields the choices need. Without :has() support every field shows, and the server still decides. */
+.make:has(input[name="mode"][value="one"]:checked) .if-many,
+.make:has(input[name="mode"][value="many"]:checked) .if-one,
+.make:has(input[name="starts"][value="now"]:checked) .if-later,
+.make:has(input[name="ends"]:checked):not(:has(input[name="ends"][value="exact"]:checked)) .if-exact,
+.make:has(input[name="ends"][value="exact"]:checked) .if-length,
+.make:has(input[name="ends"][value="never"]:checked) .if-length { display: none; }
+.coupon-code { font: 600 13.5px/1.4 var(--mono); color: var(--ink); letter-spacing: 0.03em; white-space: nowrap; }
+.copy {
+  display: block; width: max-content; max-width: 100%; margin-top: 6px; padding: 3px 7px;
+  background: #FBFAF8; border: 1px dashed var(--axis); border-radius: 6px;
+  font: 11.5px/1.45 var(--mono); color: var(--slate); white-space: nowrap;
+  -webkit-user-select: all; user-select: all; cursor: text;
+}
+.row-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+/* On a phone the list scrolls sideways rather than squeezing every row tall. */
+.coupon-list table { min-width: 660px; }
+.row-actions form.inline { flex-wrap: nowrap; }
+
 /* ---------- Sign in ---------- */
 .is-login { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
 .login-card { width: 100%; max-width: 380px; padding: 32px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; }
@@ -393,6 +428,7 @@ td form.inline .code-input { width: 120px; }
 /* ---------- Smaller screens ---------- */
 @media (max-width: 1180px) {
   .main { padding: 28px 28px 40px; }
+  .copy { max-width: 230px; white-space: normal; word-break: break-all; }
   .size-third, .size-two-thirds { grid-column: span 3; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .split { grid-template-columns: 240px minmax(0, 1fr); }
@@ -427,6 +463,8 @@ td form.inline .code-input { width: 120px; }
 
 @media (max-width: 480px) {
   .codes { grid-template-columns: repeat(2, max-content); }
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .copy { max-width: 220px; }
   .bar-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
   .bar-track { grid-column: 1 / -1; grid-row: 2; }
   .facts > div { flex-direction: column; align-items: flex-start; gap: 2px; }

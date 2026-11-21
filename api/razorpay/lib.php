@@ -144,11 +144,12 @@ function rp_rate_limit(array $config, int $max, int $seconds, string $bucket = '
 }
 
 /**
- * Checks a coupon. The code lives only in the private config and never expires.
- * With max_uses set, a lock is held until the order exists so uses cannot race
- * past the cap, and a broken counter refuses the coupon. Without max_uses there
- * is no limit. Every failure gives the same answer. With $reserve false it only
- * checks, for the Apply button, and holds nothing.
+ * Checks a coupon: first the one in the private config, then the ones made on the
+ * dashboard (tg_coupon_claim in store.php, which takes a use in the database).
+ * The config coupon never expires. With max_uses set, a lock is held until the
+ * order exists so uses cannot race past the cap, and a broken counter refuses the
+ * coupon. Without max_uses there is no limit. Every failure gives the same answer.
+ * With $reserve false it only checks, for the Apply button, and holds nothing.
  */
 function rp_coupon_claim(array $config, string $code, bool $reserve = true): array
 {
@@ -157,12 +158,16 @@ function rp_coupon_claim(array $config, string $code, bool $reserve = true): arr
     $max    = isset($coupon['max_uses']) ? (int) $coupon['max_uses'] : null;
     $usable = $real !== '' && !str_starts_with($real, 'PASTE') && empty($coupon['paused']) && ($max === null || $max > 0);
     if (!$usable || !hash_equals($real, strtoupper(trim($code)))) {
-        rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
+        $made = function_exists('tg_coupon_claim') ? tg_coupon_claim($config, $code, $reserve) : null;
+        if ($made === null) {
+            rp_json(422, ['ok' => false, 'error' => 'invalid_coupon']);
+        }
+        return ['seat_paise' => $made['seat_paise'], 'file' => null, 'used' => 0, 'coupon_id' => $made['id']];
     }
 
     $seat = min((int) $config['price_paise'], max(100, (int) ($coupon['seat_paise'] ?? $config['price_paise'])));
     if ($max === null) {
-        return ['seat_paise' => $seat, 'file' => null, 'used' => 0];
+        return ['seat_paise' => $seat, 'file' => null, 'used' => 0, 'coupon_id' => null];
     }
 
     // Named after the code, so a new code starts with a fresh count.
@@ -181,9 +186,21 @@ function rp_coupon_claim(array $config, string $code, bool $reserve = true): arr
     if (!$reserve) {
         flock($file, LOCK_UN);
         fclose($file);
-        return ['seat_paise' => $seat, 'file' => null, 'used' => $used];
+        return ['seat_paise' => $seat, 'file' => null, 'used' => $used, 'coupon_id' => null];
     }
-    return ['seat_paise' => $seat, 'file' => $file, 'used' => $used];
+    return ['seat_paise' => $seat, 'file' => $file, 'used' => $used, 'coupon_id' => null];
+}
+
+/** Lets go of a claim without counting it, when Razorpay did not create the order. */
+function rp_coupon_release(array $config, array $claim): void
+{
+    if ($claim['file'] !== null) {
+        flock($claim['file'], LOCK_UN);
+        fclose($claim['file']);
+    }
+    if (!empty($claim['coupon_id']) && function_exists('tg_coupon_release')) {
+        tg_coupon_release($config, (int) $claim['coupon_id']);
+    }
 }
 
 /** Counts the use once the order exists, so a Razorpay failure does not burn one. */

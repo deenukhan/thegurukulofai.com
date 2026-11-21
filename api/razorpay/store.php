@@ -73,9 +73,10 @@ function tg_db_enabled(array $config): bool
  * Version 2 (Phase 2) adds the outbox and the join and stop fields on bookings.
  * Version 3 (dashboard) adds Razorpay fees and refunds, and the funnel's day counts.
  * Version 4 (dashboard settings) adds two-step sign-in, the settings history and add-on delivery.
+ * Version 5 (coupon builder) adds the coupons table and which coupon each booking used.
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 4;
+const TG_DB_VERSION = 5;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -233,6 +234,30 @@ function tg_db_migrate(PDO $pdo, array $config): void
         ip VARCHAR(45) NULL,
         KEY idx_at (at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 5: coupons made on the dashboard ----
+    $pdo->exec("CREATE TABLE IF NOT EXISTS coupons (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Capitals, no spaces',
+        discount_type VARCHAR(8) NOT NULL COMMENT 'amount (paise off the seat) or percent',
+        discount_value INT UNSIGNED NOT NULL,
+        starts_at DATETIME NULL COMMENT 'IST; NULL = from when it was made',
+        ends_at DATETIME NULL COMMENT 'IST; stops working at this exact second. NULL = never',
+        max_uses INT UNSIGNED NULL COMMENT 'NULL = no limit',
+        used INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Counted when the payment window opens',
+        paused TINYINT(1) NOT NULL DEFAULT 0,
+        batch CHAR(8) NULL COMMENT 'Codes made together share this',
+        note VARCHAR(80) NOT NULL DEFAULT '',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_code (code),
+        KEY idx_batch (batch)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $has->execute(['bookings', 'coupon_id']);
+    if ((int) $has->fetchColumn() === 0) {
+        tg_db_alter($pdo, "ALTER TABLE bookings ADD COLUMN coupon_id INT UNSIGNED NULL COMMENT 'Dashboard coupon used, if any', ADD KEY idx_coupon (coupon_id)");
+    }
 
     @file_put_contents($marker, (string) time());
 }
@@ -404,15 +429,16 @@ function tg_save_lead(array $config, array $lead): ?int
             'at'              => tg_ist(time()),
         ]);
         $pdo->prepare("INSERT INTO bookings
-                (contact_id, product, status, session_at, addon, coupon, amount_paise,
+                (contact_id, product, status, session_at, addon, coupon, coupon_id, amount_paise,
                  utm_source, utm_medium, utm_campaign, utm_content, source)
-            VALUES (?, ?, 'started', ?, ?, ?, ?, ?, ?, ?, ?, 'checkout')")
+            VALUES (?, ?, 'started', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'checkout')")
             ->execute([
                 $contactId,
                 $lead['product'],
                 tg_ist($lead['session_at']),
                 $lead['addon'] ? 1 : 0,
                 $lead['coupon'] ? 1 : 0,
+                $lead['coupon_id'] ?? null,
                 $lead['amount'],
                 $lead['utm']['utm_source'] ?? '',
                 $lead['utm']['utm_medium'] ?? '',
@@ -671,5 +697,105 @@ function tg_stop_reminders(array $config, int $bookingId): bool
     } catch (Throwable $e) {
         error_log('contact store: stop failed: ' . $e->getMessage());
         return false;
+    }
+}
+
+/* ---------- Coupons made on the dashboard ----------
+ * The config file's coupon keeps working (rp_coupon_claim in lib.php checks it first).
+ * These live in the coupons table so Deenu can make them without editing the config.
+ * The seat price is always worked out here from the server's price_paise.
+ */
+
+/** Codes are stored and compared in capitals with no spaces, so " diwali 50 " finds DIWALI50. */
+function tg_coupon_norm(string $code): string
+{
+    return strtoupper(preg_replace('/\s+/u', '', $code) ?? '');
+}
+
+/** A code that can exist: 4 to 24 capital letters, digits or hyphens, starting and ending with a letter or digit. */
+function tg_coupon_code_ok(string $code): bool
+{
+    return (bool) preg_match('/^[A-Z0-9][A-Z0-9-]{2,22}[A-Z0-9]$/', $code);
+}
+
+/**
+ * The seat price with a coupon, in paise. A percent comes off to the nearest rupee.
+ * Never above the full price, never below Razorpay's ₹1 minimum.
+ */
+function tg_coupon_seat(int $price, string $type, int $value): int
+{
+    $off = $type === 'percent' ? (int) round($price * max(0, min(100, $value)) / 10000) * 100 : max(0, $value);
+    return max(100, min($price, $price - $off));
+}
+
+/** Where a coupon stands at a moment: active, scheduled, paused, expired or used_up. */
+function tg_coupon_state(array $c, int $now): string
+{
+    $ist = new DateTimeZone('Asia/Kolkata');
+    $at = static fn(?string $t): ?int => $t === null ? null : (new DateTimeImmutable($t, $ist))->getTimestamp();
+    $start = $at($c['starts_at']);
+    $ends = $at($c['ends_at']);
+    return match (true) {
+        (int) $c['paused'] === 1                                          => 'paused',
+        $ends !== null && $now >= $ends                                   => 'expired',
+        $c['max_uses'] !== null && (int) $c['used'] >= (int) $c['max_uses'] => 'used_up',
+        $start !== null && $now < $start                                  => 'scheduled',
+        default                                                           => 'active',
+    };
+}
+
+/**
+ * Finds a dashboard coupon that works right now and returns ['id', 'seat_paise'], or null.
+ * With $reserve, one use is taken by the same statement that checks the limit, so two
+ * buyers at once can never both take the last use. Null too when the store is off or down.
+ */
+function tg_coupon_claim(array $config, string $code, bool $reserve): ?array
+{
+    $code = tg_coupon_norm($code);
+    $pdo = tg_coupon_code_ok($code) ? tg_db($config) : null;
+    if ($pdo === null) {
+        return null;
+    }
+    $now = tg_ist(rp_now($config));
+    $live = 'code = ? AND paused = 0 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at > ?)
+        AND (max_uses IS NULL OR used < max_uses)';
+    try {
+        if ($reserve) {
+            $take = $pdo->prepare("UPDATE coupons SET used = used + 1 WHERE {$live}");
+            $take->execute([$code, $now, $now]);
+            if ($take->rowCount() !== 1) {
+                return null;
+            }
+            $find = $pdo->prepare('SELECT id, discount_type, discount_value FROM coupons WHERE code = ?');
+            $find->execute([$code]);
+        } else {
+            $find = $pdo->prepare("SELECT id, discount_type, discount_value FROM coupons WHERE {$live}");
+            $find->execute([$code, $now, $now]);
+        }
+        $c = $find->fetch();
+    } catch (Throwable $e) {
+        error_log('contact store: coupon check failed: ' . $e->getMessage());
+        return null;
+    }
+    if (!$c) {
+        return null;
+    }
+    return [
+        'id'         => (int) $c['id'],
+        'seat_paise' => tg_coupon_seat((int) $config['price_paise'], (string) $c['discount_type'], (int) $c['discount_value']),
+    ];
+}
+
+/** Gives back a use taken by tg_coupon_claim, when Razorpay did not create the order. */
+function tg_coupon_release(array $config, int $id): void
+{
+    $pdo = tg_db($config);
+    if ($pdo === null) {
+        return;
+    }
+    try {
+        $pdo->prepare('UPDATE coupons SET used = used - 1 WHERE id = ? AND used > 0')->execute([$id]);
+    } catch (Throwable $e) {
+        error_log('contact store: coupon use not given back: ' . $e->getMessage());
     }
 }

@@ -31,6 +31,7 @@ function icon(string $name): string
         'search'   => '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
         'sliders'  => '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
         'send'     => '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
+        'tag'      => '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/>',
     ];
     return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
         . ($paths[$name] ?? '') . '</svg>';
@@ -271,7 +272,7 @@ function ui_mail(array $mail): string
 /** This page's address, without one-time steps (a confirm box, a download), to come back to after a change. */
 function admin_here(): string
 {
-    return admin_url(array_diff_key($_GET, ['undo' => 1, 'resend' => 1, 'export' => 1]));
+    return admin_url(array_diff_key($_GET, ['undo' => 1, 'resend' => 1, 'export' => 1, 'delete' => 1]));
 }
 
 /**
@@ -298,6 +299,26 @@ function ui_field(string $label, string $name, string $attrs = '', string $hint 
 {
     return '<label class="field"><span>' . h($label) . '</span><input name="' . h($name) . '" ' . $attrs . '>'
         . ($hint !== '' ? '<small>' . h($hint) . '</small>' : '') . '</label>';
+}
+
+/**
+ * A row of choice chips (radio buttons): pick one. $options maps value => label.
+ * A form can show or hide other fields by the choice with CSS alone (see .make in admin.css).
+ */
+function ui_choice(string $label, string $name, array $options, string $current): string
+{
+    $html = '<fieldset class="choice"><legend>' . h($label) . '</legend><div class="choice-opts">';
+    foreach ($options as $value => $text) {
+        $html .= '<label><input type="radio" name="' . h($name) . '" value="' . h($value) . '"'
+            . ((string) $value === $current ? ' checked' : '') . '><span>' . h($text) . '</span></label>';
+    }
+    return $html . '</div></fieldset>';
+}
+
+/** Text picked up whole with one click or tap, ready to copy (no JavaScript on this dashboard). */
+function ui_copy(string $text): string
+{
+    return '<span class="copy" title="Click once to select it all, then copy">' . h($text) . '</span>';
 }
 
 /** The authenticator code every settings change asks for. */

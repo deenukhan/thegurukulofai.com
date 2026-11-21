@@ -6,6 +6,7 @@
  * need a fresh code from the authenticator app, so a stolen session alone can't make them.
  */
 require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/coupons.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -158,6 +159,14 @@ function admin_handle_post(PDO $pdo, array $config): void
         // ---------- Resend a confirmation email ----------
         case 'resend_confirm':
             admin_resend_confirmation($pdo, $config, (int) ($_POST['booking_id'] ?? 0));
+            break;
+
+        // ---------- Coupons (lib/coupons.php) ----------
+        case 'coupon_create':
+        case 'coupon_pause':
+        case 'coupon_resume':
+        case 'coupon_delete':
+            admin_coupon_action($pdo, $config, $action);
             break;
     }
     admin_done();

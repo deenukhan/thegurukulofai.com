@@ -243,6 +243,7 @@ const CONFIG = {
         count('popup');
       }
       loadRazorpay().catch(() => {});
+      payBox.dispatchEvent(new Event('mc:open'));
     };
     $$('a.mc-cta[href="#pricing"], .js-pay').forEach((a) => {
       a.addEventListener('click', (e) => { e.preventDefault(); openPay(); });
@@ -259,6 +260,9 @@ const CONFIG = {
     const couponHint = couponNote.textContent;
     let couponApplied = '';
     if (query.has('coupon')) couponBox.hidden = false;
+    // A shared link (?coupon=CODE) fills the code in. It is applied when the pop-up first opens.
+    const linkCode = (query.get('coupon') || '').trim().slice(0, 40);
+    if (linkCode) couponInput.value = linkCode;
 
     const showCoupon = (text, state) => {
       couponNote.textContent = text;
@@ -305,6 +309,7 @@ const CONFIG = {
       showTotals();
       showCoupon(`Coupon applied. Your seat is now ₹${inr(couponSeat)}.`, 'on');
     };
+    if (linkCode) payBox.addEventListener('mc:open', () => { if (!couponApplied) applyCoupon(); }, { once: true });
     couponButton.addEventListener('click', applyCoupon);
     couponInput.addEventListener('input', () => clearCoupon());
     couponInput.addEventListener('keydown', (e) => {

@@ -23,6 +23,8 @@ return [
                    'intro' => 'Every email the system sends, and what happened to each one.'],
     'ads'      => ['label' => 'Ads',           'icon' => 'megaphone', 'group' => 'Growth',   'range' => true,
                    'intro' => 'Which ads bring paying buyers, and what they cost.'],
+    'coupons'  => ['label' => 'Coupons',       'icon' => 'tag',       'group' => 'Growth',   'range' => false,
+                   'intro' => 'Make discount codes, see how often each is used, and stop them.'],
     'settings' => ['label' => 'Settings',      'icon' => 'sliders',   'group' => 'System',   'range' => false,
                    'intro' => 'The few things that change often.'],
     'health'   => ['label' => 'System health', 'icon' => 'pulse',     'group' => 'System',   'range' => false,
