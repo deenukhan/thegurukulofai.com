@@ -17,6 +17,8 @@ return [
                    'intro' => 'From page visit to paid seat, and who stopped on the way.'],
     'sessions' => ['label' => 'Sessions',      'icon' => 'calendar',  'group' => 'Business', 'range' => false,
                    'intro' => 'Each Sunday class: seats, reminders and who opened their join link.'],
+    'recordings' => ['label' => 'Recordings', 'icon' => 'video',     'group' => 'Business', 'range' => false,
+                   'intro' => 'The recording link and passcode for each class, ready to share.'],
     'people'   => ['label' => 'People',        'icon' => 'users',     'group' => 'Business', 'range' => false,
                    'intro' => 'Everyone who filled the booking form, buyers and leads.'],
     'emails'   => ['label' => 'Emails',        'icon' => 'mail',      'group' => 'Messages', 'range' => false,

@@ -7,6 +7,7 @@
  */
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/coupons.php';
+require_once __DIR__ . '/recordings.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -167,6 +168,12 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'coupon_resume':
         case 'coupon_delete':
             admin_coupon_action($pdo, $config, $action);
+            break;
+
+        // ---------- Recordings (lib/recordings.php) ----------
+        case 'recording_add':
+        case 'recording_delete':
+            admin_recording_action($pdo, $config, $action);
             break;
     }
     admin_done();
