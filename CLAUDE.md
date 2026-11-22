@@ -390,6 +390,13 @@ emptying `test_numbers`.
 - **Join button only in the last two WhatsApp messages** (15-minute and "We're live"), Deenu's call on 23 Nov 2026.
   The confirmation, day-before (`mc_reminder_day_before`) and 3-hour (`mc_reminder_3_hours`) messages say the
   joining link comes at 2:45 PM instead. The emails still carry the join link as before.
+- **Checkout coupon (template `nudge`, `mc_checkout_coupon`, marketing):** someone who filled the pop-up but hasn't paid
+  20 minutes after their **last** try gets one WhatsApp with a personal coupon named after them (PRIYA200; PRIYA200B if
+  taken; FRIEND200 without English letters): ₹200 off, 2 hours from sending, 3 uses (a failed retry takes a use),
+  made at send time in coupon batch `c0c0c200`. One per person per session; never if they paid since (same email or
+  phone), said STOP, or the try is over 3 hours old. Off until switched on in Settings (`whatsapp.checkout_coupon`).
+  Constants `TG_NUDGE_*` in `whatsapp.php`; the amount and hours are also in the template wording. The WhatsApp tab
+  shows sent, paid with it and ₹ recovered. Checkout times are stamped from PHP's clock (`tg_save_lead`).
 - **Meta's template rules learned the hard way:** a body can't start or end on a `{{n}}` (the 3-hour one was refused for ending "…at {{4}}."), and buttons can't link to WhatsApp. Refusals show Meta's detailed reason in the Activity log.
 - **Who gets them:** paid buyers with a consent version (they saw the pop-up wording), a usable number,
   no STOP, and no "no more reminders" click. While `test_numbers` in the config has numbers, only those

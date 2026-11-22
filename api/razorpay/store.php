@@ -462,8 +462,8 @@ function tg_save_lead(array $config, array $lead): ?int
         ]);
         $pdo->prepare("INSERT INTO bookings
                 (contact_id, product, status, session_at, addon, coupon, coupon_id, amount_paise,
-                 utm_source, utm_medium, utm_campaign, utm_content, source)
-            VALUES (?, ?, 'started', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'checkout')")
+                 utm_source, utm_medium, utm_campaign, utm_content, source, created_at)
+            VALUES (?, ?, 'started', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'checkout', ?)")
             ->execute([
                 $contactId,
                 $lead['product'],
@@ -476,6 +476,8 @@ function tg_save_lead(array $config, array $lead): ?int
                 $lead['utm']['utm_medium'] ?? '',
                 $lead['utm']['utm_campaign'] ?? '',
                 $lead['utm']['utm_content'] ?? '',
+                // From PHP, not the database clock, so the test clock moves the checkout coupon's 20 minutes too.
+                tg_ist(rp_now($config) ?: time()),
             ]);
         $bookingId = (int) $pdo->lastInsertId();
         $pdo->commit();

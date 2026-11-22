@@ -84,7 +84,7 @@ function admin_handle_post(PDO $pdo, array $config): void
             $changed = [];
             foreach ($clean as $name => $value) {
                 $current = admin_setting($config, $name)[0];
-                if (in_array($name, ['coupon.paused', 'whatsapp.paused'], true) ? (bool) $current === $value : $current === $value) {
+                if (in_array($name, ['coupon.paused', 'whatsapp.paused', 'whatsapp.checkout_coupon'], true) ? (bool) $current === $value : $current === $value) {
                     continue;
                 }
                 if (!admin_setting_write($pdo, $config, $name, $value)) {
@@ -244,6 +244,16 @@ function admin_wa_test(PDO $pdo, array $config, string $template, string $to): v
         return;
     }
     $sample = ['name' => 'Priya Sharma', 'session_at' => rp_next_session(time())->format('Y-m-d H:i:s'), 'join_token' => 'sample0000000000000000ab'];
+    if ($template === 'nudge') {
+        // A real coupon, so the test's button works: PRIYA200 (or PRIYA200B...), 2 hours, Checkout coupons batch.
+        $coupon = tg_nudge_coupon($pdo, $sample['name'], null, time());
+        if ($coupon === null) {
+            admin_flash('bad', 'Not sent: the test coupon could not be made.');
+            return;
+        }
+        $sample['coupon_code'] = $coupon['code'];
+        $sample['coupon_until'] = $coupon['until'];
+    }
     try {
         $result = tg_wa_send($config, $template, $to, tg_wa_values($config, $template, $sample));
     } catch (Throwable $e) {

@@ -26,6 +26,20 @@
  */
 const TG_WA_FOOTER = 'Reply STOP to stop these messages';
 
+/**
+ * Checkout coupon (Deenu, 23 Nov 2026): someone who filled the pop-up but has not paid
+ * 20 minutes after their last try gets a personal ₹200-off coupon on WhatsApp, named
+ * after them (PRIYA200), working for 2 hours, with the link that applies it. One per
+ * person per session. Switched on and off on the dashboard's Settings page.
+ * The amount and hours are also written into the template's wording, so change both together.
+ */
+const TG_NUDGE_AFTER = 1200;          // seconds after the last unpaid try
+const TG_NUDGE_LOOKBACK = 3 * 3600;   // tries older than this are left alone (and the row expires)
+const TG_NUDGE_VALID = 7200;          // the coupon works for this long after it is made
+const TG_NUDGE_OFF_PAISE = 20000;     // ₹200 off the seat
+const TG_NUDGE_MAX_USES = 3;          // a use is taken when the payment window opens, so a failed retry doesn't burn it
+const TG_NUDGE_BATCH = 'c0c0c200';    // every checkout coupon shares this batch, so they show as one row on Coupons
+
 function tg_wa_templates(array $config): array
 {
     $site = tg_site($config);
@@ -77,6 +91,17 @@ function tg_wa_templates(array $config): array
             'body'    => "Hi {{1}}, we start in 15 minutes. Tap the button below to join the masterclass on Zoom.",
             'example' => ['Priya'],
             'buttons' => [$join],
+        ],
+        // Marketing on purpose: it carries a discount, so Meta would move it there anyway.
+        'nudge' => [
+            'name'     => 'mc_checkout_coupon',
+            'label'    => 'Checkout coupon',
+            'when'     => '20 minutes after an unpaid checkout',
+            'category' => 'MARKETING',
+            'body'     => "Hi {{1}}, your booking for the {{2}} didn't go through, so here is a personal coupon for you: {{3}} for ₹200 off.\n\n"
+                . "It works for the next 2 hours, until {{4}}. Tap below and it is already applied.",
+            'example'  => ['Priya', $event, 'PRIYA200', '8:40 PM IST'],
+            'buttons'  => [['text' => 'Complete my booking', 'url' => $site . '/masterclass/?coupon={{1}}', 'example' => $site . '/masterclass/?coupon=PRIYA200']],
         ],
         // mc_class_live was moved to "marketing" by Meta (23 Nov 2026), so this plainer
         // wording goes under a new name. Approved or reviewed wording can't be edited.
@@ -149,6 +174,72 @@ function tg_wa_allowed(array $config, string $number): bool
 {
     $test = tg_wa_test_numbers($config);
     return $test === [] || in_array($number, $test, true);
+}
+
+/** The checkout coupon is off until Deenu switches it on (Settings page, or `checkout_coupon` in the config). */
+function tg_nudge_on(array $config): bool
+{
+    return !empty($config['whatsapp']['checkout_coupon']);
+}
+
+/** "PRIYA200" from "Priya Sharma": the first name's English letters, then the rupees off. FRIEND200 if none. */
+function tg_nudge_code_base(string $name): string
+{
+    $first = strtoupper(preg_replace('/[^A-Za-z]/', '', explode(' ', trim($name))[0] ?? '') ?? '');
+    if (strlen($first) < 2) {
+        $first = 'FRIEND';
+    }
+    return substr($first, 0, 12) . (int) (TG_NUDGE_OFF_PAISE / 100);
+}
+
+/**
+ * The personal coupon for one nudge: found again if it was made already (a retry), or
+ * made now, working for TG_NUDGE_VALID from now. A code already taken gets a letter
+ * (PRIYA200B, PRIYA200C, ...). Returns ['code', 'until' (unix)], or null if it can't be made.
+ * $bookingId null is a dashboard test message.
+ */
+function tg_nudge_coupon(PDO $pdo, string $name, ?int $bookingId, int $now): ?array
+{
+    $ist = new DateTimeZone('Asia/Kolkata');
+    $note = $bookingId === null ? 'Checkout coupon, test message' : 'Checkout coupon, booking ' . $bookingId;
+    if ($bookingId !== null) {
+        $find = $pdo->prepare('SELECT code, ends_at FROM coupons WHERE batch = ? AND note = ? ORDER BY id LIMIT 1');
+        $find->execute([TG_NUDGE_BATCH, $note]);
+        if ($c = $find->fetch()) {
+            return ['code' => (string) $c['code'], 'until' => (new DateTimeImmutable((string) $c['ends_at'], $ist))->getTimestamp()];
+        }
+    }
+    $base = tg_nudge_code_base($name);
+    $until = $now + TG_NUDGE_VALID;
+    $insert = $pdo->prepare("INSERT IGNORE INTO coupons (code, discount_type, discount_value, starts_at, ends_at, max_uses, batch, note)
+        VALUES (?, 'amount', ?, NULL, ?, ?, ?, ?)");
+    $tries = array_merge([''], range('B', 'Z'));
+    for ($i = 0; $i < 6; $i++) {
+        $tries[] = strtoupper(substr(bin2hex(random_bytes(2)), 0, 3));
+    }
+    foreach ($tries as $suffix) {
+        $code = $base . $suffix;
+        $insert->execute([$code, TG_NUDGE_OFF_PAISE, tg_ist($until), TG_NUDGE_MAX_USES, TG_NUDGE_BATCH, $note]);
+        if ($insert->rowCount() === 1) {
+            return ['code' => $code, 'until' => $until];
+        }
+    }
+    return null;
+}
+
+/**
+ * Has this person got a seat since their unpaid try? True if they (by email, or anyone
+ * with the same phone number) paid after it, or already hold a seat for a session
+ * that hasn't happened yet. Then no coupon.
+ */
+function tg_nudge_paid_since(PDO $pdo, int $bookingId, int $now): bool
+{
+    $q = $pdo->prepare("SELECT COUNT(*) FROM bookings b JOIN contacts c ON c.id = b.contact_id
+        JOIN contacts pc ON pc.id = c.id OR (c.phone <> '' AND pc.phone = c.phone)
+        JOIN bookings p ON p.contact_id = pc.id AND p.status = 'paid' AND p.product = b.product
+        WHERE b.id = ? AND (p.paid_at >= b.created_at OR p.session_at > ?)");
+    $q->execute([$bookingId, tg_ist($now)]);
+    return (int) $q->fetchColumn() > 0;
 }
 
 /**
@@ -268,6 +359,12 @@ function tg_wa_values(array $config, string $template, array $row): array
             return ['body' => [$first, $event, $when['time'] . ' IST', $early], 'buttons' => []];
         case 'live':
             return ['body' => [$first, $event], 'buttons' => [$token]];
+        case 'nudge':
+            // The worker puts the real coupon in the row (tg_nudge_coupon); previews use a sample.
+            $code = (string) ($row['coupon_code'] ?? tg_nudge_code_base((string) ($row['name'] ?? '')));
+            $until = (int) ($row['coupon_until'] ?? (rp_now($config) + TG_NUDGE_VALID));
+            $time = (new DateTimeImmutable('@' . $until))->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('g:i A') . ' IST';
+            return ['body' => [$first, $event, $code, $time], 'buttons' => [$code]];
         default:
             return ['body' => [$first], 'buttons' => [$token]];
     }
@@ -374,7 +471,7 @@ function tg_wa_template_request(array $config, array $t): array
     return [
         'name'       => $t['name'],
         'language'   => (string) ($config['whatsapp']['language'] ?? 'en'),
-        'category'   => 'UTILITY',
+        'category'   => (string) ($t['category'] ?? 'UTILITY'),
         'components' => [
             ['type' => 'BODY', 'text' => $t['body'], 'example' => ['body_text' => [$t['example']]]],
             ['type' => 'FOOTER', 'text' => TG_WA_FOOTER],

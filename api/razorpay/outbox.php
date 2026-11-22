@@ -17,6 +17,10 @@
  * WhatsApp too, as rows with channel 'whatsapp'. Email and WhatsApp fail separately,
  * so a WhatsApp problem never holds up an email, and the other way round.
  *
+ * The checkout coupon (template 'nudge') also rides along when switched on: someone who
+ * filled the pop-up but hasn't paid 20 minutes after their last try gets one WhatsApp
+ * with a personal coupon, made at the moment it is sent. See TG_NUDGE_* in whatsapp.php.
+ *
  * All times are worked out here in PHP and passed to SQL, never SQL's NOW(),
  * so the test clock (`test_now`) moves everything together.
  */
@@ -100,6 +104,30 @@ function tg_outbox_run(array $config, int $now): array
         }
     }
 
+    // 2b. Checkout coupon. Only each person's latest try counts, only once it is 20
+    // minutes old, and only tries from the last few hours (switching it on never
+    // reaches back to old leads). One per person per session, by the dedupe key.
+    if ($wa && tg_nudge_on($config)) {
+        $unpaid = $pdo->prepare("SELECT b.id, b.contact_id, b.created_at, b.session_at, c.phone, c.consent_version, c.wa_optout_at
+            FROM bookings b JOIN contacts c ON c.id = b.contact_id
+            WHERE b.product = ? AND b.status IN ('started', 'failed') AND b.created_at <= ? AND b.created_at > ?
+              AND NOT EXISTS (SELECT 1 FROM bookings n WHERE n.contact_id = b.contact_id AND n.id > b.id)");
+        $unpaid->execute([$config['product'], tg_ist($now - TG_NUDGE_AFTER), tg_ist($now - TG_NUDGE_LOOKBACK)]);
+        foreach ($unpaid->fetchAll() as $b) {
+            $number = tg_wa_number((string) $b['phone']);
+            if ($number === null || $b['consent_version'] === null || $b['wa_optout_at'] !== null
+                || !tg_wa_allowed($config, $number) || tg_wa_opted_out($pdo, $number)
+                || tg_nudge_paid_since($pdo, (int) $b['id'], $now)) {
+                continue;
+            }
+            $tried = tg_unix($b['created_at']);
+            $session = $b['session_at'] !== null ? gmdate('YmdHi', tg_unix($b['session_at'])) : 'none';
+            $planWa->execute(['wa:nudge:c' . $b['contact_id'] . ':' . $session, 'nudge', $b['id'], $number,
+                tg_ist($tried + TG_NUDGE_AFTER), tg_ist($tried + TG_NUDGE_LOOKBACK)]);
+            $sum['planned'] += $planWa->rowCount() === 1 ? 1 : 0;
+        }
+    }
+
     // 3. Deenu's summary, at 9 AM IST, sendable until noon.
     $nine = (new DateTimeImmutable('@' . $now))->setTimezone(new DateTimeZone('Asia/Kolkata'))->setTime(9, 0);
     if ($nine->getTimestamp() + 3 * 3600 > $now) {
@@ -110,9 +138,23 @@ function tg_outbox_run(array $config, int $now): array
     // 4. Cancel reminders that should no longer go, and drop those whose time passed.
     $cancel = $pdo->prepare("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id
         SET o.status = 'cancelled', o.last_error = 'Buyer stopped reminders, or the booking is no longer paid'
-        WHERE o.status = 'queued' AND (b.reminders_off_at IS NOT NULL OR b.status <> 'paid')");
+        WHERE o.status = 'queued' AND o.template <> 'nudge' AND (b.reminders_off_at IS NOT NULL OR b.status <> 'paid')");
     $cancel->execute();
     $sum['cancelled'] = $cancel->rowCount();
+    if (!tg_nudge_on($config)) {
+        $off = $pdo->prepare("UPDATE outbox SET status = 'cancelled', last_error = 'Checkout coupon switched off', alerted_at = ?
+            WHERE template = 'nudge' AND status = 'queued'");
+        $off->execute([$at]);
+        $sum['cancelled'] += $off->rowCount();
+    }
+    // A checkout coupon is for someone who hasn't paid: once they have, it never goes.
+    $cancelNudge = $pdo->prepare("UPDATE outbox SET status = 'cancelled', last_error = 'Paid in the meantime' WHERE id = ? AND status = 'queued'");
+    foreach ($pdo->query("SELECT id, booking_id FROM outbox WHERE template = 'nudge' AND status = 'queued'")->fetchAll() as $n) {
+        if (tg_nudge_paid_since($pdo, (int) $n['booking_id'], $now)) {
+            $cancelNudge->execute([$n['id']]);
+            $sum['cancelled'] += $cancelNudge->rowCount();
+        }
+    }
     $cancelWa = $pdo->prepare("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id JOIN contacts c ON c.id = b.contact_id
         SET o.status = 'cancelled', o.last_error = 'Replied STOP on WhatsApp'
         WHERE o.channel = 'whatsapp' AND o.status = 'queued' AND c.wa_optout_at IS NOT NULL");
@@ -176,6 +218,15 @@ function tg_outbox_run(array $config, int $now): array
         $messageId = null;
         $permanent = false;
         try {
+            if ($channel === 'whatsapp' && $row['template'] === 'nudge') {
+                // Made at the last moment, so the 2 hours start when the message goes.
+                $coupon = tg_nudge_coupon($pdo, (string) $row['name'], (int) $row['booking_id'], $now);
+                if ($coupon === null) {
+                    throw new RuntimeException('the personal coupon could not be made');
+                }
+                $row['coupon_code'] = $coupon['code'];
+                $row['coupon_until'] = $coupon['until'];
+            }
             if ($channel === 'whatsapp') {
                 $sent = tg_wa_send($config, $row['template'], $row['to_addr'], tg_wa_values($config, $row['template'], $row));
                 $ok = $sent['ok'];

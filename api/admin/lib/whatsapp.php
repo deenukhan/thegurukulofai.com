@@ -74,7 +74,8 @@ function admin_wa_template_summary(array $config, ?array $states): array
         $out['approved'] += $state === 'APPROVED' ? 1 : 0;
         $out['pending'] += in_array($state, ['PENDING', 'IN_APPEAL'], true) ? 1 : 0;
         $out['rejected'] += in_array($state, ['REJECTED', 'PAUSED', 'DISABLED', 'FLAGGED'], true) ? 1 : 0;
-        $out['recategorised'] += $s['category'] !== '' && strtoupper($s['category']) !== 'UTILITY' ? 1 : 0;
+        $out['recategorised'] += $s['category'] !== '' && strtoupper($s['category']) !== strtoupper($t['category'] ?? 'UTILITY') ? 1 : 0;
+        $out['nudge_ready'] = ($out['nudge_ready'] ?? false) || ($t['name'] === tg_wa_templates($config)['nudge']['name'] && $state === 'APPROVED');
     }
     return $out;
 }
@@ -110,6 +111,9 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
     }
     if ($t['recategorised'] > 0) {
         $add('warn', 'WhatsApp', 'Meta moved a template out of "utility"', 'Each of those messages now costs the marketing rate. See the WhatsApp tab.', 'emails');
+    }
+    if (tg_nudge_on($config) && $meta['templates'] !== null && empty($t['nudge_ready'])) {
+        $add('warn', 'WhatsApp', 'The checkout coupon is on, but Meta has not approved its template', 'No coupons go out until it is approved. See the WhatsApp tab.', 'emails');
     }
     if (admin_wa_needs_register($meta['phone'])) {
         $add('bad', 'WhatsApp', 'The WhatsApp number is not registered for the Cloud API', 'Register it once on the WhatsApp tab.', 'emails');
@@ -237,12 +241,14 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
         if ($s && in_array(strtoupper($s['status']), ['REJECTED', 'PAUSED', 'DISABLED'], true)) {
             $note .= '<small class="sub">Needs new wording under a new name. Ask Claude.</small>';
         }
-        $cat = $s && $s['category'] !== '' && strtoupper($s['category']) !== 'UTILITY' ? ' ' . ui_pill(ucfirst(strtolower($s['category'])), 'warn') : '';
+        $expected = strtoupper($t['category'] ?? 'UTILITY');
+        $cat = $s && $s['category'] !== '' && strtoupper($s['category']) !== $expected ? ' ' . ui_pill(ucfirst(strtolower($s['category'])), 'warn')
+            : ($expected !== 'UTILITY' ? ' ' . ui_pill(ucfirst(strtolower($expected)), 'neutral') : '');
         $rows[] = [h($t['label']) . '<small class="sub">' . h($t['when']) . ' · <code>' . h($t['name']) . '</code></small>', admin_wa_state_pill($s) . $cat . $note];
     }
     $submit = $ready && !empty($meta['ok']) && $sum['missing'] > 0
         ? ui_post('wa_submit', ['#' => 'wa-templates'], '<p class="muted small">Sends the ' . $sum['missing'] . ' missing template' . ($sum['missing'] === 1 ? '' : 's')
-            . ' to Meta for review as "utility". Ones already there are left alone.</p>', 'Submit to Meta', 'primary', 'stack')
+            . ' to Meta for review: booking messages as "utility", the checkout coupon as "marketing". Ones already there are left alone.</p>', 'Submit to Meta', 'primary', 'stack')
         : '';
     $templateCard = ui_card('Templates', ui_table([['Message', ''], ['Status', '']], $rows) . $submit,
         ['id' => 'wa-templates', 'flush' => $submit === '', 'sub' => 'Meta must approve each one before it can be sent.']);
@@ -283,5 +289,42 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
         $testCard = ui_card('Send a test', ui_empty('No test numbers', 'Add your own number to test_numbers in the whatsapp block of the private config.'), ['id' => 'wa-test']);
     }
 
-    return $html . ui_grid($connection, $templateCard, $previewCard, $testCard);
+    return $html . ui_grid($connection, $templateCard, $previewCard, $testCard, admin_nudge_card($pdo, $config, $now));
+}
+
+/** The checkout coupon: is it on, what it brought back, and the latest ones sent. */
+function admin_nudge_card(PDO $pdo, array $config, int $now): string
+{
+    $month = tg_ist($now - 30 * 86400);
+    $k = row($pdo, "SELECT COALESCE(SUM(status = 'sent'), 0) AS sent, COALESCE(SUM(read_at IS NOT NULL), 0) AS seen
+        FROM outbox WHERE template = 'nudge' AND due_at >= ?", [$month]);
+    $won = row($pdo, "SELECT COUNT(*) AS n, COALESCE(SUM(p.amount_paise), 0) AS paise FROM bookings p JOIN coupons cp ON cp.id = p.coupon_id
+        WHERE cp.batch = ? AND p.status = 'paid' AND p.paid_at >= ?", [TG_NUDGE_BATCH, $month]);
+    $on = tg_nudge_on($config);
+    $facts = ui_facts([
+        ['Status', ($on ? ui_pill('On', 'good') : ui_pill('Off', 'neutral')) . ' <a class="row-link" href="' . h(admin_url(['view' => 'settings'])) . '#whatsapp">Change in Settings</a>'],
+        ['Sent, last 30 days', h(num((int) $k['sent'])) . ' <span class="muted">· ' . h(num((int) $k['seen'])) . ' read</span>'],
+        ['Paid with the coupon', h(num((int) $won['n'])) . ' <span class="muted">· ' . h(money((int) $won['paise'])) . ' recovered</span>'],
+    ]);
+    $list = rows($pdo, "SELECT o.status, o.due_at, o.sent_at, o.read_at, o.last_error, c.name, cp.code,
+            (SELECT COUNT(*) FROM bookings p WHERE p.coupon_id = cp.id AND p.status = 'paid') AS paid
+        FROM outbox o JOIN bookings b ON b.id = o.booking_id JOIN contacts c ON c.id = b.contact_id
+        LEFT JOIN coupons cp ON cp.batch = ? AND cp.note = CONCAT('Checkout coupon, booking ', o.booking_id)
+        WHERE o.template = 'nudge' ORDER BY o.id DESC LIMIT 15", [TG_NUDGE_BATCH]);
+    $rows = [];
+    foreach ($list as $r) {
+        $state = (int) $r['paid'] > 0 ? ui_pill('Paid', 'good')
+            : ($r['read_at'] !== null ? ui_pill('Read', 'info')
+            : match ($r['status']) {
+                'sent'              => ui_pill('Sent', 'neutral'),
+                'queued', 'sending' => ui_pill('Waiting', 'neutral'),
+                'cancelled'         => ui_pill('Not sent', 'neutral') . '<small class="sub">' . h((string) $r['last_error']) . '</small>',
+                default             => ui_pill('Failed', 'bad') . '<small class="sub">' . h((string) $r['last_error']) . '</small>',
+            });
+        $rows[] = [h(tg_first_name((string) $r['name'])) . '<small class="sub">' . h(when($r['sent_at'] ?? $r['due_at'])) . '</small>',
+            $r['code'] !== null && $r['status'] === 'sent' ? '<code>' . h($r['code']) . '</code>' : '<span class="muted">—</span>', $state];
+    }
+    return ui_card('Checkout coupon', $facts . ui_table([['Person', ''], ['Coupon', ''], ['Result', '']], $rows,
+        ['empty' => 'No checkout coupons sent yet.']), ['id' => 'wa-nudge', 'size' => 'full',
+        'sub' => 'A personal ₹' . (int) (TG_NUDGE_OFF_PAISE / 100) . '-off coupon on WhatsApp, 20 minutes after an unpaid checkout.']);
 }
