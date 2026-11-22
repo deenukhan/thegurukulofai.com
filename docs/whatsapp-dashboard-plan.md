@@ -11,7 +11,7 @@ Where the plan disagrees with the critic, the reason is under "Risks and decisio
 
 | Phase | What | Schema | Status |
 |---|---|---|---|
-| 1 | Inbox | v7 | not started |
+| 1 | Inbox | v7 | built (see "Phase 1 as built") |
 | 2 | Templates | v8 | not started |
 | 3 | Broadcasts | v9 | not started |
 | 4 | Automations | v10 | not started |
@@ -427,6 +427,28 @@ messages" link instead. Opening it sets `unread = 0` (see decisions). Back link 
 
 Inbox suite all green; baselines hold; php -l clean; pages clean; CLAUDE.md, privacy policy and this plan's
 status updated; commit "add whatsapp inbox with 24-hour replies and quick replies".
+
+### Phase 1 as built (builder's notes, 23 Nov 2026)
+
+Where the code differs from the text above, or settles something it left open:
+- **`tg_wa_apply_stop()`** (whatsapp.php) holds the STOP/START effects on contacts and outbox rows, shared by the
+  webhook and the dashboard's manual STOP/START, so both behave the same. Phase 3 adds its `source` split there.
+- **Reactions and system notices** (`skip` kinds) are recorded in `wa_inbound` as before but not stored as messages,
+  not counted unread and do not move `last_in_at`. Only real messages open the 24-hour window.
+- **"Waiting for you"**: not marked done, their last message (by `wa_inbound`, so backfilled rows count) is a real
+  reply under 24 hours old, and no reply by hand or automatic answer (not failed) came after it. STOP and START are
+  never "waiting". `last_out_at` is any message we sent, booking messages included.
+- **Health warning** fires for people waiting 12 to 24 hours only; after 24 hours the free window is gone, so it
+  would never clear by itself.
+- **Chips**: "All" shows every conversation, done ones included; "Done" shows only those.
+- **Template send order**: the purpose rule (switches, STOP, consent or messaged us) is checked before Meta's
+  approval, so the reason shown is the one that matters first.
+- **`admin_here()`** also drops `ask` (the ask-first STOP card) and `eqr` (editing a quick reply on the list).
+- **The conversation box** opens scrolled to the newest message with CSS alone (`flex-direction: column-reverse`).
+- **`tg_wa_send_text_result()`** also returns Meta's error `code`, which the reply action uses to spot 131047.
+- **Existing kit changes**: whatsapp.py "Submit to Meta" now expects six missing templates (with
+  `gurukul_follow_up`), and "messages without buttons" includes `reopen`. No other existing check changed.
+- Test suite `dashboard_inbox.py`: 110 checks.
 
 ---
 

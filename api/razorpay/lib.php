@@ -33,7 +33,8 @@ function rp_config(): array
  * The few settings Deenu can change from the dashboard's Settings page. Each one is
  * a dotted path into the config. Secrets, prices and the schedule are never here.
  */
-const RP_DASHBOARD_SETTINGS = ['zoom.join_url', 'community_url', 'coupon.paused', 'coupon.max_uses', 'whatsapp.paused', 'whatsapp.checkout_coupon'];
+const RP_DASHBOARD_SETTINGS = ['zoom.join_url', 'community_url', 'coupon.paused', 'coupon.max_uses', 'whatsapp.paused', 'whatsapp.checkout_coupon',
+    'whatsapp.forward_replies'];
 
 function rp_settings_path(array $config): string
 {

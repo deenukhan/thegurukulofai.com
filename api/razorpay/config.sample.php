@@ -117,7 +117,8 @@ return [
         'language'        => 'en',
         // While this list has numbers in it, ONLY these numbers get messages. Empty it to go live.
         'test_numbers'    => ['91PASTE_YOUR_OWN_NUMBER'],
-        // Replies to the business number are emailed to mail_notify. false turns that off.
+        // Replies to the business number show in the dashboard's Inbox, and a copy is emailed
+        // to mail_notify. false turns the emails off. The Inbox page can also switch it.
         'forward_replies' => true,
     ],
 

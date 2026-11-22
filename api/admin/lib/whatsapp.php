@@ -92,6 +92,13 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
         $add('warn', 'WhatsApp', 'The WhatsApp settings are not finished', 'A value in the private config\'s whatsapp block still says PASTE.');
         return;
     }
+    // People who wrote 12 to 24 hours ago and got no answer: their free window closes soon.
+    $waiting = (int) value($pdo, 'SELECT COUNT(*) FROM wa_contacts wc WHERE ' . admin_inbox_waiting_sql() . ' AND wc.last_in_at < ?',
+        [tg_ist($now - TG_WA_WINDOW), tg_ist($now - 12 * 3600)]);
+    if ($waiting > 0) {
+        $add('warn', 'WhatsApp', $waiting . ($waiting === 1 ? ' person is' : ' people are') . ' waiting for an answer on WhatsApp',
+            'They wrote over 12 hours ago. After 24 hours only a template can reach them.', 'inbox');
+    }
     $meta = admin_wa_meta($config);
     if (empty($meta['ok'])) {
         $add('bad', 'WhatsApp', 'Meta refused the WhatsApp token', (string) ($meta['error'] ?? ''), 'emails');
@@ -229,7 +236,7 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
                 . ui_field('Choose a 6-digit PIN', 'pin', 'inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off"',
                     'This becomes the number\'s two-step PIN. Keep it in your password manager. Meta allows 10 tries in 3 days.')
                 . ui_code_input(), 'Register number', 'primary', 'stack') : '')
-            . '<p class="notice">' . icon('info') . 'Replies to this number are emailed to you. It has no app, so reply from your own WhatsApp.</p>',
+            . '<p class="notice">' . icon('info') . '<span>Replies to this number show in the <a href="' . h(admin_url(['view' => 'inbox'])) . '">Inbox</a>, where you can answer from the business number. A copy is emailed to you unless you switch that off there.</span></p>',
             ['id' => 'wa-connection', 'sub' => 'As Meta sees it. Refreshed every 10 minutes.']);
     }
 

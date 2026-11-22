@@ -11,6 +11,10 @@
  * private config), unless they ticked the offers box. Leave the setting out to
  * keep everyone.
  *
+ * And it clears the WhatsApp profile name of WhatsApp-only conversations quiet for
+ * 90 days (tg_wa_anonymise). Nothing WhatsApp is deleted: the number stays as the key
+ * for STOP, and message text is already gone after 30 days.
+ *
  * Cron job in hPanel, once a night:
  *   /usr/bin/php /home/u886151741/domains/thegurukulofai.com/public_html/api/razorpay/cron/reconcile.php
  *
@@ -30,6 +34,7 @@ if (PHP_SAPI !== 'cli') {
 }
 require dirname(__DIR__) . '/lib.php';
 require dirname(__DIR__) . '/store.php';
+require_once dirname(__DIR__) . '/wa_store.php';
 
 $config = rp_config();
 $opts = getopt('', ['since:', 'days:', 'dry-run']);
@@ -199,6 +204,17 @@ if (!$dry && $keepDays > 0) {
     }
 }
 
+// WhatsApp-only conversations quiet for 90 days lose their profile name. Never deleted.
+$forgotten = 0;
+if (!$dry && $pdo !== null) {
+    try {
+        $forgotten = tg_wa_anonymise($pdo, rp_now($config));
+    } catch (Throwable $e) {
+        error_log('reconcile: WhatsApp names not cleared: ' . $e->getMessage());
+        $counts['error']++;
+    }
+}
+
 $sinceText = (new DateTimeImmutable('@' . $from))->setTimezone($ist)->format('j M Y, g:i A');
 $lines = [
     ($dry ? 'DRY RUN. ' : '') . "Checked {$seen} Razorpay orders since {$sinceText} IST.",
@@ -217,6 +233,9 @@ if ($tooOld > 0) {
 }
 if ($deleted > 0) {
     $lines[] = "Deleted {$deleted} unpaid leads older than {$keepDays} days.";
+}
+if ($forgotten > 0) {
+    $lines[] = "Cleared the WhatsApp name of {$forgotten} quiet WhatsApp-only conversations.";
 }
 if ($others) {
     arsort($others);

@@ -1,8 +1,9 @@
 <?php
 /**
  * The masterclass dashboard. It shows everything. It changes only a few things:
- * the settings on the Settings page, whether an add-on was delivered, and resending
- * a buyer's confirmation email.
+ * the settings on the Settings page, whether an add-on was delivered, resending
+ * a buyer's confirmation email, coupons, recordings, and the WhatsApp inbox
+ * (answering people from the business number).
  *
  * Not linked from anywhere and kept out of search. Sign-in is the password (hash in
  * the private config's `admin` block). Two-step sign-in (a code from an authenticator
@@ -28,7 +29,7 @@ require __DIR__ . '/lib/actions.php';
 $config = rp_config();
 date_default_timezone_set('Asia/Kolkata'); // the store keeps IST times
 
-const ADMIN_CSS_VERSION = 14;
+const ADMIN_CSS_VERSION = 15;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
@@ -95,11 +96,14 @@ function admin_fails(array $config, bool $add = false, bool $clear = false): arr
     return [$count, $start];
 }
 
-/** The page skeleton: fonts, styles and the body. */
-function admin_document(string $title, string $body, string $bodyClass = ''): void
+/** The page skeleton: fonts, styles and the body. $refresh reloads the page after that many seconds. */
+function admin_document(string $title, string $body, string $bodyClass = '', int $refresh = 0): void
 {
+    // An auto-refresh marks itself with auto=1, so it does not count as Deenu being active.
+    $reload = $refresh > 0
+        ? '<meta http-equiv="refresh" content="' . $refresh . ';url=' . h(admin_url(array_diff_key($_GET, ['auto' => 1]) + ['auto' => '1'])) . '">' : '';
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">',
-        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">', $reload,
         '<meta name="robots" content="noindex, nofollow">',
         '<title>', h($title), ' · Gurukul dashboard</title>',
         '<link rel="icon" href="/assets/images/favicon.png">',
@@ -245,7 +249,12 @@ if (!$signedIn) {
         '<input type="hidden" name="action" value="mfa">' . admin_code_field('Code')
         . '<button type="submit" class="btn btn-primary">Sign in</button>');
 }
-$_SESSION['seen'] = time();
+// Being active keeps the session alive for 30 minutes. An auto-refresh (the inbox list
+// reloads itself) is not activity, so a dashboard left open still signs out. This idle
+// timer stays on real time on purpose: it is security, not a business rule.
+if (!(($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['auto'] ?? '') === '1')) {
+    $_SESSION['seen'] = time();
+}
 
 // ---------- Signed in ----------
 $pdo = tg_db($config);
@@ -268,7 +277,7 @@ if (!array_key_exists($key, $sections)) {
     $key = 'overview';
 }
 $section = $sections[$key];
-$now = time();
+$now = rp_now($config); // the test clock, when one is set with test keys; otherwise the real time
 $d = [
     'pdo'     => $pdo,
     'config'  => $config,
@@ -279,13 +288,13 @@ $d = [
 ];
 
 $render = require __DIR__ . '/views/' . $key . '.php';
-$page = $render($d) + ['title' => $section['label'], 'intro' => $section['intro'], 'actions' => '', 'back' => null, 'body' => ''];
+$page = $render($d) + ['title' => $section['label'], 'intro' => $section['intro'], 'actions' => '', 'back' => null, 'body' => '', 'refresh' => 0];
 
 // ---------- Menu ----------
 $checks = admin_checks($pdo, $config, $now);
 $bad = count(array_filter($checks, static fn($c) => $c['level'] === 'bad'));
 $warn = count(array_filter($checks, static fn($c) => $c['level'] === 'warn'));
-$badges = ['health' => [$bad + $warn, $bad > 0 ? 'bad' : 'warn']];
+$badges = ['health' => [$bad + $warn, $bad > 0 ? 'bad' : 'warn'], 'inbox' => [admin_inbox_unread($pdo), 'info']];
 
 $nav = '';
 $group = null;
@@ -297,7 +306,7 @@ foreach ($sections as $k => $s) {
     $on = $k === $key;
     $badge = '';
     if (!empty($badges[$k][0])) {
-        $badge = '<b class="badge badge-' . $badges[$k][1] . '" aria-label="' . (int) $badges[$k][0] . ' to check">' . (int) $badges[$k][0] . '</b>';
+        $badge = '<b class="badge badge-' . $badges[$k][1] . '" aria-label="' . (int) $badges[$k][0] . ($k === 'inbox' ? ' unread' : ' to check') . '">' . (int) $badges[$k][0] . '</b>';
     }
     $range = $s['range'] && $d['range']['key'] !== '30d' ? $d['range']['key'] : '';
     $nav .= '<a class="nav-item' . ($on ? ' on' : '') . '"' . ($on ? ' aria-current="page"' : '')
@@ -352,4 +361,4 @@ admin_document($page['title'], '<a class="skip" href="#main">Skip to content</a>
     . '<h1>' . h($page['title']) . '</h1><p>' . h($page['intro']) . '</p></div>'
     . ($tools !== '' ? '<div class="page-tools">' . $tools . '</div>' : '') . '</header>'
     . $flashHtml . $page['body']
-    . '<footer class="page-foot">All times IST · Every change is logged · Loaded ' . h(date('j M, g:i A', $now)) . '</footer></main></div>');
+    . '<footer class="page-foot">All times IST · Every change is logged · Loaded ' . h(date('j M, g:i A', $now)) . '</footer></main></div>', '', (int) $page['refresh']);

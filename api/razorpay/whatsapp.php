@@ -6,11 +6,16 @@
  * four reminders. Each one is a template that Meta approved in advance; we only fill
  * in the name, the date and the personal join link. The outbox (outbox.php) plans and
  * sends them with the emails, and ../whatsapp/webhook.php hears back from Meta:
- * delivered, read, failed, a "STOP", or any other reply (emailed to Deenu).
+ * delivered, read, failed, a "STOP", or any other reply (shown in the dashboard's
+ * inbox, and emailed to Deenu unless he switched that off).
+ *
+ * Every message in and out is stored in wa_messages (wa_store.php) with its text for
+ * 30 days, then the text is removed. STOP and START records in wa_inbound stay for good.
  *
  * Settings live in the private config's `whatsapp` block (see config.sample.php).
  * The access token and app secret never leave the server and never reach a log.
  */
+require_once __DIR__ . '/wa_store.php';
 
 /**
  * The templates, keyed by the outbox's template name. Everything a buyer reads on
@@ -20,9 +25,10 @@
  * Changing approved wording: give the template a new name (Meta won't let a name be
  * reused for four weeks after it is deleted), then submit it from the dashboard.
  *
- * body:    the text, with {{1}}, {{2}}... filled in at send time (tg_wa_values).
- * example: sample values Meta's reviewers see.
- * buttons: link buttons; the {{1}} at the end of each link is filled in at send time.
+ * body:     the text, with {{1}}, {{2}}... filled in at send time (tg_wa_values).
+ * example:  sample values Meta's reviewers see.
+ * buttons:  link buttons; the {{1}} at the end of each link is filled in at send time.
+ * category: UTILITY (facts about their booking) or MARKETING. Every template has one.
  */
 const TG_WA_FOOTER = 'Reply STOP to stop these messages';
 
@@ -50,6 +56,7 @@ function tg_wa_templates(array $config): array
             'name'    => 'mc_seat_confirmed',
             'label'   => 'Seat confirmed',
             'when'    => 'Right after payment',
+            'category' => 'UTILITY',
             'body'    => "Hi {{1}}, your seat for the {{2}} is confirmed.\n\n"
                 . "When: {{3}}\nWhere: Live on Zoom\n\n"
                 . "Your personal joining link will come here on WhatsApp on the day at {{4}}, 15 minutes before we start.\n\n"
@@ -66,6 +73,7 @@ function tg_wa_templates(array $config): array
             'name'    => 'mc_reminder_day_before',
             'label'   => 'Day-before reminder',
             'when'    => '24 hours before the session',
+            'category' => 'UTILITY',
             'body'    => "Hi {{1}}, a reminder that your {{2}} is tomorrow, {{3}}, live on Zoom.\n\n"
                 . "Before you join:\n"
                 . "- Use a laptop. A phone screen is too small for the hands-on parts.\n"
@@ -79,6 +87,7 @@ function tg_wa_templates(array $config): array
             'name'    => 'mc_reminder_3_hours',
             'label'   => '3-hour reminder',
             'when'    => '3 hours before',
+            'category' => 'UTILITY',
             'body'    => "Hi {{1}}, your {{2}} starts today at {{3}}, live on Zoom.\n\n"
                 . "Charge your laptop and sign in to Claude before we start. Your personal joining link will come here at {{4}}, 15 minutes before we start.",
             'example' => ['Priya', $event, '3 PM IST', '2:45 PM IST'],
@@ -88,6 +97,7 @@ function tg_wa_templates(array $config): array
             'name'    => 'mc_reminder_15min',
             'label'   => '15-minute reminder',
             'when'    => '15 minutes before',
+            'category' => 'UTILITY',
             'body'    => "Hi {{1}}, we start in 15 minutes. Tap the button below to join the masterclass on Zoom.",
             'example' => ['Priya'],
             'buttons' => [$join],
@@ -109,9 +119,21 @@ function tg_wa_templates(array $config): array
             'name'    => 'mc_class_started',
             'label'   => '"We\'re live" message',
             'when'    => 'When the session starts',
+            'category' => 'UTILITY',
             'body'    => "Hi {{1}}, your {{2}} has started on Zoom. Your personal join link is the button below.",
             'example' => ['Priya', $event],
             'buttons' => [$join],
+        ],
+        // The one template the inbox can always offer once someone's 24-hour window has
+        // closed (Phase 1 of the WhatsApp dashboard, 23 Nov 2026). Only their first name.
+        'reopen' => [
+            'name'     => 'gurukul_follow_up',
+            'label'    => 'Follow-up after 24 hours',
+            'when'     => 'From the inbox, after the 24-hour window closes',
+            'category' => 'UTILITY',
+            'body'     => "Hi {{1}}, this is Deenu from The Gurukul of AI, following up on your message. Reply here and we can carry on.",
+            'example'  => ['Priya'],
+            'buttons'  => [],
         ],
     ];
 }
@@ -342,6 +364,9 @@ function tg_wa_values(array $config, string $template, array $row): array
 {
     $event = (string) ($config['event']['name'] ?? 'AI Video Editing Masterclass');
     $first = tg_first_name((string) ($row['name'] ?? ''));
+    if ($template === 'reopen') {
+        return ['body' => [$first], 'buttons' => []];
+    }
     $when = tg_session_parts((string) $row['session_at']);
     $token = (string) $row['join_token'];
     // When the joining link arrives: the 15-minute reminder, e.g. "2:45 PM IST".
@@ -419,21 +444,10 @@ function tg_wa_send(array $config, string $template, string $to, array $values):
     return ['ok' => false, 'id' => null, 'error' => $error, 'retry' => tg_wa_retryable($status, $body)];
 }
 
-/** A plain reply inside the 24 hours after someone wrote to us (STOP and START answers). */
+/** A plain reply inside the 24 hours after someone wrote to us. True if Meta took it. See tg_wa_send_text_result. */
 function tg_wa_send_text(array $config, string $to, string $text): bool
 {
-    [$status, $body] = tg_wa_graph($config, 'POST', rawurlencode((string) $config['whatsapp']['phone_number_id']) . '/messages', [
-        'messaging_product' => 'whatsapp',
-        'recipient_type'    => 'individual',
-        'to'                => $to,
-        'type'              => 'text',
-        'text'              => ['body' => $text, 'preview_url' => false],
-    ]);
-    $ok = $status >= 200 && $status < 300;
-    if (!$ok) {
-        error_log('whatsapp reply not sent: ' . tg_wa_error_text($config, $status, $body));
-    }
-    return $ok;
+    return tg_wa_send_text_result($config, $to, $text)['ok'];
 }
 
 /** What Meta says about each of our templates: name => status, category, reason. Null if Meta can't be read. */
@@ -519,9 +533,13 @@ function tg_wa_status(PDO $pdo, array $s): void
     $at = tg_ist((int) ($s['timestamp'] ?? time()));
     if ($state === 'delivered') {
         $pdo->prepare("UPDATE outbox SET delivered_at = COALESCE(delivered_at, ?) WHERE provider_id = ?")->execute([$at, $id]);
+        $pdo->prepare("UPDATE wa_messages SET delivered_at = COALESCE(delivered_at, ?), status = IF(status = 'sent', 'delivered', status)
+            WHERE wa_id = ? AND direction = 'out'")->execute([$at, $id]);
     } elseif ($state === 'read') {
         $pdo->prepare("UPDATE outbox SET delivered_at = COALESCE(delivered_at, ?), read_at = COALESCE(read_at, ?) WHERE provider_id = ?")
             ->execute([$at, $at, $id]);
+        $pdo->prepare("UPDATE wa_messages SET delivered_at = COALESCE(delivered_at, ?), read_at = COALESCE(read_at, ?), status = 'read', error = NULL
+            WHERE wa_id = ? AND direction = 'out'")->execute([$at, $at, $id]);
     } elseif ($state === 'failed') {
         $e = $s['errors'][0] ?? [];
         $details = (string) ($e['error_data']['details'] ?? '');
@@ -529,6 +547,8 @@ function tg_wa_status(PDO $pdo, array $s): void
             . ($details !== '' ? ' (' . $details . ')' : '');
         // Only a message that wasn't delivered can fail; a late "failed" never undoes "read".
         $pdo->prepare("UPDATE outbox SET status = 'failed', last_error = ? WHERE provider_id = ? AND read_at IS NULL")
+            ->execute([mb_substr($why, 0, 255), $id]);
+        $pdo->prepare("UPDATE wa_messages SET status = 'failed', error = ? WHERE wa_id = ? AND direction = 'out' AND read_at IS NULL")
             ->execute([mb_substr($why, 0, 255), $id]);
     }
 }
@@ -551,8 +571,36 @@ function tg_wa_contacts(PDO $pdo, string $number): array
 }
 
 /**
- * One message someone sent us. Returns what to do once Meta has its answer:
- * ['kind' => stop|start|reply|skip, 'from', 'name', 'text', 'contacts'], or null for a repeat.
+ * Records a STOP or START for a number, from WhatsApp or from the dashboard: the opt-out
+ * on every contact with that number, and their queued WhatsApp booking messages.
+ * STOP cancels them; START brings back only the ones STOP cancelled whose time has not
+ * passed. Returns the contact ids touched.
+ */
+function tg_wa_apply_stop(PDO $pdo, array $config, string $number, string $kind, int $now): array
+{
+    $ids = array_map('intval', array_column(tg_wa_contacts($pdo, $number), 'id'));
+    if ($ids) {
+        $in = implode(',', $ids);
+        if ($kind === 'stop') {
+            $pdo->prepare("UPDATE contacts SET wa_optout_at = COALESCE(wa_optout_at, ?) WHERE id IN ({$in})")->execute([tg_ist($now)]);
+            $pdo->exec("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id SET o.status = 'cancelled', o.last_error = 'Replied STOP on WhatsApp'
+                WHERE o.channel = 'whatsapp' AND o.status = 'queued' AND b.contact_id IN ({$in})");
+        } else {
+            $pdo->exec("UPDATE contacts SET wa_optout_at = NULL WHERE id IN ({$in})");
+            // Reminders still ahead of them come back; ones whose time passed stay stopped.
+            $pdo->prepare("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id SET o.status = 'queued', o.last_error = NULL
+                WHERE o.channel = 'whatsapp' AND o.status = 'cancelled' AND o.last_error = 'Replied STOP on WhatsApp'
+                AND o.expires_at > ? AND b.contact_id IN ({$in})")->execute([tg_ist(rp_now($config))]);
+        }
+    }
+    return $ids;
+}
+
+/**
+ * One message someone sent us. It is recorded once by its id (wa_inbound, no text) and
+ * stored with its text in the inbox (wa_messages). Returns what to do once Meta has its
+ * answer: ['kind' => stop|start|reply|skip, 'from', 'name', 'text', 'contacts',
+ * 'wa_contact_id', 'wa_id'], or null for a repeat.
  */
 function tg_wa_inbound(PDO $pdo, array $config, array $m, array $profiles): ?array
 {
@@ -573,45 +621,42 @@ function tg_wa_inbound(PDO $pdo, array $config, array $m, array $profiles): ?arr
     $kind = in_array($word, TG_WA_STOP_WORDS, true) ? 'stop'
         : (in_array($word, TG_WA_START_WORDS, true) ? 'start'
         : (in_array($type, ['reaction', 'system', 'unsupported', 'ephemeral', 'request_welcome'], true) ? 'skip' : 'reply'));
+    $sentAt = (int) ($m['timestamp'] ?? time());
 
     // The message id makes Meta's repeats harmless.
     $add = $pdo->prepare('INSERT INTO wa_inbound (wa_id, phone, kind, received_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE id = id');
-    $add->execute([$id, $from, $kind, tg_ist((int) ($m['timestamp'] ?? time()))]);
+    $add->execute([$id, $from, $kind, tg_ist($sentAt)]);
     if ($add->rowCount() !== 1) {
         return null;
     }
 
     $contacts = tg_wa_contacts($pdo, $from);
     if ($kind === 'stop' || $kind === 'start') {
-        $ids = array_map('intval', array_column($contacts, 'id'));
-        if ($ids) {
-            $in = implode(',', $ids);
-            if ($kind === 'stop') {
-                $pdo->prepare("UPDATE contacts SET wa_optout_at = COALESCE(wa_optout_at, ?) WHERE id IN ({$in})")->execute([tg_ist(time())]);
-                $pdo->exec("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id SET o.status = 'cancelled', o.last_error = 'Replied STOP on WhatsApp'
-                    WHERE o.channel = 'whatsapp' AND o.status = 'queued' AND b.contact_id IN ({$in})");
-            } else {
-                $pdo->exec("UPDATE contacts SET wa_optout_at = NULL WHERE id IN ({$in})");
-                // Reminders still ahead of them come back; ones whose time passed stay stopped.
-                $pdo->prepare("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id SET o.status = 'queued', o.last_error = NULL
-                    WHERE o.channel = 'whatsapp' AND o.status = 'cancelled' AND o.last_error = 'Replied STOP on WhatsApp'
-                    AND o.expires_at > ? AND b.contact_id IN ({$in})")->execute([tg_ist(rp_now($config))]);
-            }
-        }
+        $ids = tg_wa_apply_stop($pdo, $config, $from, $kind, time());
         tg_audit($config, 'system', 'whatsapp_' . $kind, tg_wa_pretty($from) . ($ids ? ' (contact ' . implode(', ', $ids) . ')' : ' (not a contact)'));
     }
 
     $profile = '';
     foreach ($profiles as $p) {
-        if (tg_wa_number((string) ($p['wa_id'] ?? '')) === $from) {
+        if (is_array($p) && tg_wa_number((string) ($p['wa_id'] ?? '')) === $from) {
             $profile = rp_clean($p['profile']['name'] ?? '', 80);
         }
     }
+    $caption = in_array($type, ['image', 'video', 'document'], true) ? trim((string) ($m[$type]['caption'] ?? '')) : '';
     $label = $text !== '' ? $text : match ($type) {
         'image' => '[a photo]', 'video' => '[a video]', 'audio' => '[a voice note]', 'document' => '[a document]',
         'sticker' => '[a sticker]', 'location' => '[a location]', 'contacts' => '[a contact card]', default => '[' . $type . ' message]',
-    };
-    return ['kind' => $kind, 'from' => $from, 'name' => $profile, 'text' => mb_substr($label, 0, 2000), 'contacts' => $contacts];
+    } . ($caption !== '' ? ' ' . $caption : '');
+
+    // The inbox keeps the words for 30 days. Reactions and system notices are left out.
+    $waContactId = tg_wa_contact_id($pdo, $from, rp_now($config), $profile);
+    if ($kind !== 'skip') {
+        $logKind = $kind === 'stop' || $kind === 'start' ? $kind
+            : (in_array($type, ['text', 'image', 'video', 'audio', 'document', 'sticker', 'location', 'contacts', 'button', 'interactive'], true) ? $type : 'other');
+        tg_wa_log_in($pdo, $waContactId, ['id' => $id, 'timestamp' => $sentAt], $logKind, $label);
+    }
+    return ['kind' => $kind, 'from' => $from, 'name' => $profile, 'text' => mb_substr($label, 0, 2000), 'contacts' => $contacts,
+        'wa_contact_id' => $waContactId, 'wa_id' => $id];
 }
 
 /** The email Deenu gets for a WhatsApp message, because this number has no app to read it in. */
@@ -634,6 +679,10 @@ function tg_wa_reply_email(array $config, array $r, array $bookings): array
         $lines[] = '';
     }
     $lines[] = 'This number runs on the WhatsApp API only, so the message is not on any phone.';
+    if (!empty($r['wa_contact_id'])) {
+        // Our own row id, never the phone number, so the link says nothing about who it is.
+        $lines[] = 'Answer in the dashboard: ' . tg_site($config) . '/api/admin/?view=inbox&c=' . (int) $r['wa_contact_id'];
+    }
     $lines[] = 'Reply from your own WhatsApp: https://wa.me/' . $r['from'];
     return ['subject' => 'WhatsApp from ' . $who . ' (' . tg_wa_pretty($r['from']) . ')', 'body' => implode("\n", $lines)];
 }

@@ -7,8 +7,10 @@ doesn't match what you see, send Claude a screenshot with any secret covered.
 **The number:** +91 78278 76564, API only (no WhatsApp app on a phone).
 **What it sends:** to buyers who agreed in the booking pop-up, the seat confirmation and the four
 reminders (day before, 3 hours, 15 minutes, "we're live"). They also still get every email.
-**Replies:** this number has no app, so every reply is emailed to deenu@thegurukulofai.com,
-with a wa.me link to answer from your own WhatsApp. STOP and START are handled automatically.
+**Replies:** this number has no app, so replies land in the dashboard's **Inbox** (WhatsApp > Inbox), where you
+answer from the business number itself: free text within 24 hours of their last message, or the approved follow-up
+template after that. A copy of each reply is also emailed to deenu@thegurukulofai.com unless you switch that off on
+the Inbox page. Message text is kept 30 days, then deleted. STOP and START are handled automatically.
 
 **Order:** steps 1 to 5 are done (22 Nov 2026). Step 6 needs the code live ("push it"). Then 7 and 8.
 

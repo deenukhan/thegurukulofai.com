@@ -338,6 +338,8 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
   (click once to select it). Pause, resume and delete (asks first) work on one code or a whole batch.
   Every change goes through `lib/actions.php` into `lib/coupons.php`, is logged in `audit`, and needs a
   fresh authenticator code when two-step is on. The config coupon stays on the Settings page.
+- **Inbox:** answer WhatsApp messages from the business number, send the follow-up template after 24 hours,
+  quick replies, tags, Mark done, and stop or restart WhatsApp for one number (see "Masterclass WhatsApp").
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
@@ -359,7 +361,8 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 6 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+- Schema version 7 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
+  7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -406,9 +409,26 @@ emptying `test_numbers`.
   Meta's busy and rate-limit errors retry; anything else (bad number, unapproved template) fails at once and alerts Deenu.
 - **The webhook** answers Meta's GET check with `verify_token`, refuses any POST whose `X-Hub-Signature-256` doesn't
   match `app_secret`, records delivered/read/failed on the outbox row (`provider_id` = Meta's message id), handles
-  STOP/START (and Hinglish "band karo"), and emails Deenu every other message, with a wa.me link to answer from
-  his own WhatsApp. Message text is never stored; `wa_inbound` keeps only id, number and kind, so Meta's repeats are ignored.
+  STOP/START (and Hinglish "band karo"), stores every other message in the inbox, and emails Deenu a copy with a
+  link to answer it in the inbox (switch: `whatsapp.forward_replies`, on by default). The automatic STOP/START answers
+  go only while WhatsApp is enabled, not paused and (in test mode) to a test number; the STOP itself is always recorded.
+  `wa_inbound` keeps only id, number and kind, for good, so Meta's repeats are ignored and STOP is never forgotten.
   It also emails Deenu when a template is rejected, paused or moved to marketing.
+- **Message text is kept for 30 days, then deleted** (Deenu's decision, 23 Nov 2026). `wa_messages` holds every
+  message in and out with its text; the worker's `tg_wa_retention` (`api/razorpay/wa_store.php`) empties `body` after
+  30 days and keeps the row, so counts, ticks and spend estimates don't change. Nightly, reconcile clears the profile
+  name of WhatsApp-only conversations quiet for 90 days. Nothing WhatsApp is deleted by age. The privacy policy says so.
+  Audit and error-log lines name the number and a length, never the words of a message.
+- **Inbox** (dashboard > WhatsApp > Inbox, `views/inbox.php`, `lib/inbox.php`): every conversation (`wa_contacts`,
+  one row per number, linked to the newest contact with that number). Free replies only inside Meta's 24-hour window
+  from their last message; after it closes, only the approved `reopen` template (`gurukul_follow_up`, utility) can
+  restart it. Who may get what is decided in one place, `tg_wa_can_message` (reply / template / marketing), after the
+  switches: enabled, not paused, the test list, STOP. Quick replies, tags, Mark done, manual STOP/START (START needs a
+  "they asked" tick), an unread badge in the menu, and a health warning when someone waited over 12 hours. The list
+  reloads every 30 seconds with `auto=1`, which does not count as activity, so the 30-minute idle sign-out still works.
+  Inbox template sends write a final outbox row (dedupe `wa:inbox:...`) so they show in the send log.
+  The dashboard's clock is `rp_now` (the test clock in tests); the idle sign-out stays on real time.
+  The rest of the plan (templates, broadcasts, automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
   and every key filled in. The token and app secret never leave the server; the token goes in an
   Authorization header, never a URL or a log.
@@ -417,7 +437,7 @@ emptying `test_numbers`.
   and Send a test (test numbers only). Settings has a WhatsApp pause switch (`whatsapp.paused`). Health checks
   are in `admin_wa_checks` (`api/admin/lib/whatsapp.php`).
 - **Portfolio:** the ads portfolio's WhatsApp buttons point at this same number, so those enquiries now
-  arrive by email through the webhook.
+  arrive in the inbox (and by email) through the webhook.
 
 ---
 

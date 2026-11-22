@@ -8,6 +8,7 @@
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/coupons.php';
 require_once __DIR__ . '/recordings.php';
+require_once __DIR__ . '/inbox.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -84,7 +85,8 @@ function admin_handle_post(PDO $pdo, array $config): void
             $changed = [];
             foreach ($clean as $name => $value) {
                 $current = admin_setting($config, $name)[0];
-                if (in_array($name, ['coupon.paused', 'whatsapp.paused', 'whatsapp.checkout_coupon'], true) ? (bool) $current === $value : $current === $value) {
+                if (in_array($name, ['coupon.paused', 'whatsapp.paused', 'whatsapp.checkout_coupon'], true) ? (bool) $current === $value
+                    : ($name === 'whatsapp.forward_replies' ? ($current !== false) === $value : $current === $value)) {
                     continue;
                 }
                 if (!admin_setting_write($pdo, $config, $name, $value)) {
@@ -228,6 +230,21 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'wa_test':
             admin_wa_test($pdo, $config, (string) ($_POST['template'] ?? ''), (string) ($_POST['to'] ?? ''));
             break;
+
+        // ---------- WhatsApp inbox (lib/inbox.php) ----------
+        case 'wa_reply':
+        case 'wa_reply_quick':
+        case 'wa_send_template':
+        case 'wa_quick_save':
+        case 'wa_quick_delete':
+        case 'wa_thread_done':
+        case 'wa_thread_open':
+        case 'wa_optout':
+        case 'wa_optin':
+        case 'wa_tag_add':
+        case 'wa_tag_remove':
+            admin_inbox_action($pdo, $config, $action);
+            break;
     }
     admin_done();
 }
@@ -266,10 +283,15 @@ function admin_wa_test(PDO $pdo, array $config, string $template, string $to): v
         ->execute(['wa:test:' . $template . ':' . bin2hex(random_bytes(6)), $template, $to, $at, $at,
             $result['ok'] ? 'sent' : 'failed', $result['ok'] ? 'Test message' : mb_substr((string) $result['error'], 0, 255),
             $result['ok'] ? $at : null, $result['id']]);
+    $outboxId = (int) $pdo->lastInsertId();
     // A test failure is not news for the alert email.
     if (!$result['ok']) {
-        $pdo->prepare('UPDATE outbox SET alerted_at = ? WHERE id = ?')->execute([$at, (int) $pdo->lastInsertId()]);
+        $pdo->prepare('UPDATE outbox SET alerted_at = ? WHERE id = ?')->execute([$at, $outboxId]);
     }
+    $t = tg_wa_templates($config)[$template];
+    tg_wa_log_out($pdo, $to, ['kind' => 'template', 'body' => tg_wa_render($config, $template, tg_wa_values($config, $template, $sample))['body'],
+        'template' => $t['name'], 'category' => $t['category'] ?? 'UTILITY', 'sent_by' => 'test', 'wa_id' => $result['id'],
+        'outbox_id' => $outboxId, 'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['ok'] ? null : $result['error']], rp_now($config));
     tg_audit($config, 'admin', 'whatsapp_test', $template . ' to ' . tg_wa_pretty($to) . ': ' . ($result['ok'] ? 'sent' : $result['error']));
     admin_flash($result['ok'] ? 'good' : 'bad', $result['ok']
         ? 'Sent to ' . tg_wa_pretty($to) . '. Check your phone. Delivered and read show in the send log within a minute.'

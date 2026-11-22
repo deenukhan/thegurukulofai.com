@@ -76,9 +76,11 @@ function tg_db_enabled(array $config): bool
  * Version 5 (coupon builder) adds the coupons table and which coupon each booking used.
  * Version 6 (WhatsApp) adds Meta's message id and delivery times to the outbox, and
  * wa_inbound: one row per message someone sent us (for STOP, START and repeats).
+ * Version 7 (WhatsApp inbox) adds wa_contacts (one row per number), wa_messages (every
+ * message in and out, its text kept 30 days), wa_tags and wa_quick_replies.
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 6;
+const TG_DB_VERSION = 7;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -280,7 +282,8 @@ function tg_db_migrate(PDO $pdo, array $config): void
     if ((int) $index === 0) {
         tg_db_alter($pdo, 'ALTER TABLE outbox ADD KEY idx_provider (provider_id)');
     }
-    // Message text is never kept here: replies are emailed to Deenu, STOP is recorded.
+    // No message text here: one row per message someone sent us, kept for good, so STOP,
+    // START and "they messaged us first" never vanish. The words live in wa_messages (version 7).
     $pdo->exec("CREATE TABLE IF NOT EXISTS wa_inbound (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         wa_id VARCHAR(128) NOT NULL COMMENT 'Meta message id, so a repeat is ignored',
@@ -290,6 +293,75 @@ function tg_db_migrate(PDO $pdo, array $config): void
         UNIQUE KEY uniq_wa (wa_id),
         KEY idx_phone (phone, id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 7: WhatsApp inbox ----
+    // One row per WhatsApp number we talk to. Keyed by number, not email: people who only
+    // messaged us have no email. Linked to the newest contact with that number, if any.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_contacts (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        phone VARCHAR(16) NOT NULL COMMENT 'Country code first, e.g. 919876543210',
+        profile_name VARCHAR(80) NOT NULL DEFAULT '' COMMENT 'The name on their WhatsApp profile',
+        contact_id INT UNSIGNED NULL COMMENT 'Newest contact with this number',
+        last_in_at DATETIME NULL COMMENT 'Their last message: the 24-hour window runs from here',
+        last_out_at DATETIME NULL,
+        last_msg_at DATETIME NULL,
+        unread SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+        closed_at DATETIME NULL COMMENT 'Marked done; a new message from them reopens it',
+        created_at DATETIME NOT NULL,
+        UNIQUE KEY uniq_phone (phone),
+        KEY idx_contact (contact_id),
+        KEY idx_last (last_msg_at),
+        CONSTRAINT fk_wa_contact FOREIGN KEY (contact_id) REFERENCES contacts (id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    // Every message in or out. The words are kept 30 days (tg_wa_retention), then removed;
+    // the row stays, so counts, ticks and spend estimates never change for old periods.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_messages (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        wa_contact_id INT UNSIGNED NOT NULL,
+        direction CHAR(3) NOT NULL COMMENT 'in or out',
+        kind VARCHAR(12) NOT NULL COMMENT 'text, template, image, video, audio, document, sticker, location, contacts, button, interactive, stop, start, other',
+        body TEXT NULL COMMENT 'The words; NULL after 30 days',
+        body_gone TINYINT(1) NOT NULL DEFAULT 0,
+        template VARCHAR(64) NULL COMMENT 'Meta template name',
+        category VARCHAR(12) NULL COMMENT 'MARKETING or UTILITY, for templates',
+        billable TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Meta charges for it',
+        sent_by VARCHAR(10) NOT NULL COMMENT 'contact, admin, system, auto, broadcast, test',
+        wa_id VARCHAR(128) NULL COMMENT 'Meta message id',
+        outbox_id INT UNSIGNED NULL,
+        status VARCHAR(10) NOT NULL COMMENT 'received, sent, delivered, read, failed',
+        error VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL,
+        delivered_at DATETIME NULL,
+        read_at DATETIME NULL,
+        UNIQUE KEY uniq_wa (wa_id),
+        KEY idx_thread (wa_contact_id, id),
+        KEY idx_outbox (outbox_id),
+        KEY idx_created (created_at),
+        CONSTRAINT fk_wa_message_contact FOREIGN KEY (wa_contact_id) REFERENCES wa_contacts (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_tags (
+        wa_contact_id INT UNSIGNED NOT NULL,
+        tag VARCHAR(30) NOT NULL COMMENT 'Lowercase a-z, 0-9 and hyphens',
+        added_at DATETIME NOT NULL,
+        added_by VARCHAR(10) NOT NULL COMMENT 'admin or broadcast',
+        PRIMARY KEY (wa_contact_id, tag),
+        KEY idx_tag (tag, added_at),
+        CONSTRAINT fk_wa_tag_contact FOREIGN KEY (wa_contact_id) REFERENCES wa_contacts (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_quick_replies (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(40) NOT NULL,
+        body VARCHAR(1000) NOT NULL,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    // Numbers that wrote before the inbox existed (STOPs included) get a conversation,
+    // without messages: their text was never kept.
+    $pdo->exec("INSERT IGNORE INTO wa_contacts (phone, last_in_at, last_msg_at, created_at)
+        SELECT phone, MAX(CASE WHEN kind <> 'skip' THEN received_at END), MAX(CASE WHEN kind <> 'skip' THEN received_at END), MIN(received_at)
+        FROM wa_inbound GROUP BY phone");
+    $pdo->exec("UPDATE wa_contacts wc SET contact_id = (SELECT MAX(c.id) FROM contacts c WHERE c.phone = wc.phone OR c.phone = RIGHT(wc.phone, 10))
+        WHERE wc.contact_id IS NULL");
 
     @file_put_contents($marker, (string) time());
 }

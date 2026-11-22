@@ -39,7 +39,7 @@ return static function (array $d): array {
         if ($channel !== '') {
             $where .= ' AND o.channel = ' . $pdo->quote($channel);
         }
-        $list = rows($pdo, "SELECT o.channel, o.template, o.status, o.to_addr, o.due_at, o.sent_at, o.tries, o.last_error, o.delivered_at, o.read_at,
+        $list = rows($pdo, "SELECT o.channel, o.template, o.status, o.to_addr, o.due_at, o.sent_at, o.tries, o.last_error, o.delivered_at, o.read_at, o.dedupe_key,
                 b.contact_id, b.session_at, c.name, c.email
             FROM outbox o LEFT JOIN bookings b ON b.id = o.booking_id LEFT JOIN contacts c ON c.id = b.contact_id
             WHERE {$where} ORDER BY o.status IN ('queued', 'sending'), CASE WHEN o.status IN ('queued', 'sending') THEN o.due_at END ASC, o.due_at DESC, o.id DESC LIMIT 300");
@@ -47,7 +47,7 @@ return static function (array $d): array {
         foreach ($list as $o) {
             $address = $o['channel'] === 'whatsapp' ? tg_wa_pretty($o['to_addr']) : $o['to_addr'];
             $to = $o['contact_id'] ? m_person($o) . '<small class="sub">' . h($address) . '</small>'
-                : h($address) . '<small class="sub">' . ($o['channel'] === 'whatsapp' ? 'Test message' : 'You') . '</small>';
+                : h($address) . '<small class="sub">' . ($o['channel'] === 'whatsapp' ? (str_starts_with((string) $o['dedupe_key'], 'wa:inbox:') ? 'From the inbox' : 'Test message') : 'You') . '</small>';
             $note = $o['last_error'] ? '<span class="muted">' . h($o['last_error']) . '</span>'
                 : ($o['read_at'] ? '<span class="muted">Read ' . h(when($o['read_at'], 'g:i A')) . '</span>'
                 : ($o['sent_at'] ? '<span class="muted">Sent ' . h(when($o['sent_at'], 'g:i A')) . '</span>' : ''));

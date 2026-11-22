@@ -23,6 +23,8 @@ return [
                    'intro' => 'Everyone who filled the booking form, buyers and leads.'],
     'emails'   => ['label' => 'Messages',      'icon' => 'mail',      'group' => 'Messages', 'range' => false,
                    'intro' => 'Every email and WhatsApp message the system sends, and what happened to each one.'],
+    'inbox'    => ['label' => 'Inbox',         'icon' => 'whatsapp',  'group' => 'WhatsApp', 'range' => false,
+                   'intro' => 'Every WhatsApp conversation. Answer from the business number.'],
     'ads'      => ['label' => 'Ads',           'icon' => 'megaphone', 'group' => 'Growth',   'range' => true,
                    'intro' => 'Which ads bring paying buyers, and what they cost.'],
     'coupons'  => ['label' => 'Coupons',       'icon' => 'tag',       'group' => 'Growth',   'range' => false,

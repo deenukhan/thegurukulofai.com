@@ -7,10 +7,15 @@
  * POST: news from Meta, signed with the app secret. We act on:
  *       - delivery news for our messages (sent, delivered, read, failed),
  *       - STOP or START from a buyer (never message them again, or again),
- *       - any other message: emailed to Deenu, because this number has no app,
+ *       - any other message: shown in the dashboard's inbox, and emailed to Deenu
+ *         unless he switched reply emails off (this number has no app),
  *       - template reviews: a rejected, paused or re-categorised template is emailed.
- * Message text is never stored. Meta resends anything we don't answer with 200,
- * so each incoming message is recorded once by its id and repeats are ignored.
+ * Message text is kept for 30 days in wa_messages so Deenu can answer from the inbox,
+ * then removed by the worker; wa_inbound keeps only id, number and kind, for good.
+ * The automatic STOP and START answers go only while WhatsApp is on, not paused, and
+ * (in test mode) to a test number; the STOP or START itself is always recorded.
+ * Meta resends anything we don't answer with 200, so each incoming message is
+ * recorded once by its id and repeats are ignored.
  */
 require dirname(__DIR__) . '/razorpay/lib.php';
 require dirname(__DIR__) . '/razorpay/store.php';
@@ -112,7 +117,16 @@ rp_json_early(200, ['ok' => true]);
 
 foreach ($later as $r) {
     if ($r['kind'] === 'stop' || $r['kind'] === 'start') {
-        tg_wa_send_text($config, $r['from'], $r['kind'] === 'stop' ? TG_WA_STOPPED : TG_WA_STARTED);
+        // Pause stops everything, the courtesy answer included. The STOP itself is already recorded.
+        if (!tg_wa_enabled($config) || tg_wa_paused($config) || !tg_wa_allowed($config, $r['from'])) {
+            continue;
+        }
+        $text = $r['kind'] === 'stop' ? TG_WA_STOPPED : TG_WA_STARTED;
+        $sent = tg_wa_send_text_result($config, $r['from'], $text);
+        if ($sent['ok']) {
+            tg_wa_log_out($pdo, $r['from'], ['kind' => 'text', 'body' => $text, 'sent_by' => 'auto', 'wa_id' => $sent['id'],
+                'status' => 'sent', 'billable' => false], rp_now($config));
+        }
         continue;
     }
     if (($wa['forward_replies'] ?? true) === false) {

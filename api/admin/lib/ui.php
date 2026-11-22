@@ -269,11 +269,13 @@ function ui_mail(array $mail): string
         . '<pre class="mail-body">' . $body . '</pre></article>';
 }
 
-/** The current page's address, so a change can come back to it. */
-/** This page's address, without one-time steps (a confirm box, a download), to come back to after a change. */
+/**
+ * This page's address, without one-time steps (a confirm box, a download, a quick reply
+ * put in the box, an auto-refresh), to come back to after a change.
+ */
 function admin_here(): string
 {
-    return admin_url(array_diff_key($_GET, ['undo' => 1, 'resend' => 1, 'export' => 1, 'delete' => 1]));
+    return admin_url(array_diff_key($_GET, ['undo' => 1, 'resend' => 1, 'export' => 1, 'delete' => 1, 'qr' => 1, 'auto' => 1, 'ask' => 1, 'eqr' => 1]));
 }
 
 /**
@@ -330,4 +332,85 @@ function ui_code_input(): string
         return '';
     }
     return ui_field('Code from your app', 'code', 'inputmode="numeric" autocomplete="one-time-code" maxlength="7" required placeholder="123 456" class="code-input"');
+}
+
+/** A labelled box for longer text. $attrs is html (maxlength, required and so on, already escaped). */
+function ui_textarea(string $label, string $name, string $value, string $attrs = '', string $hint = ''): string
+{
+    return '<label class="field"><span>' . h($label) . '</span><textarea name="' . h($name) . '" ' . $attrs . '>' . h($value) . '</textarea>'
+        . ($hint !== '' ? '<small>' . h($hint) . '</small>' : '') . '</label>';
+}
+
+/** A labelled drop-down. $options maps value => label. */
+function ui_select(string $label, string $name, array $options, string $current, string $hint = ''): string
+{
+    $html = '<label class="field"><span>' . h($label) . '</span><select name="' . h($name) . '">';
+    foreach ($options as $value => $text) {
+        $html .= '<option value="' . h($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . h($text) . '</option>';
+    }
+    return $html . '</select>' . ($hint !== '' ? '<small>' . h($hint) . '</small>' : '') . '</label>';
+}
+
+/**
+ * An ask-first card: what will happen (html), the form that does it (html, from ui_post),
+ * and a way back. Opened by a link that adds a one-time step such as &ask=…, which
+ * admin_here() drops again after the change.
+ */
+function ui_confirm(string $title, string $html, string $form, string $cancelHref): string
+{
+    return ui_card($title, $html . '<div class="confirm-actions">' . $form . ui_button('Cancel', $cancelHref, 'quiet') . '</div>',
+        ['size' => 'full', 'id' => 'confirm']);
+}
+
+/**
+ * A WhatsApp conversation, oldest first, in a box that opens scrolled to the newest
+ * message (no JavaScript). Each message: direction (in or out), kind, body, body_gone,
+ * template, sent_by, status, error, created_at, delivered_at, read_at. Text is escaped here.
+ */
+function ui_chat(array $messages, int $now): string
+{
+    if (!$messages) {
+        return ui_empty('No messages kept yet.', 'New messages in and out show here.');
+    }
+    $by = ['admin' => 'You', 'system' => 'Booking message', 'auto' => 'Automatic answer', 'broadcast' => 'Broadcast', 'test' => 'Test'];
+    $html = '';
+    $day = '';
+    foreach ($messages as $m) {
+        $d = when($m['created_at'], 'D j M Y');
+        if ($d !== $day) {
+            $day = $d;
+            $html .= '<p class="chat-day"><span>' . h(when($m['created_at'], 'D j M')) . '</span></p>';
+        }
+        $out = $m['direction'] === 'out';
+        if ((int) $m['body_gone'] === 1) {
+            $text = '<p class="chat-text chat-gone">Text removed after 30 days</p>';
+        } elseif ($m['body'] === null || $m['body'] === '') {
+            $text = '<p class="chat-text chat-gone">No text kept</p>';
+        } else {
+            $text = '<p class="chat-text">' . h($m['body']) . '</p>';
+        }
+        $label = [];
+        if ($out) {
+            $label[] = $by[$m['sent_by']] ?? ucfirst((string) $m['sent_by']);
+        }
+        if ($m['kind'] === 'template' && !empty($m['template'])) {
+            $label[] = 'template ' . $m['template'];
+        } elseif ($m['kind'] === 'stop' || $m['kind'] === 'start') {
+            $label[] = $m['kind'] === 'stop' ? 'said STOP' : 'said START';
+        }
+        $meta = h(when($m['created_at'], 'g:i A'));
+        if ($out) {
+            $meta .= ' · ' . match ($m['status']) {
+                'read'      => '<span class="chat-tick chat-tick-read">Read ' . h(when($m['read_at'], 'g:i A')) . '</span>',
+                'delivered' => '<span class="chat-tick">Delivered</span>',
+                'failed'    => '<span class="chat-tick chat-tick-bad">Failed</span>',
+                default     => '<span class="chat-tick">Sent</span>',
+            };
+        }
+        $error = $out && $m['status'] === 'failed' && !empty($m['error']) ? '<p class="chat-error">' . h($m['error']) . '</p>' : '';
+        $html .= '<div class="chat-msg ' . ($out ? 'chat-out' : 'chat-in') . ($m['status'] === 'failed' ? ' chat-failed' : '') . '">'
+            . ($label ? '<p class="chat-by">' . h(implode(' · ', $label)) . '</p>' : '')
+            . $text . $error . '<p class="chat-meta">' . $meta . '</p></div>';
+    }
+    return '<div class="chat-scroll" tabindex="0" aria-label="Conversation"><div class="chat">' . $html . '</div></div>';
 }

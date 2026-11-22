@@ -17,6 +17,10 @@
  * WhatsApp too, as rows with channel 'whatsapp'. Email and WhatsApp fail separately,
  * so a WhatsApp problem never holds up an email, and the other way round.
  *
+ * Every WhatsApp message that goes (or finally fails) is also stored in the inbox's
+ * wa_messages with its text, and each run removes the text of messages older than 30
+ * days (tg_wa_retention in wa_store.php).
+ *
  * The checkout coupon (template 'nudge') also rides along when switched on: someone who
  * filled the pop-up but hasn't paid 20 minutes after their last try gets one WhatsApp
  * with a personal coupon, made at the moment it is sent. See TG_NUDGE_* in whatsapp.php.
@@ -217,6 +221,8 @@ function tg_outbox_run(array $config, int $now): array
         $route = '';
         $messageId = null;
         $permanent = false;
+        $final = false;
+        $values = null;
         try {
             if ($channel === 'whatsapp' && $row['template'] === 'nudge') {
                 // Made at the last moment, so the 2 hours start when the message goes.
@@ -228,7 +234,8 @@ function tg_outbox_run(array $config, int $now): array
                 $row['coupon_until'] = $coupon['until'];
             }
             if ($channel === 'whatsapp') {
-                $sent = tg_wa_send($config, $row['template'], $row['to_addr'], tg_wa_values($config, $row['template'], $row));
+                $values = tg_wa_values($config, $row['template'], $row);
+                $sent = tg_wa_send($config, $row['template'], $row['to_addr'], $values);
                 $ok = $sent['ok'];
                 $messageId = $sent['id'];
                 $route = (string) $sent['error'];
@@ -259,6 +266,10 @@ function tg_outbox_run(array $config, int $now): array
                 $sum[$channel === 'whatsapp' ? 'wa_paused' : 'paused'] = true;
             }
         }
+        // The inbox shows each WhatsApp message as the buyer got it (or why it failed).
+        if ($channel === 'whatsapp' && ($ok || $final)) {
+            tg_outbox_log_wa($pdo, $config, $row, $values, $ok, $messageId, $route, $now);
+        }
         if ($pauseMs > 0) {
             usleep($pauseMs * 1000);
         }
@@ -266,7 +277,35 @@ function tg_outbox_run(array $config, int $now): array
 
     // 6. One alert to Deenu about everything that finally failed or was missed.
     $sum['alerted'] = tg_outbox_alert($pdo, $config, $now);
+
+    // 7. The inbox keeps message text for 30 days only.
+    tg_wa_retention($pdo, $now);
     return $sum;
+}
+
+/** Stores one booking WhatsApp message in the inbox, with the words the buyer saw. */
+function tg_outbox_log_wa(PDO $pdo, array $config, array $row, ?array $values, bool $ok, ?string $messageId, string $error, int $now): void
+{
+    $t = tg_wa_templates($config)[$row['template']] ?? null;
+    $text = null;
+    if ($t !== null && $values !== null) {
+        try {
+            $text = tg_wa_render($config, $row['template'], $values)['body'];
+        } catch (Throwable $e) {
+            $text = null;
+        }
+    }
+    tg_wa_log_out($pdo, (string) $row['to_addr'], [
+        'kind'      => 'template',
+        'body'      => $text,
+        'template'  => $t['name'] ?? (string) $row['template'],
+        'category'  => $t['category'] ?? 'UTILITY',
+        'sent_by'   => 'system',
+        'wa_id'     => $messageId,
+        'outbox_id' => (int) $row['id'],
+        'status'    => $ok ? 'sent' : 'failed',
+        'error'     => $ok ? null : $error,
+    ], $now);
 }
 
 /** Emails Deenu about failed or missed messages he has not been told about. Returns how many. */

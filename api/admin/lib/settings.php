@@ -47,6 +47,11 @@ function admin_setting_defs(): array
             'check' => static fn(string $v): array => in_array($v, ['0', '1'], true) ? [$v === '1', null] : [null, 'Choose on or off.'],
             'show' => static fn($v): string => $v ? 'On' : 'Off',
         ],
+        'whatsapp.forward_replies' => [
+            'label' => 'Email me each WhatsApp reply',
+            'check' => static fn(string $v): array => in_array($v, ['0', '1'], true) ? [$v === '1', null] : [null, 'Choose on or off.'],
+            'show' => static fn($v): string => $v === false ? 'Off' : 'On',
+        ],
         'coupon.max_uses' => [
             'label' => 'Coupon use limit',
             'check' => static function (string $v): array {
