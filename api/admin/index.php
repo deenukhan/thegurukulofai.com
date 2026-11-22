@@ -2,8 +2,8 @@
 /**
  * The masterclass dashboard. It shows everything. It changes only a few things:
  * the settings on the Settings page, whether an add-on was delivered, resending
- * a buyer's confirmation email, coupons, recordings, and the WhatsApp inbox
- * (answering people from the business number).
+ * a buyer's confirmation email, coupons, recordings, the WhatsApp inbox (answering
+ * people from the business number), WhatsApp templates and broadcasts.
  *
  * Not linked from anywhere and kept out of search. Sign-in is the password (hash in
  * the private config's `admin` block). Two-step sign-in (a code from an authenticator
@@ -29,7 +29,7 @@ require __DIR__ . '/lib/actions.php';
 $config = rp_config();
 date_default_timezone_set('Asia/Kolkata'); // the store keeps IST times
 
-const ADMIN_CSS_VERSION = 16;
+const ADMIN_CSS_VERSION = 17;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');

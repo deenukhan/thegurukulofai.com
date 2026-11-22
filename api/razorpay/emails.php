@@ -176,7 +176,13 @@ function tg_digest_email(array $config, array $d): array
         array_push($lines, 'WHATSAPP',
             $d['wa']['paused'] ? '- Paused in the dashboard. Nothing goes out on WhatsApp until you switch it back on.'
                 : '- Sent: ' . $d['wa']['sent'] . ' (' . $d['wa']['seen'] . ' read so far)',
-            '- Failed: ' . $d['wa']['failed'], '');
+            '- Failed: ' . $d['wa']['failed']);
+        $bulk = $d['wa']['bulk'] ?? null;
+        if (is_array($bulk) && $bulk['sent'] + $bulk['failed'] + $bulk['held'] > 0) {
+            $lines[] = '- Broadcasts and rules: ' . $bulk['sent'] . ' sent, ' . $bulk['failed'] . ' failed, ' . $bulk['held']
+                . ' not sent (daily limit or quiet hours). Details: ' . tg_site($config) . '/api/admin/?view=broadcasts';
+        }
+        $lines[] = '';
     }
     if ($d['last_session_label'] !== null) {
         $lines[] = 'LAST SESSION';
@@ -219,6 +225,9 @@ function tg_alert_email(array $config, array $rows): array
     }
     if ($wa > 0) {
         $lines[] = ($mail > 0 ? '3' : '2') . '. WhatsApp: open Messages > Send log in the dashboard for the reason. The same reminder also went by email.';
+    }
+    if (array_filter($rows, static fn(array $r): bool => !empty($r['bulk']))) {
+        $lines[] = 'Broadcast, rule and inbox messages have no email copy. See them on the Broadcasts page: ' . tg_site($config) . '/api/admin/?view=broadcasts';
     }
     return [
         'subject' => 'ACTION: ' . count($rows) . ' ' . ($wa === 0 ? 'reminder email' : $noun) . (count($rows) === 1 ? '' : 's') . ' not sent',

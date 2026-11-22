@@ -537,7 +537,19 @@ form.make .btn { align-self: flex-start; }
 .tag-item { display: inline-flex; align-items: center; gap: 4px; }
 form.tag-remove { display: inline; }
 .tick-plain { color: var(--slate); }
+/* Broadcasts */
+.lead-line { margin: 0 0 12px; color: var(--ink); font-size: 15px; }
+.plain.skipped, .plain.blocked { text-align: left; }
+.plain.skipped li { color: var(--slate); font-size: 13.5px; }
+.blocked li { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 13.5px; }
+.blocked .icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; }
+.msg-preview { display: block; max-width: 620px; color: var(--slate); font-size: 13px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.notice-good { color: var(--good); font-weight: 500; }
+.notice-warn { color: var(--warn); font-weight: 500; }
+.steps-list { margin: 0 0 12px; padding-left: 20px; color: var(--slate); font-size: 14px; }
+.steps-list li + li { margin-top: 6px; }
 @media (max-width: 860px) {
+  .msg-preview { max-width: 100%; }
   .chat-msg { max-width: 88%; }
   .quick { flex-direction: column; align-items: flex-start; }
 }

@@ -13,7 +13,7 @@ Where the plan disagrees with the critic, the reason is under "Risks and decisio
 |---|---|---|---|
 | 1 | Inbox | v7 | built (see "Phase 1 as built") |
 | 2 | Templates | v8 | built (see "Phase 2 as built") |
-| 3 | Broadcasts | v9 | not started |
+| 3 | Broadcasts | v9 | built (see "Phase 3 as built") |
 | 4 | Automations | v10 | not started |
 | 5 | Contacts and WhatsApp overview | none (v10) | not started |
 
@@ -904,6 +904,55 @@ flag), schema 9.
 
 Broadcast suite green, earlier phase suites green, baselines hold, commit
 "add whatsapp broadcasts with test send, typed confirm and daily cap".
+
+### Phase 3 as built (builder's notes, 23 Nov 2026)
+
+Where the code differs from the text above, or settles something it left open:
+- **Files.** `api/razorpay/wa_bulk.php` (audience, daily limit, day plan, hash, field mapping; required by
+  `whatsapp.php`), `tg_outbox_bulk` / `tg_bulk_template_dead` / `tg_bc_finish` / `tg_bulk_label` in `outbox.php`,
+  `api/admin/lib/broadcasts.php` (pages and `admin_bc_action`), `api/admin/views/broadcasts.php`.
+- **Only templates written on the Templates page** can be broadcast (rows `c:<id>`). The built-in booking templates
+  need a booking to fill them, so they are not offered. A bulk row that is not `c:` is never queued.
+- **Field mapping.** Step 1 shows, for each slot of the saved template (`b1` for `{{1}}`, `u0` for a link button's
+  `{{1}}`), a field select and a text box (used when the field is "Text you type"). Changing the template resets them
+  to the template's own fields. `fields` JSON is `{fields: {b1: ...}, fixed: {b2: ...}}`.
+- **People whose message can't be filled** (a "session" field for someone with no paid seat, an empty typed text) are
+  left out, counted under "Nothing to fill {{n}} (...)". Tags and the offers box narrow the audience and are not
+  counted as left out. "Everyone you may message" starts from every contact with a phone and every WhatsApp-only number.
+- **Checkouts not paid**: each person's latest checkout, unpaid, created in the period, and `tg_nudge_paid_since`
+  false (no seat since, same email or number).
+- **Test sends count toward the daily limit** (they are real business-started templates) and are not checked
+  against it (they go only to Deenu's own numbers). The test needs WhatsApp enabled and not paused.
+- **Day one's room** is today's room only when the broadcast starts within 24 hours; a later start gets the full limit.
+  A limit of 0 refuses every confirm.
+- **Held rows** carry `last_error` "Waiting: daily limit reached", "Waiting: quiet hours (9 PM to 9 AM)" or "Waiting: the
+  template is paused at Meta" with `next_try_at`. On expiry they become "Not sent: ..." and are marked alerted (no
+  alert email): they show on the broadcast page and in the 9 AM summary line. A health warning fires when rows have
+  waited over a day for room.
+- **132001** (Meta has no such template) marks the row `DISABLED` with Meta's reason, not `DELETED`, so the name is
+  not blocked by our 30-day rule; the rest of its rows fail with one alert, as for 132016. 132015 marks it `PAUSED`
+  and the row waits an hour. These three still count toward the streak.
+- **One-person errors reported later by the webhook** (a `failed` status with 131049, 131050, 131026, 131047 or
+  131021) on a bulk row also get the plain reason and `alerted_at`, so no alert email; 131050 sets `marketing_off_at`.
+  A bad-number 100 is recognised by "phone" or "recipient" in Meta's message.
+- **Rule rows (Phase 4) hooks**: a bulk row whose `params` has `check_paid` and `booking` is cancelled "Paid in the
+  meantime" when `tg_nudge_paid_since` says so; `source = 'automation'` rows are treated as live until Phase 4 adds the
+  rule check; `sent_by` is `auto` for them.
+- **The 9 AM summary's WhatsApp "Sent" and "Failed"** count rows with no source (booking messages and test sends);
+  broadcasts and rules have their own line, only when there was any. The send log's "Failed this week", the WhatsApp
+  tab's failed count and the health warning leave out broadcast and rule rows (their page shows them).
+- **Cancel the rest** cancels queued rows only; a row already being sent in that moment finishes.
+- **"Replied"**: a `wa_inbound` row of kind `reply` (not STOP/START, not a dashboard entry) within 72 hours after
+  `sent_at`.
+- **Offers-box note**: shown on the Broadcasts list, on a marketing draft and as a health info line until a marketing
+  broadcast with "Only people who ticked the offers box" was confirmed, or `TG_CONSENT_VERSIONS` has more than one entry.
+- **Settings**: `whatsapp.daily_cap` (0 to 10,000; the config's `daily_cap`, else 250) and `whatsapp.my_number` (a
+  WhatsApp number, or empty for none) on Settings > WhatsApp > Broadcasts.
+- **Inbox**: template sends now write `source = 'inbox'` and are refused when the daily limit has no room for a new
+  person ("You've reached your daily limit ..."). Quiet hours still do not apply to a one-off inbox send.
+- **Worker summary**: one-person failures are counted as `undelivered` (printed, but the cron run does not exit as
+  failed for them); `failed` stays for real failures.
+- Test suite `dashboard_broadcasts.py`: 122 checks. No existing kit check changed.
 
 ---
 

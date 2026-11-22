@@ -36,7 +36,7 @@ if (isset($sum['error'])) {
     exit(1);
 }
 $parts = [];
-foreach (['planned', 'sent', 'retrying', 'failed', 'expired', 'cancelled', 'alerted'] as $key) {
+foreach (['planned', 'sent', 'retrying', 'failed', 'undelivered', 'expired', 'cancelled', 'alerted'] as $key) {
     if ($sum[$key] > 0) {
         $parts[] = $sum[$key] . ' ' . $key;
     }

@@ -52,6 +52,26 @@ function admin_setting_defs(): array
             'check' => static fn(string $v): array => in_array($v, ['0', '1'], true) ? [$v === '1', null] : [null, 'Choose on or off.'],
             'show' => static fn($v): string => $v === false ? 'Off' : 'On',
         ],
+        'whatsapp.daily_cap' => [
+            'label' => 'WhatsApp daily limit',
+            'check' => static function (string $v): array {
+                $v = trim($v);
+                return ctype_digit($v) && (int) $v <= 10000 ? [(int) $v, null] : [null, 'The daily limit must be a whole number, 0 to 10,000.'];
+            },
+            'show' => static fn($v): string => $v === null ? (string) TG_WA_DAILY_CAP . ' (default)' : num((int) $v) . ' people a day',
+        ],
+        'whatsapp.my_number' => [
+            'label' => 'Your WhatsApp number for tests',
+            'check' => static function (string $v): array {
+                $v = trim($v);
+                if ($v === '') {
+                    return ['', null];
+                }
+                $n = tg_wa_number($v);
+                return $n !== null ? [$n, null] : [null, 'That is not a WhatsApp number. Type it with the country code, such as +91 98765 43210.'];
+            },
+            'show' => static fn($v): string => (string) $v === '' ? 'None' : tg_wa_pretty((string) $v),
+        ],
         'coupon.max_uses' => [
             'label' => 'Coupon use limit',
             'check' => static function (string $v): array {

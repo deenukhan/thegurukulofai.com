@@ -342,6 +342,9 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
   quick replies, tags, Mark done, and stop or restart WhatsApp for one number (see "Masterclass WhatsApp").
 - **Templates (WhatsApp):** write, check, submit, duplicate and delete your own WhatsApp templates. The built-in
   booking templates stay in code and are shown locked (see "Masterclass WhatsApp").
+- **Broadcasts (WhatsApp):** send one approved template to a group, tested first, with a typed confirmation of the
+  count; cancel the rest; resend to people who did not read (see "Masterclass WhatsApp"). Settings has the daily
+  limit (`whatsapp.daily_cap`) and your own test number (`whatsapp.my_number`).
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
@@ -363,8 +366,9 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 8 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
-  7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`; 8 added `wa_templates`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+- Schema version 9 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
+  7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`; 8 added `wa_templates`; 9 added
+  `wa_broadcasts`, `outbox.params`/`source`/`source_id` and `wa_contacts.marketing_off_at`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -453,7 +457,44 @@ emptying `test_numbers`.
   change them. Approved templates show in the inbox (once the window has closed) for anyone whose details fill them;
   a send goes straight to Meta and writes a final outbox row with template `c:<id>`, so the worker never sends it again.
   Media headers need Meta's upload API and the app id, so they are left for later.
-  The rest of the plan (templates, broadcasts, automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
+- **Broadcasts** (dashboard > WhatsApp > Broadcasts, `views/broadcasts.php`, `lib/broadcasts.php`; audience, limit and
+  rules in `api/razorpay/wa_bulk.php`; sending in `tg_outbox_bulk` in `outbox.php`; table `wa_broadcasts`, schema 9):
+  one approved template of your own to a group, in four steps. **Message:** the template, and what fills each variable.
+  **Who:** paid buyers (optionally one session), add-on buyers, buyers without the add-on, checkouts not paid (7, 30 or
+  90 days), people who messaged you (24 hours to ever), or everyone; then tag in, tag out, and "Only people who ticked
+  the offers box". Always applied (`tg_wa_audience`): a valid number once each, consent (pop-up `consent_version`) **or**
+  they messaged us first (`wa_inbound`), never STOP, the test list while it has numbers, and for marketing not
+  `marketing_off_at` (Meta's 131050). The preview shows the count, who was left out and why, how many ticked the offers
+  box, the first ten people with their own message, the estimated cost (count × ₹0.86 marketing or ₹0.15 utility) and the
+  plan against the daily limit. **Test:** required, to a number on the test list while it is set, else to
+  `whatsapp.my_number`; any change to steps 1–2 needs a new one (`test_hash`). **Send:** now or at a time (up to 30 days
+  ahead), with the number of people typed; a count that changed since the preview is refused with the new number.
+  - **Daily limit** (`whatsapp.daily_cap`, default 250, Meta's lowest tier): the most different people sent any template
+    in a rolling 24 hours, the way Meta counts its messaging limit. Everything counts (booking messages, the checkout
+    coupon, inbox templates, tests, broadcasts); free replies don't. Booking messages are never held; broadcast rows
+    yield to them and to a reserve for booking messages queued in the next 24 hours. Confirming spreads the rows by day
+    at the limit (day one gets today's room), each row expiring 48 hours after its own time; more than 7 days is refused.
+    Inbox template sends are refused once the room is gone.
+  - **Quiet hours:** no marketing between 9 PM and 9 AM IST. A time inside them is refused; "Send now" at night starts at
+    9 AM; a held row waits until 9 AM. Utility may go any time.
+  - **Bulk rows** (`source` broadcast, automation or inbox) never carry a `booking_id`, so the booking cancels never touch
+    them; the values (and a first name) are in `params`, cleared 30 days after the row is final. The worker sends them
+    after the booking messages, up to `outbox.wa_bulk_per_run` (200) a run, re-checking each: test list, STOP ("Said STOP
+    before it was sent", which START never revives), consent and marketing-off, the broadcast still on, the template still
+    APPROVED in `wa_templates` (PAUSED waits an hour; DISABLED, REJECTED or deleted fails the rest with one alert), quiet
+    hours, then the limit. Meta errors about one person (131049, 131050, 131026, 131047, 131021) fail just that row with
+    a plain reason, no alert email and no "WhatsApp is down" streak; anything else counts and alerts as for bookings.
+    Rows still waiting when they expire show as "Not sent" on the page and in the 9 AM summary's own line.
+  - **Results:** sent, delivered, read, replied (they wrote within 72 hours), failed and not sent, the reasons grouped,
+    everyone listed, "Cancel the rest" while sending, and "Resend to people who did not read" 12 hours after it
+    finished (a new draft, with its own test and confirmation). A template used by a scheduled or sending broadcast
+    can't be deleted. The global pause stops broadcasts too; they carry on when switched back on.
+  - **Before the first marketing broadcast, make the checkout pop-up and the privacy policy agree** (flagged for Deenu,
+    23 Nov 2026). The pop-up's consent covers booking updates only, and its separate offers box (`marketing_optin`) is
+    unticked by default, so many people chose not to get offers. Either send marketing only with "Only people who
+    ticked the offers box" on, or add a new `TG_CONSENT_VERSIONS` wording that mentions occasional WhatsApp offers. A
+    health info line and a note on the Broadcasts page repeat this until one of the two is done.
+  The rest of the plan (automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
   and every key filled in. The token and app secret never leave the server; the token goes in an
   Authorization header, never a URL or a log.

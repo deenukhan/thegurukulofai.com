@@ -149,10 +149,28 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
     if ($heard === null) {
         $add('warn', 'WhatsApp', 'Meta has not reached the WhatsApp webhook yet', 'Set the callback URL in the Meta app, then send a test message.', 'emails');
     }
+    // Broadcast and rule results show on their own pages, so only booking and inbox messages count here.
     $failed = (int) value($pdo, "SELECT COUNT(*) FROM outbox WHERE channel = 'whatsapp' AND status IN ('failed', 'expired')
-        AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused'", [tg_ist($now - 7 * 86400)]);
+        AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused' AND COALESCE(source, '') NOT IN ('broadcast', 'automation')",
+        [tg_ist($now - 7 * 86400)]);
     if ($failed > 0) {
         $add('warn', 'WhatsApp', $failed . ' WhatsApp message' . ($failed === 1 ? '' : 's') . ' failed this week', 'See the send log for who and why.', 'emails');
+    }
+
+    try {
+        $offers = function_exists('admin_bc_offers_note') ? admin_bc_offers_note($pdo) : null;
+    } catch (Throwable $e) {
+        $offers = null;
+    }
+    if ($offers !== null) {
+        $add('info', 'WhatsApp', 'Before your first marketing broadcast, settle the offers box', $offers, 'broadcasts');
+    }
+    // Broadcast rows waiting for room for over a day: the daily limit may be too low.
+    $held = (int) value($pdo, "SELECT COUNT(*) FROM outbox WHERE source IS NOT NULL AND status = 'queued' AND last_error = 'Waiting: daily limit reached' AND due_at < ?",
+        [tg_ist($now - 86400)]);
+    if ($held > 0) {
+        $add('warn', 'WhatsApp', $held . ' broadcast message' . ($held === 1 ? ' has' : 's have') . ' waited over a day for room under the daily limit',
+            'They are dropped 48 hours after their time. Raise the limit in Settings, or cancel the broadcast.', 'broadcasts');
     }
 
     if (empty($config['whatsapp']['enabled'])) {
@@ -219,7 +237,7 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
     $week = tg_ist($now - 7 * 86400);
     $k = row($pdo, "SELECT COALESCE(SUM(status = 'sent' AND sent_at >= ?), 0) AS sent, COALESCE(SUM(read_at >= ?), 0) AS seen,
             COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused'), 0) AS failed
-        FROM outbox WHERE channel = 'whatsapp'", [$week, $week, $week]);
+        FROM outbox WHERE channel = 'whatsapp' AND COALESCE(source, '') NOT IN ('broadcast', 'automation')", [$week, $week, $week]);
     $stops = (int) value($pdo, 'SELECT COUNT(*) FROM contacts WHERE wa_optout_at IS NOT NULL');
     $html = ui_kpis([
         ['label' => 'WhatsApp', 'value' => ui_pill($mode[0], $mode[1]), 'note' => $mode[2]],

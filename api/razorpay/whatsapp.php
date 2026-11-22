@@ -17,6 +17,7 @@
  */
 require_once __DIR__ . '/wa_store.php';
 require_once __DIR__ . '/wa_custom.php';
+require_once __DIR__ . '/wa_bulk.php';
 
 /**
  * The templates, keyed by the outbox's template name. Everything a buyer reads on
@@ -552,6 +553,18 @@ function tg_wa_status(PDO $pdo, array $s): void
         // Only a message that wasn't delivered can fail; a late "failed" never undoes "read".
         $pdo->prepare("UPDATE outbox SET status = 'failed', last_error = ? WHERE provider_id = ? AND read_at IS NULL")
             ->execute([mb_substr($why, 0, 255), $id]);
+        // In a broadcast, a failure about one person shows on its page, not in an alert email.
+        $code = (int) ($e['code'] ?? 0);
+        if (isset(TG_WA_PERSON_ERRORS[$code])) {
+            $pdo->prepare("UPDATE outbox SET alerted_at = COALESCE(alerted_at, ?), last_error = ? WHERE provider_id = ? AND source IS NOT NULL AND read_at IS NULL")
+                ->execute([$at, TG_WA_PERSON_ERRORS[$code], $id]);
+        }
+        if ($code === 131050) {
+            $to = tg_wa_value($pdo, 'SELECT to_addr FROM outbox WHERE provider_id = ? AND read_at IS NULL LIMIT 1', [$id]);
+            if (is_string($to) && $to !== '') {
+                tg_wa_set_marketing_off($pdo, $to, (int) ($s['timestamp'] ?? time()));
+            }
+        }
         $pdo->prepare("UPDATE wa_messages SET status = 'failed', error = ? WHERE wa_id = ? AND direction = 'out' AND read_at IS NULL")
             ->execute([mb_substr($why, 0, 255), $id]);
     }
@@ -576,13 +589,19 @@ function tg_wa_contacts(PDO $pdo, string $number): array
 
 /**
  * Records a STOP or START for a number, from WhatsApp or from the dashboard: the opt-out
- * on every contact with that number, and their queued WhatsApp booking messages.
- * STOP cancels them; START brings back only the ones STOP cancelled whose time has not
- * passed. Returns the contact ids touched.
+ * on every contact with that number, and their queued WhatsApp messages. STOP cancels
+ * them (broadcast and rule messages too, by number); START brings back only booking
+ * messages STOP cancelled whose time has not passed. Returns the contact ids touched.
  */
 function tg_wa_apply_stop(PDO $pdo, array $config, string $number, string $kind, int $now): array
 {
     $ids = array_map('intval', array_column(tg_wa_contacts($pdo, $number), 'id'));
+    if ($kind === 'stop') {
+        // Broadcast and rule messages waiting for this number never go. They keep their own
+        // reason, so a later START does not bring them back (only booking messages return).
+        $pdo->prepare("UPDATE outbox SET status = 'cancelled', last_error = 'Said STOP before it was sent'
+            WHERE channel = 'whatsapp' AND status = 'queued' AND source IS NOT NULL AND to_addr = ?")->execute([$number]);
+    }
     if ($ids) {
         $in = implode(',', $ids);
         if ($kind === 'stop') {
@@ -594,7 +613,7 @@ function tg_wa_apply_stop(PDO $pdo, array $config, string $number, string $kind,
             // Reminders still ahead of them come back; ones whose time passed stay stopped.
             $pdo->prepare("UPDATE outbox o JOIN bookings b ON b.id = o.booking_id SET o.status = 'queued', o.last_error = NULL
                 WHERE o.channel = 'whatsapp' AND o.status = 'cancelled' AND o.last_error = 'Replied STOP on WhatsApp'
-                AND o.expires_at > ? AND b.contact_id IN ({$in})")->execute([tg_ist(rp_now($config))]);
+                AND o.source IS NULL AND o.expires_at > ? AND b.contact_id IN ({$in})")->execute([tg_ist(rp_now($config))]);
         }
     }
     return $ids;

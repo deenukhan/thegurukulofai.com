@@ -80,9 +80,12 @@ function tg_db_enabled(array $config): bool
  * message in and out, its text kept 30 days), wa_tags and wa_quick_replies.
  * Version 8 (WhatsApp templates) adds wa_templates: templates written on the dashboard,
  * their checks, Meta's review status, category and quality.
+ * Version 9 (WhatsApp broadcasts) adds wa_broadcasts, and to the outbox the values of a
+ * custom template (params), where a bulk row came from (source, source_id); and
+ * wa_contacts.marketing_off_at (they turned off our marketing in WhatsApp).
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 8;
+const TG_DB_VERSION = 9;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -392,6 +395,56 @@ function tg_db_migrate(PDO $pdo, array $config): void
         updated_at DATETIME NOT NULL,
         UNIQUE KEY uniq_name_lang (name, language),
         KEY idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 9: WhatsApp broadcasts ----
+    // Bulk rows (a broadcast, a rule, an inbox template) never carry a booking_id: the
+    // booking cancels join on it. Their values live in params, cleared 30 days after the
+    // row is final (tg_wa_retention).
+    $columns = [
+        'params'    => "TEXT NULL COMMENT 'JSON values for a custom template; NULL 30 days after it is final'",
+        'source'    => "VARCHAR(12) NULL COMMENT 'broadcast, automation or inbox; NULL for booking messages'",
+        'source_id' => "INT UNSIGNED NULL COMMENT 'The broadcast or rule id'",
+    ];
+    foreach ($columns as $name => $definition) {
+        $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $has->execute(['outbox', $name]);
+        if ((int) $has->fetchColumn() === 0) {
+            tg_db_alter($pdo, "ALTER TABLE outbox ADD COLUMN {$name} {$definition}");
+        }
+    }
+    $index = $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'outbox' AND INDEX_NAME = 'idx_source'")->fetchColumn();
+    if ((int) $index === 0) {
+        tg_db_alter($pdo, 'ALTER TABLE outbox ADD KEY idx_source (source, source_id)');
+    }
+    $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $has->execute(['wa_contacts', 'marketing_off_at']);
+    if ((int) $has->fetchColumn() === 0) {
+        tg_db_alter($pdo, "ALTER TABLE wa_contacts ADD COLUMN marketing_off_at DATETIME NULL COMMENT 'Meta said 131050: they turned off our marketing'");
+    }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_broadcasts (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(80) NOT NULL,
+        template_id INT UNSIGNED NOT NULL COMMENT 'wa_templates.id',
+        fields TEXT NOT NULL COMMENT 'JSON: the field for each variable, and fixed texts',
+        audience TEXT NOT NULL COMMENT 'JSON filters: base, session, tag_in, tag_out, days, offers_box, parent',
+        parent_id INT UNSIGNED NULL COMMENT 'Resend to people who did not read this broadcast',
+        status VARCHAR(12) NOT NULL DEFAULT 'draft' COMMENT 'draft, scheduled, sending, done, cancelled',
+        test_hash CHAR(16) NULL COMMENT 'Template, fields and audience at the last good test',
+        test_at DATETIME NULL,
+        test_to VARCHAR(16) NULL,
+        send_at DATETIME NULL COMMENT 'When it starts, IST',
+        total INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'People queued at confirmation',
+        est_paise INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        confirmed_at DATETIME NULL,
+        finished_at DATETIME NULL,
+        cancelled_at DATETIME NULL,
+        KEY idx_status (status, send_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     @file_put_contents($marker, (string) time());

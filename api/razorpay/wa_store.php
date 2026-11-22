@@ -211,7 +211,8 @@ function tg_wa_has_consent(PDO $pdo, string $phone): bool
  *            they wrote again after it.
  * template:  one approved template. They agreed to booking updates, or messaged us first.
  *            Never after STOP.
- * marketing: as template, and not in the quiet hours (9 PM to 9 AM IST).
+ * marketing: as template, they did not turn off our marketing in WhatsApp (Meta's 131050),
+ *            and not in the quiet hours (9 PM to 9 AM IST).
  * The switches come first, in this order: set up and enabled, not paused, the test list.
  */
 function tg_wa_can_message(PDO $pdo, array $config, string $phone, string $purpose, int $now): ?string
@@ -249,6 +250,9 @@ function tg_wa_can_message(PDO $pdo, array $config, string $phone, string $purpo
     }
     if (!tg_wa_has_consent($pdo, $phone) && !tg_wa_messaged_us($pdo, $phone)) {
         return 'They have not agreed to booking updates and have not messaged you, so no template may go to them.';
+    }
+    if ($purpose === 'marketing' && tg_wa_marketing_off($pdo, $phone)) {
+        return 'They turned off marketing messages from you in WhatsApp.';
     }
     if ($purpose === 'marketing' && tg_wa_quiet_hours($now)) {
         return 'Marketing messages do not go out between 9 PM and 9 AM.';
@@ -292,12 +296,19 @@ function tg_wa_mark_read(array $config, string $waId): void
     ]);
 }
 
-/** Removes the words of messages older than 30 days, up to 2,000 a run. The rows stay. Returns how many. */
+/**
+ * Removes the words of messages older than 30 days, up to 2,000 a run, and the filled-in
+ * values (names, sessions) of broadcast and rule rows finished over 30 days ago. Only rows
+ * in a final state lose their values, by the times PHP set (sent, or else due), so a send
+ * still waiting never does. The rows stay. Returns how many messages lost their text.
+ */
 function tg_wa_retention(PDO $pdo, int $now): int
 {
     try {
         $q = $pdo->prepare('UPDATE wa_messages SET body = NULL, body_gone = 1 WHERE body IS NOT NULL AND created_at < ? LIMIT 2000');
         $q->execute([tg_ist($now - TG_WA_KEEP_TEXT_DAYS * 86400)]);
+        $pdo->prepare("UPDATE outbox SET params = NULL WHERE params IS NOT NULL AND status IN ('sent', 'failed', 'expired', 'cancelled')
+            AND COALESCE(sent_at, due_at) < ? LIMIT 2000")->execute([tg_ist($now - TG_WA_KEEP_TEXT_DAYS * 86400)]);
         return $q->rowCount();
     } catch (Throwable $e) {
         error_log('whatsapp inbox: old text not removed: ' . $e->getMessage());

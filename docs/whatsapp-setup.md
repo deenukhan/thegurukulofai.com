@@ -13,6 +13,12 @@ template after that. A copy of each reply is also emailed to deenu@thegurukulofa
 the Inbox page. Message text is kept 30 days, then deleted. STOP and START are handled automatically.
 **Your own templates:** write them on **WhatsApp > Templates**. The page checks Meta's rules before you submit,
 sends them for review, and shows Meta's answer. Approved ones can be sent from the Inbox once the 24-hour window closes.
+**Broadcasts:** send one approved template to a group on **WhatsApp > Broadcasts**: pick who, see the count, real
+names and cost, send a test to your own phone, then type the number of people to confirm. It goes in batches within
+your daily limit (Settings, 250 to start), never marketing between 9 PM and 9 AM. **Before your first marketing
+broadcast**, decide about the checkout pop-up's offers box: send marketing only to people who ticked it, or ask Claude
+for new pop-up wording that mentions WhatsApp offers. Once `test_numbers` is empty, set your own number in Settings
+so broadcast tests have somewhere to go.
 
 **Order:** steps 1 to 5 are done (22 Nov 2026). Step 6 needs the code live ("push it"). Then 7 and 8.
 

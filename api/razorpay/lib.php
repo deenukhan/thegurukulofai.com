@@ -34,7 +34,7 @@ function rp_config(): array
  * a dotted path into the config. Secrets, prices and the schedule are never here.
  */
 const RP_DASHBOARD_SETTINGS = ['zoom.join_url', 'community_url', 'coupon.paused', 'coupon.max_uses', 'whatsapp.paused', 'whatsapp.checkout_coupon',
-    'whatsapp.forward_replies'];
+    'whatsapp.forward_replies', 'whatsapp.daily_cap', 'whatsapp.my_number'];
 
 function rp_settings_path(array $config): string
 {

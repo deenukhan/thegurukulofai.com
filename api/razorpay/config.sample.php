@@ -95,8 +95,10 @@ return [
     'support_whatsapp' => '+91 83838 40943',
     // Most emails sent per 5-minute run, and a short pause between them.
     'outbox' => [
-        'max_per_run' => 60,
-        'pause_ms'    => 200,
+        'max_per_run'     => 60,
+        'pause_ms'        => 200,
+        // WhatsApp broadcast rows sent per 5-minute run, after the booking messages.
+        'wa_bulk_per_run' => 200,
     ],
 
     // WhatsApp messages through Meta's WhatsApp Cloud API: the seat confirmation and the
@@ -120,6 +122,11 @@ return [
         // Replies to the business number show in the dashboard's Inbox, and a copy is emailed
         // to mail_notify. false turns the emails off. The Inbox page can also switch it.
         'forward_replies' => true,
+        // Broadcasts: the most different people who may get a template in any 24 hours
+        // (Meta's lowest messaging tier is 250), and your own number for broadcast tests
+        // once test_numbers is empty. Both can be changed on the dashboard's Settings page.
+        'daily_cap'       => 250,
+        'my_number'       => '',
     ],
 
     // Marker files that stop a buyer being emailed twice.

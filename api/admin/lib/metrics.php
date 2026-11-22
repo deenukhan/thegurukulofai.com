@@ -155,6 +155,17 @@ function m_message_label(array $config, array $o): string
     return h($label) . ' ' . ui_pill('Email', 'neutral');
 }
 
+/** Where a WhatsApp row with no booking came from, by its dedupe key, for the send log. */
+function m_wa_origin(string $key): string
+{
+    return match (true) {
+        str_starts_with($key, 'wa:inbox:')  => 'From the inbox',
+        str_starts_with($key, 'wa:bctest:') => 'Broadcast test',
+        str_starts_with($key, 'wa:bc')      => 'Broadcast',
+        default                             => 'Test message',
+    };
+}
+
 /** Status, plus WhatsApp's delivered and read ticks once Meta reports them. */
 function m_message_status(array $o): string
 {

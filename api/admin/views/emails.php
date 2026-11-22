@@ -14,7 +14,8 @@ return static function (array $d): array {
         $channel = in_array($_GET['channel'] ?? '', ['email', 'whatsapp'], true) ? (string) $_GET['channel'] : '';
         $week = tg_ist($d['now'] - 7 * 86400);
         $k = row($pdo, "SELECT COALESCE(SUM(status = 'sent' AND sent_at >= ?), 0) AS sent, COALESCE(SUM(status IN ('queued', 'sending')), 0) AS waiting,
-                COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused'), 0) AS failed,
+                COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused'
+                    AND COALESCE(source, '') NOT IN ('broadcast', 'automation')), 0) AS failed,
                 COALESCE(SUM(status = 'cancelled'), 0) AS stopped,
                 COALESCE(SUM(channel = 'whatsapp' AND status = 'sent' AND sent_at >= ?), 0) AS wa_sent,
                 COALESCE(SUM(channel = 'whatsapp' AND read_at >= ?), 0) AS wa_read
@@ -48,7 +49,7 @@ return static function (array $d): array {
         foreach ($list as $o) {
             $address = $o['channel'] === 'whatsapp' ? tg_wa_pretty($o['to_addr']) : $o['to_addr'];
             $to = $o['contact_id'] ? m_person($o) . '<small class="sub">' . h($address) . '</small>'
-                : h($address) . '<small class="sub">' . ($o['channel'] === 'whatsapp' ? (str_starts_with((string) $o['dedupe_key'], 'wa:inbox:') ? 'From the inbox' : 'Test message') : 'You') . '</small>';
+                : h($address) . '<small class="sub">' . ($o['channel'] === 'whatsapp' ? m_wa_origin((string) $o['dedupe_key']) : 'You') . '</small>';
             $note = $o['last_error'] ? '<span class="muted">' . h($o['last_error']) . '</span>'
                 : ($o['read_at'] ? '<span class="muted">Read ' . h(when($o['read_at'], 'g:i A')) . '</span>'
                 : ($o['sent_at'] ? '<span class="muted">Sent ' . h(when($o['sent_at'], 'g:i A')) . '</span>' : ''));

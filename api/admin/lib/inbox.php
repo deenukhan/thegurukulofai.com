@@ -40,6 +40,13 @@ function admin_inbox_fillable(array $config, array $t, array $person, int $now):
     return tg_wat_values($config, $t, $person, $typed, $now)['missing'] === [];
 }
 
+/** Why a template from the inbox was refused under the daily limit. */
+function admin_inbox_cap_text(array $config): string
+{
+    return 'You\'ve reached your daily limit of ' . num(tg_wa_daily_cap($config)) . ' people in 24 hours, so nothing was sent. '
+        . 'Raise it in Settings, or send it later.';
+}
+
 /** What Meta charges for one template, in words. */
 function admin_inbox_cost(string $category): string
 {
@@ -425,6 +432,10 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
                 admin_flash('bad', 'Meta has not approved ' . $allowed[$key]['name'] . ' yet, so nothing was sent. Submit it on the WhatsApp tab.');
                 return;
             }
+            if (!tg_wa_cap_allows($pdo, $config, $phone, $now)) {
+                admin_flash('bad', admin_inbox_cap_text($config));
+                return;
+            }
             if (!admin_once_take()) {
                 admin_flash('warn', 'That template was already sent, so it was not sent again. Check the conversation below.');
                 return;
@@ -434,8 +445,8 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
             $result = tg_wa_send($config, $key, $phone, $values);
             $at = tg_ist($now);
             // An outbox row already final, so it shows in the send log with its ticks.
-            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at)
-                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
+            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
+                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'inbox')")
                 ->execute(['wa:inbox:' . $key . ':c' . $id . ':' . bin2hex(random_bytes(6)), $key, $phone, $at, $at,
                     $result['ok'] ? 'sent' : 'failed', $result['ok'] ? null : mb_substr((string) $result['error'], 0, 255),
                     $result['ok'] ? $at : null, $result['id'], $result['ok'] ? null : $at]);
@@ -510,7 +521,8 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
  * Sends one approved template written on the Templates page to this conversation, filled
  * from their details and any text typed in the form (fixed[b2], fixed[u0]). Goes straight
  * to Meta, like the follow-up, and writes an outbox row already final (template c:<id>)
- * so it shows in the send log. Nothing is queued, so the worker never sends it again.
+ * so it shows in the send log (source 'inbox'). Nothing is queued, so the worker never
+ * sends it again. It counts toward the daily limit like every template.
  */
 function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, int $now): void
 {
@@ -539,14 +551,18 @@ function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, i
         admin_flash('bad', 'Not sent. Fill in ' . implode(', ', $values['missing']) . '.');
         return;
     }
+    if (!tg_wa_cap_allows($pdo, $config, $phone, $now)) {
+        admin_flash('bad', admin_inbox_cap_text($config));
+        return;
+    }
     if (!admin_once_take()) {
         admin_flash('warn', 'That template was already sent, so it was not sent again. Check the conversation below.');
         return;
     }
     $result = tg_wat_send($config, $fresh, $phone, $values);
     $at = tg_ist($now);
-    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at)
-        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
+    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
+        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'inbox')")
         ->execute(['wa:inbox:c' . $fresh['id'] . ':c' . $id . ':' . bin2hex(random_bytes(6)), 'c:' . $fresh['id'], $phone, $at, $at,
             $result['ok'] ? 'sent' : 'failed', $result['ok'] ? null : mb_substr((string) $result['error'], 0, 255),
             $result['ok'] ? $at : null, $result['id'], $result['ok'] ? null : $at]);

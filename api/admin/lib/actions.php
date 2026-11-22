@@ -10,6 +10,7 @@ require_once __DIR__ . '/coupons.php';
 require_once __DIR__ . '/recordings.php';
 require_once __DIR__ . '/inbox.php';
 require_once __DIR__ . '/wa_templates.php';
+require_once __DIR__ . '/broadcasts.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -86,8 +87,13 @@ function admin_handle_post(PDO $pdo, array $config): void
             $changed = [];
             foreach ($clean as $name => $value) {
                 $current = admin_setting($config, $name)[0];
-                if (in_array($name, ['coupon.paused', 'whatsapp.paused', 'whatsapp.checkout_coupon'], true) ? (bool) $current === $value
-                    : ($name === 'whatsapp.forward_replies' ? ($current !== false) === $value : $current === $value)) {
+                $same = match (true) {
+                    in_array($name, ['coupon.paused', 'whatsapp.paused', 'whatsapp.checkout_coupon'], true) => (bool) $current === $value,
+                    $name === 'whatsapp.forward_replies' => ($current !== false) === $value,
+                    $name === 'whatsapp.daily_cap' => is_numeric($current) && (int) $current === $value,
+                    default => $current === $value,
+                };
+                if ($same) {
                     continue;
                 }
                 if (!admin_setting_write($pdo, $config, $name, $value)) {
@@ -254,6 +260,16 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'wat_delete':
         case 'wat_sync':
             admin_wat_action($pdo, $config, $action);
+            break;
+
+        // ---------- WhatsApp broadcasts (lib/broadcasts.php) ----------
+        case 'bc_save':
+        case 'bc_test':
+        case 'bc_confirm':
+        case 'bc_cancel':
+        case 'bc_resend':
+        case 'bc_delete':
+            admin_bc_action($pdo, $config, $action);
             break;
     }
     admin_done();

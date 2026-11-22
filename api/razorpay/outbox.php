@@ -25,6 +25,12 @@
  * filled the pop-up but hasn't paid 20 minutes after their last try gets one WhatsApp
  * with a personal coupon, made at the moment it is sent. See TG_NUDGE_* in whatsapp.php.
  *
+ * Broadcasts (wa_bulk.php) are "bulk rows": source set, no booking. They go after the
+ * booking messages in each run, up to outbox.wa_bulk_per_run (200), and are checked again
+ * one by one as they go (tg_outbox_bulk): the test list, STOP, consent, the broadcast still
+ * on, the template still approved, quiet hours for marketing and the daily limit. A row
+ * that has to wait gets next_try_at; one that may not go is cancelled with the reason.
+ *
  * All times are worked out here in PHP and passed to SQL, never SQL's NOW(),
  * so the test clock (`test_now`) moves everything together.
  */
@@ -43,7 +49,7 @@ function tg_unix(string $ist): int
 
 function tg_outbox_run(array $config, int $now): array
 {
-    $sum = ['planned' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'expired' => 0, 'cancelled' => 0, 'alerted' => 0,
+    $sum = ['planned' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'expired' => 0, 'cancelled' => 0, 'alerted' => 0, 'undelivered' => 0,
         'paused' => false, 'wa_paused' => false];
     $pdo = tg_db($config);
     if ($pdo === null) {
@@ -176,19 +182,28 @@ function tg_outbox_run(array $config, int $now): array
         $pdo->prepare("UPDATE outbox SET status = 'expired', last_error = 'WhatsApp was off or paused', alerted_at = ?
             WHERE channel = 'whatsapp' AND status = 'queued' AND expires_at <= ?")->execute([$at, $at]);
     }
+    // A broadcast row still waiting (daily limit, quiet hours, a paused template) when its
+    // 48 hours end is not sent. It shows on the broadcast's page and in the 9 AM summary,
+    // not in an alert email.
+    $bulkExpire = $pdo->prepare("UPDATE outbox SET status = 'expired', alerted_at = COALESCE(alerted_at, ?),
+            last_error = CASE WHEN last_error LIKE 'Waiting: %' THEN CONCAT('Not sent: ', SUBSTRING(last_error, 10))
+                ELSE COALESCE(last_error, 'Not sent: its time passed') END
+        WHERE status = 'queued' AND source IS NOT NULL AND expires_at <= ?");
+    $bulkExpire->execute([$at, $at]);
     $expire = $pdo->prepare("UPDATE outbox SET status = 'expired',
             last_error = COALESCE(last_error, 'Its time passed before it could be sent')
         WHERE status = 'queued' AND expires_at <= ?");
     $expire->execute([$at]);
-    $sum['expired'] = $expire->rowCount();
+    $sum['expired'] = $expire->rowCount() + $bulkExpire->rowCount();
 
-    // 5. Send what is due. A limited number per run keeps the mailbox under its sending limits.
+    // 5. Send what is due: booking messages first. A limited number per run keeps the
+    // mailbox under its sending limits. Broadcast rows (source set) go after, in 5b.
     $max = max(1, (int) ($config['outbox']['max_per_run'] ?? 60));
     $pauseMs = max(0, (int) ($config['outbox']['pause_ms'] ?? 200));
     $channels = $wa ? "'email', 'whatsapp'" : "'email'";
     $due = $pdo->prepare("SELECT o.*, b.session_at, b.join_token, c.name
         FROM outbox o LEFT JOIN bookings b ON b.id = o.booking_id LEFT JOIN contacts c ON c.id = b.contact_id
-        WHERE o.status = 'queued' AND o.channel IN ({$channels}) AND o.due_at <= ? AND (o.next_try_at IS NULL OR o.next_try_at <= ?)
+        WHERE o.status = 'queued' AND o.channel IN ({$channels}) AND o.source IS NULL AND o.due_at <= ? AND (o.next_try_at IS NULL OR o.next_try_at <= ?)
         ORDER BY o.due_at, o.id LIMIT {$max}");
     $due->execute([$at, $at]);
     $claim = $pdo->prepare("UPDATE outbox SET status = 'sending', next_try_at = ? WHERE id = ? AND status = 'queued'");
@@ -275,6 +290,12 @@ function tg_outbox_run(array $config, int $now): array
         }
     }
 
+    // 5b. Broadcast rows, after the booking messages, while WhatsApp is not failing.
+    if ($wa && $streak['whatsapp'] < 3) {
+        tg_outbox_bulk($pdo, $config, $now, $sum, $streak);
+    }
+    tg_bc_finish($pdo, $now);
+
     // 6. One alert to Deenu about everything that finally failed or was missed.
     $sum['alerted'] = tg_outbox_alert($pdo, $config, $now);
 
@@ -308,25 +329,294 @@ function tg_outbox_log_wa(PDO $pdo, array $config, array $row, ?array $values, b
     ], $now);
 }
 
+/**
+ * Step 5b: broadcast (and rule) rows, after the booking messages, up to
+ * outbox.wa_bulk_per_run a run. Each row is checked again as it goes, in this order:
+ * the test list, STOP, consent (or messaged us) and marketing-off, the broadcast still
+ * on, a paid-since check for rows that ask for one, the template still approved (from
+ * wa_templates, no call to Meta), quiet hours for marketing, then the daily limit. A row
+ * that fails a check is cancelled with the reason, or waits (next_try_at) until it may go.
+ * A Meta error about one person (TG_WA_PERSON_ERRORS) fails just that row, with no alert
+ * and without counting toward "WhatsApp is down"; anything else counts, as for bookings.
+ */
+function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$streak): void
+{
+    $at = tg_ist($now);
+    $max = max(1, (int) ($config['outbox']['wa_bulk_per_run'] ?? 200));
+    $pauseMs = max(0, (int) ($config['outbox']['pause_ms'] ?? 200));
+    $q = $pdo->prepare("SELECT * FROM outbox WHERE status = 'queued' AND channel = 'whatsapp' AND source IN ('broadcast', 'automation', 'inbox')
+        AND due_at <= ? AND (next_try_at IS NULL OR next_try_at <= ?) ORDER BY due_at, id LIMIT {$max}");
+    $q->execute([$at, $at]);
+    $rows = $q->fetchAll();
+    if (!$rows) {
+        return;
+    }
+    $cap = tg_wa_cap_state($pdo, $config, $now);
+    $room = $cap['room'];
+    $used = $cap['used'];
+    $templates = [];
+    $sources = [];
+    $drop = $pdo->prepare("UPDATE outbox SET status = 'cancelled', last_error = ? WHERE id = ? AND status = 'queued'");
+    $hold = $pdo->prepare("UPDATE outbox SET next_try_at = ?, last_error = ? WHERE id = ? AND status = 'queued'");
+    $claim = $pdo->prepare("UPDATE outbox SET status = 'sending', next_try_at = ? WHERE id = ? AND status = 'queued'");
+    $done = $pdo->prepare("UPDATE outbox SET status = 'sent', sent_at = ?, tries = tries + 1, last_error = NULL, provider_id = ? WHERE id = ?");
+    $personFail = $pdo->prepare("UPDATE outbox SET status = 'failed', tries = tries + 1, last_error = ?, alerted_at = ? WHERE id = ?");
+    $retry = $pdo->prepare('UPDATE outbox SET status = ?, tries = tries + 1, next_try_at = ?, last_error = ? WHERE id = ?');
+    $unclaim = $pdo->prepare("UPDATE outbox SET status = 'queued', next_try_at = ?, last_error = ? WHERE id = ? AND status = 'sending'");
+    $starting = $pdo->prepare("UPDATE wa_broadcasts SET status = 'sending', updated_at = ? WHERE id = ? AND status = 'scheduled'");
+
+    foreach ($rows as $row) {
+        if ($streak['whatsapp'] >= 3) {
+            break; // WhatsApp is failing: the rest wait for the next run
+        }
+        $id = (int) $row['id'];
+        $to = (string) $row['to_addr'];
+        $cancel = static function (string $why) use ($drop, $id, &$sum): void {
+            $drop->execute([mb_substr($why, 0, 255), $id]);
+            $sum['cancelled'] += $drop->rowCount();
+        };
+
+        // 1-2. The test list and STOP. STOP keeps its own wording, so START never revives it.
+        if (!tg_wa_allowed($config, $to)) {
+            $cancel('Not on the WhatsApp test list');
+            continue;
+        }
+        if (tg_wa_stop_at($pdo, $to) !== null) {
+            $cancel('Said STOP before it was sent');
+            continue;
+        }
+        $tid = str_starts_with((string) $row['template'], 'c:') ? (int) substr((string) $row['template'], 2) : 0;
+        if (!array_key_exists($tid, $templates)) {
+            $templates[$tid] = $tid > 0 ? tg_wat_get($pdo, $tid) : null;
+        }
+        $t = $templates[$tid];
+        $category = $t !== null ? tg_wat_category($t) : 'MARKETING';
+
+        // 3. Consent or messaged us, and for marketing, not turned off in WhatsApp.
+        $why = tg_wa_can_message($pdo, $config, $to, 'template', $now);
+        if ($why === null && $category === 'MARKETING' && tg_wa_marketing_off($pdo, $to)) {
+            $why = 'They turned off marketing from you in WhatsApp';
+        }
+        if ($why !== null) {
+            $cancel($why);
+            continue;
+        }
+
+        // 4. Its broadcast is still on.
+        $source = (string) $row['source'];
+        $sourceId = (int) $row['source_id'];
+        if ($source === 'broadcast') {
+            $key = 'b' . $sourceId;
+            if (!array_key_exists($key, $sources)) {
+                $sources[$key] = tg_wa_value($pdo, 'SELECT status FROM wa_broadcasts WHERE id = ?', [$sourceId]);
+            }
+            if (!in_array($sources[$key], ['scheduled', 'sending'], true)) {
+                $cancel('Broadcast cancelled');
+                continue;
+            }
+        }
+
+        // 5. A row that is only for people who have not paid (a rule's), checked again now.
+        $params = json_decode((string) ($row['params'] ?? ''), true);
+        $params = is_array($params) ? $params : null;
+        if (!empty($params['check_paid']) && !empty($params['booking']) && tg_nudge_paid_since($pdo, (int) $params['booking'], $now)) {
+            $cancel('Paid in the meantime');
+            continue;
+        }
+
+        // 6. The template, as the webhook and the sync last saw it.
+        if ($t === null || $t['deleted_at'] !== null || !in_array($t['status'], ['APPROVED', 'PAUSED'], true)) {
+            $sum['failed'] += tg_bulk_template_dead($pdo, (string) $row['template'], $now);
+            continue;
+        }
+        if ($t['status'] === 'PAUSED') {
+            $hold->execute([tg_ist($now + 3600), tg_bulk_hold_reason('the template is paused at Meta'), $id]);
+            continue;
+        }
+
+        // 7. Quiet hours: no marketing between 9 PM and 9 AM.
+        if ($category === 'MARKETING' && tg_wa_quiet_hours($now)) {
+            $hold->execute([tg_ist(tg_wa_quiet_end($now)), tg_bulk_hold_reason('quiet hours (9 PM to 9 AM)'), $id]);
+            continue;
+        }
+
+        // 8. The daily limit. Someone already sent a template in the last 24 hours costs nothing more.
+        if (!isset($used[$to]) && $room <= 0) {
+            $hold->execute([tg_ist(max($now + 300, (int) ($cap['free_at'] ?? $now + 3600))), tg_bulk_hold_reason('daily limit reached'), $id]);
+            continue;
+        }
+
+        if ($params === null || !is_array($params['body'] ?? null)) {
+            $personFail->execute(['Its values were removed before it could be sent', $at, $id]);
+            $sum['failed']++;
+            continue;
+        }
+        $values = [
+            'body'    => array_values(array_map('strval', $params['body'])),
+            'buttons' => array_map('strval', is_array($params['buttons'] ?? null) ? $params['buttons'] : []),
+        ];
+        $claim->execute([$at, $id]);
+        if ($claim->rowCount() !== 1) {
+            continue;
+        }
+        if ($source === 'broadcast') {
+            $starting->execute([$at, $sourceId]);
+        }
+        $sent = tg_wat_send($config, $t, $to, $values);
+        $final = false;
+        if ($sent['ok']) {
+            $done->execute([$at, $sent['id'], $id]);
+            $sum['sent']++;
+            $streak['whatsapp'] = 0;
+            if (!isset($used[$to])) {
+                $room--;
+                $used[$to] = $now + 86400;
+            }
+        } else {
+            $code = (int) ($sent['code'] ?? 0);
+            if (isset(TG_WA_PERSON_ERRORS[$code]) || ($code === 100 && preg_match('/phone|recipient/i', (string) $sent['error']))) {
+                // About this one person: fail it quietly; it shows on the broadcast's page.
+                $personFail->execute([TG_WA_PERSON_ERRORS[$code] ?? 'Not a valid WhatsApp number', $at, $id]);
+                $sum['undelivered']++; // normal in a broadcast: not a failed run
+                $final = true;
+                if ($code === 131050) {
+                    tg_wa_set_marketing_off($pdo, $to, $now);
+                }
+                $sent['error'] = TG_WA_PERSON_ERRORS[$code] ?? 'Not a valid WhatsApp number';
+            } elseif ($code === 132015) {
+                // Meta paused the template: every row waits, this one included.
+                $pdo->prepare("UPDATE wa_templates SET status = 'PAUSED', status_at = ?, updated_at = ? WHERE id = ?")->execute([$at, $at, $tid]);
+                $templates[$tid]['status'] = 'PAUSED';
+                $unclaim->execute([tg_ist($now + 3600), tg_bulk_hold_reason('the template is paused at Meta'), $id]);
+                $streak['whatsapp']++;
+            } elseif ($code === 132016 || $code === 132001) {
+                // Disabled, or Meta no longer has it: the rest of its rows fail, with one alert.
+                $pdo->prepare("UPDATE wa_templates SET status = 'DISABLED', reason = ?, status_at = ?, updated_at = ? WHERE id = ?")
+                    ->execute([mb_substr((string) $sent['error'], 0, 255), $at, $at, $tid]);
+                $templates[$tid]['status'] = 'DISABLED';
+                $sum['failed'] += tg_bulk_template_dead($pdo, (string) $row['template'], $now);
+                $streak['whatsapp']++;
+                $final = true;
+                $sent['error'] = 'That template is no longer approved';
+            } else {
+                $tries = (int) $row['tries'] + 1;
+                $final = !$sent['retry'] || $tries >= TG_MAX_TRIES || $now + TG_RETRY_SECONDS >= tg_unix($row['expires_at']);
+                $retry->execute([$final ? 'failed' : 'queued', tg_ist($now + TG_RETRY_SECONDS), mb_substr((string) $sent['error'], 0, 255), $id]);
+                $sum[$final ? 'failed' : 'retrying']++;
+                if (++$streak['whatsapp'] >= 3) {
+                    $sum['wa_paused'] = true;
+                }
+            }
+        }
+        if ($sent['ok'] || $final) {
+            tg_wa_log_out($pdo, $to, [
+                'kind'      => 'template',
+                'body'      => tg_wat_text(tg_wat_render($t, $values)),
+                'template'  => $t['name'],
+                'category'  => $category,
+                'sent_by'   => $source === 'automation' ? 'auto' : 'broadcast',
+                'wa_id'     => $sent['id'],
+                'outbox_id' => $id,
+                'status'    => $sent['ok'] ? 'sent' : 'failed',
+                'error'     => $sent['ok'] ? null : $sent['error'],
+            ], $now);
+        }
+        if ($pauseMs > 0) {
+            usleep($pauseMs * 1000);
+        }
+    }
+}
+
+/**
+ * A template that is no longer approved (disabled, rejected, deleted): every bulk row
+ * still waiting to use it fails at once with one reason, and Deenu gets one alert for
+ * the lot (the first row is left for the alert email, the rest are marked told).
+ * Returns how many rows failed.
+ */
+function tg_bulk_template_dead(PDO $pdo, string $template, int $now): int
+{
+    $q = $pdo->prepare("SELECT id FROM outbox WHERE template = ? AND source IS NOT NULL AND status IN ('queued', 'sending') ORDER BY id");
+    $q->execute([$template]);
+    $ids = array_map('intval', $q->fetchAll(PDO::FETCH_COLUMN));
+    if (!$ids) {
+        return 0;
+    }
+    $alerted = (int) tg_wa_value($pdo, "SELECT COUNT(*) FROM outbox WHERE template = ? AND source IS NOT NULL AND status = 'failed'
+        AND last_error = 'That template is no longer approved' AND alerted_at IS NULL", [$template]) > 0;
+    $first = $alerted ? 0 : $ids[0];
+    $pdo->prepare("UPDATE outbox SET status = 'failed', last_error = 'That template is no longer approved',
+            alerted_at = IF(id = ?, NULL, ?) WHERE id IN (" . implode(',', $ids) . ')')
+        ->execute([$first, tg_ist($now)]);
+    return count($ids);
+}
+
+/** Marks broadcasts done once none of their rows are waiting. */
+function tg_bc_finish(PDO $pdo, int $now): void
+{
+    try {
+        $pdo->prepare("UPDATE wa_broadcasts b SET b.status = 'done', b.finished_at = ?, b.updated_at = ?
+            WHERE b.status IN ('scheduled', 'sending') AND b.send_at <= ?
+              AND NOT EXISTS (SELECT 1 FROM outbox o WHERE o.source = 'broadcast' AND o.source_id = b.id AND o.status IN ('queued', 'sending'))")
+            ->execute([tg_ist($now), tg_ist($now), tg_ist($now)]);
+    } catch (Throwable $e) {
+        error_log('broadcasts: status not updated: ' . $e->getMessage());
+    }
+}
+
+/** A bulk row in words, for the alert email: WhatsApp broadcast "Nov offer", never c:12. */
+function tg_bulk_label(PDO $pdo, array $r): string
+{
+    $tid = str_starts_with((string) $r['template'], 'c:') ? (int) substr((string) $r['template'], 2) : 0;
+    $tpl = $tid > 0 ? (string) (tg_wa_value($pdo, 'SELECT name FROM wa_templates WHERE id = ?', [$tid]) ?? 'your template') : (string) $r['template'];
+    switch ((string) $r['source']) {
+        case 'broadcast':
+            $name = tg_wa_value($pdo, 'SELECT name FROM wa_broadcasts WHERE id = ?', [(int) $r['source_id']]);
+            return 'WhatsApp broadcast "' . ($name ?? 'deleted') . '"';
+        case 'automation':
+            try {
+                $name = tg_wa_value($pdo, 'SELECT name FROM wa_rules WHERE id = ?', [(int) $r['source_id']]);
+            } catch (Throwable $e) {
+                $name = null;
+            }
+            return 'WhatsApp rule "' . ($name ?? $tpl) . '"';
+        default:
+            return 'WhatsApp inbox template ' . $tpl;
+    }
+}
+
 /** Emails Deenu about failed or missed messages he has not been told about. Returns how many. */
 function tg_outbox_alert(PDO $pdo, array $config, int $now): int
 {
-    $rows = $pdo->query("SELECT o.id, o.channel, o.template, o.to_addr, o.last_error, b.session_at, c.name
+    $rows = $pdo->query("SELECT o.id, o.channel, o.template, o.to_addr, o.last_error, o.source, o.source_id, o.due_at, b.session_at, c.name
         FROM outbox o LEFT JOIN bookings b ON b.id = o.booking_id LEFT JOIN contacts c ON c.id = b.contact_id
         WHERE o.status IN ('failed', 'expired') AND o.alerted_at IS NULL ORDER BY o.due_at, o.id LIMIT 200")->fetchAll();
     if (!$rows) {
         return 0;
     }
     $waLabels = array_map(static fn(array $t): string => $t['label'], tg_wa_templates($config));
-    $items = array_map(static fn(array $r): array => [
-        'channel'       => $r['channel'],
-        'label'         => $r['channel'] === 'whatsapp' ? 'WhatsApp ' . lcfirst($waLabels[$r['template']] ?? $r['template'])
-            : ($r['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$r['template']]['label'] ?? $r['template'])),
-        'name'          => $r['name'] ?? 'Deenu',
-        'email'         => $r['channel'] === 'whatsapp' ? tg_wa_pretty($r['to_addr']) : $r['to_addr'],
-        'session_label' => $r['session_at'] ? (new DateTimeImmutable($r['session_at']))->format('D j M, g A') : 'today',
-        'error'         => $r['last_error'] ?? 'unknown',
-    ], $rows);
+    $items = array_map(static function (array $r) use ($pdo, $config, $waLabels): array {
+        if ($r['source'] !== null) {
+            // A broadcast, rule or inbox send: named by what it was, never "c:12".
+            return [
+                'channel'       => 'whatsapp',
+                'label'         => tg_bulk_label($pdo, $r),
+                'name'          => ($n = tg_wat_person($pdo, $config, (string) $r['to_addr'])['name']) !== '' ? $n : 'Someone',
+                'email'         => tg_wa_pretty((string) $r['to_addr']),
+                'session_label' => (new DateTimeImmutable((string) $r['due_at']))->format('D j M'),
+                'error'         => $r['last_error'] ?? 'unknown',
+                'bulk'          => true,
+            ];
+        }
+        return [
+            'channel'       => $r['channel'],
+            'label'         => $r['channel'] === 'whatsapp' ? 'WhatsApp ' . lcfirst($waLabels[$r['template']] ?? $r['template'])
+                : ($r['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$r['template']]['label'] ?? $r['template'])),
+            'name'          => $r['name'] ?? 'Deenu',
+            'email'         => $r['channel'] === 'whatsapp' ? tg_wa_pretty($r['to_addr']) : $r['to_addr'],
+            'session_label' => $r['session_at'] ? (new DateTimeImmutable($r['session_at']))->format('D j M, g A') : 'today',
+            'error'         => $r['last_error'] ?? 'unknown',
+        ];
+    }, $rows);
     $mail = tg_alert_email($config, $items);
     // mail() is allowed as the backup here: when SMTP is down, this is how Deenu hears about it.
     if (!rp_mail($config, $config['mail_notify'], $mail['subject'], $mail['body'])) {
@@ -370,9 +660,14 @@ function tg_digest_data(PDO $pdo, array $config, int $now): array
             COALESCE(SUM(status = 'queued' AND due_at <= ?), 0) AS queued,
             COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ?), 0) AS failed
         FROM outbox WHERE template <> 'digest' AND channel = 'email'", [$since, tg_ist($now + 86400), $since]);
+    // Booking messages only; broadcasts and rules get their own line.
     $wa = $one("SELECT COALESCE(SUM(status = 'sent' AND sent_at >= ?), 0) AS sent, COALESCE(SUM(read_at >= ?), 0) AS seen,
             COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ? AND last_error <> 'WhatsApp was off or paused'), 0) AS failed
-        FROM outbox WHERE channel = 'whatsapp'", [$since, $since, $since]);
+        FROM outbox WHERE channel = 'whatsapp' AND source IS NULL", [$since, $since, $since]);
+    $bulk = $one("SELECT COALESCE(SUM(status = 'sent' AND sent_at >= ?), 0) AS sent,
+            COALESCE(SUM(status = 'failed' AND COALESCE(sent_at, due_at) >= ?), 0) AS failed,
+            COALESCE(SUM(status = 'expired' AND expires_at >= ?), 0) AS held
+        FROM outbox WHERE channel = 'whatsapp' AND source IN ('broadcast', 'automation')", [$since, $since, $since]);
 
     $reconcile = $one("SELECT at, detail FROM audit WHERE actor = 'reconcile' ORDER BY id DESC LIMIT 1", []);
 
@@ -395,6 +690,7 @@ function tg_digest_data(PDO $pdo, array $config, int $now): array
             'sent'   => (int) ($wa['sent'] ?? 0),
             'seen'   => (int) ($wa['seen'] ?? 0),
             'failed' => (int) ($wa['failed'] ?? 0),
+            'bulk'   => ['sent' => (int) ($bulk['sent'] ?? 0), 'failed' => (int) ($bulk['failed'] ?? 0), 'held' => (int) ($bulk['held'] ?? 0)],
         ] : null,
         'last_session_label' => !empty($last['s']) ? (new DateTimeImmutable($last['s']))->format('l j M') : null,
         'last_paid'          => (int) ($lastRow['paid'] ?? 0),

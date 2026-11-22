@@ -98,7 +98,8 @@ return static function (array $d): array {
                 . ui_code_input(), 'Save', 'primary', 'stack')
             . $reset('whatsapp.paused', $waFrom, 'whatsapp')
             . admin_nudge_setting($config, $reset)
-            . admin_forward_setting($config, $reset), ['id' => 'whatsapp', 'sub' => 'A quick off switch, the checkout coupon and reply emails.']);
+            . admin_forward_setting($config, $reset)
+            . admin_broadcast_settings($config, $reset), ['id' => 'whatsapp', 'sub' => 'A quick off switch, the checkout coupon, reply emails and broadcast limits.']);
     }
 
     // ---- Two-step sign-in ----
@@ -181,4 +182,28 @@ function admin_nudge_setting(array $config, callable $reset): string
             . '<option value="0"' . ($on ? '' : ' selected') . '>Off</option></select></label>'
             . ui_code_input(), 'Save', 'primary', 'stack')
         . $reset('whatsapp.checkout_coupon', $from, 'whatsapp');
+}
+
+
+/** The daily limit and your own test number, inside the WhatsApp card. Used by Broadcasts and the inbox. */
+function admin_broadcast_settings(array $config, callable $reset): string
+{
+    [$cap, $capFrom] = admin_setting($config, 'whatsapp.daily_cap');
+    [$mine, $mineFrom] = admin_setting($config, 'whatsapp.my_number');
+    $listSet = tg_wa_test_numbers($config) !== [];
+    return '<h3 class="sub-head">Broadcasts</h3>'
+        . '<p class="notice">' . icon('info') . 'The daily limit is the most different people who may get a template from you in any 24 hours, the way Meta counts '
+        . 'its messaging limit. Every template counts, booking messages too. Booking messages always go; broadcasts wait for room. '
+        . 'Start at 250, Meta\'s lowest tier, and raise it only when Meta raises yours.</p>'
+        . ui_post('setting_save', ['#' => 'whatsapp'],
+            ui_field('Daily limit (people in 24 hours)', 'values[whatsapp.daily_cap]', 'type="number" min="0" max="10000" required value="' . h((string) tg_wa_daily_cap($config)) . '"',
+                'Now ' . num(tg_wa_daily_cap($config)) . ($capFrom === 'dashboard' ? ', set here.' : ', the default.'))
+            . ui_code_input(), 'Save limit', 'primary', 'stack')
+        . $reset('whatsapp.daily_cap', $capFrom, 'whatsapp')
+        . ui_post('setting_save', ['#' => 'whatsapp'],
+            ui_field('Your WhatsApp number for tests', 'values[whatsapp.my_number]', 'inputmode="tel" autocomplete="off" placeholder="+91 98765 43210" value="'
+                . h((string) $mine !== '' && $mine !== null ? tg_wa_pretty((string) $mine) : '') . '"',
+                $listSet ? 'While the test list is set, tests go only to numbers on it, so this is used once the list is empty.' : 'Broadcast tests go here. Leave empty for none.')
+            . ui_code_input(), 'Save number', 'quiet', 'stack')
+        . $reset('whatsapp.my_number', $mineFrom, 'whatsapp');
 }
