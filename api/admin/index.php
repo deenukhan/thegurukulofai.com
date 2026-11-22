@@ -16,9 +16,11 @@
 require dirname(__DIR__) . '/razorpay/lib.php';
 require dirname(__DIR__) . '/razorpay/store.php';
 require dirname(__DIR__) . '/razorpay/emails.php';
+require dirname(__DIR__) . '/razorpay/whatsapp.php';
 require __DIR__ . '/lib/helpers.php';
 require __DIR__ . '/lib/ui.php';
 require __DIR__ . '/lib/checks.php';
+require __DIR__ . '/lib/whatsapp.php';
 require __DIR__ . '/lib/metrics.php';
 require __DIR__ . '/lib/totp.php';
 require __DIR__ . '/lib/actions.php';
@@ -26,7 +28,7 @@ require __DIR__ . '/lib/actions.php';
 $config = rp_config();
 date_default_timezone_set('Asia/Kolkata'); // the store keeps IST times
 
-const ADMIN_CSS_VERSION = 10;
+const ADMIN_CSS_VERSION = 11;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');

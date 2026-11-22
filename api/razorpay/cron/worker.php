@@ -1,7 +1,7 @@
 <?php
 /**
- * Sends scheduled emails: buyer reminders, the 9 AM summary for Deenu, and an
- * alert when a message finally fails. All the logic is in ../outbox.php.
+ * Sends scheduled messages: buyer reminders by email and WhatsApp, the 9 AM summary
+ * for Deenu, and an alert when a message finally fails. All the logic is in ../outbox.php.
  *
  * Cron job in hPanel, every 5 minutes:
  *   /usr/bin/php /home/u886151741/domains/thegurukulofai.com/public_html/api/razorpay/cron/worker.php
@@ -43,6 +43,9 @@ foreach (['planned', 'sent', 'retrying', 'failed', 'expired', 'cancelled', 'aler
 }
 if ($sum['paused']) {
     $parts[] = 'paused: the mail server kept failing';
+}
+if ($sum['wa_paused']) {
+    $parts[] = 'paused: WhatsApp kept failing';
 }
 if ($parts) {
     echo date('Y-m-d H:i'), ' ', implode(', ', $parts), "\n";

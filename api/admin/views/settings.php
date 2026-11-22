@@ -78,6 +78,27 @@ return static function (array $d): array {
         $couponCard = ui_card('Coupon', $couponBody, ['id' => 'coupon', 'sub' => 'Pause it, or change how many times it can be used.']);
     }
 
+    // ---- WhatsApp ----
+    if (!tg_wa_ready($config) || empty($config['whatsapp']['enabled'])) {
+        $waCard = ui_card('WhatsApp messages', ui_empty(tg_wa_ready($config) ? 'Switched off in the config' : 'Not set up yet',
+            'A pause switch shows here once WhatsApp is switched on in the private config.'), ['id' => 'whatsapp']);
+    } else {
+        [$waPaused, $waFrom] = admin_setting($config, 'whatsapp.paused');
+        $waPaused = (bool) $waPaused;
+        $waCard = ui_card('WhatsApp messages', ui_facts([
+            ['Status', $waPaused ? ui_pill('Paused', 'warn') : ui_pill('On', 'good')],
+            ['Comes from', $source($waFrom)],
+            ['Used by', 'The WhatsApp confirmation and reminders. Emails are not affected.'],
+        ])
+            . '<p class="notice">' . icon('info') . 'Pause it if a WhatsApp message goes wrong. Reminders whose time passes while paused are skipped, not sent late.</p>'
+            . ui_post('setting_save', ['#' => 'whatsapp'],
+                '<label class="field"><span>WhatsApp messages</span><select name="values[whatsapp.paused]">'
+                . '<option value="0"' . ($waPaused ? '' : ' selected') . '>On: buyers get them</option>'
+                . '<option value="1"' . ($waPaused ? ' selected' : '') . '>Paused: nothing goes out on WhatsApp</option></select></label>'
+                . ui_code_input(), 'Save', 'primary', 'stack')
+            . $reset('whatsapp.paused', $waFrom, 'whatsapp'), ['id' => 'whatsapp', 'sub' => 'A quick off switch.']);
+    }
+
     // ---- Two-step sign-in ----
     if (!ADMIN_TWO_STEP) {
         $securityCard = ui_card('Sign-in security', ui_facts([
@@ -125,7 +146,7 @@ return static function (array $d): array {
 
     return [
         'intro' => 'The few things that change often. Each change is live at once' . (ADMIN_TWO_STEP ? ' and needs a code from your authenticator app.' : '.'),
-        'body'  => ui_grid($zoomCard, $communityCard, $couponCard, $securityCard, $history)
-            . '<p class="page-note">Prices, the session day and email wording stay in code on purpose: they change rarely and break expensively. Ask Claude to change them.</p>',
+        'body'  => ui_grid($zoomCard, $communityCard, $couponCard, $waCard, $securityCard, $history)
+            . '<p class="page-note">Prices, the session day, and email and WhatsApp wording stay in code on purpose: they change rarely and break expensively. Ask Claude to change them.</p>',
     ];
 };

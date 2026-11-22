@@ -99,6 +99,28 @@ return [
         'pause_ms'    => 200,
     ],
 
+    // WhatsApp messages through Meta's WhatsApp Cloud API: the seat confirmation and the
+    // four reminders, sent as well as the emails. Leave this block out, leave a PASTE
+    // value, or set 'enabled' => false, and nothing goes out on WhatsApp.
+    // All values come from Meta (see docs/whatsapp-setup.md). Paste them here only.
+    'whatsapp' => [
+        'enabled'         => false,
+        'phone_number_id' => 'PASTE_PHONE_NUMBER_ID_HERE',   // WhatsApp > API Setup in the Meta app
+        'waba_id'         => 'PASTE_WHATSAPP_BUSINESS_ACCOUNT_ID_HERE',
+        // A system user's token that never expires, with whatsapp_business_messaging
+        // and whatsapp_business_management. Never paste it anywhere else.
+        'access_token'    => 'PASTE_SYSTEM_USER_TOKEN_HERE',
+        'app_secret'      => 'PASTE_APP_SECRET_HERE',        // App settings > Basic. Checks Meta's signature.
+        // Any long random text. Type the same text into the Meta app's webhook setup.
+        'verify_token'    => 'PASTE_A_LONG_RANDOM_TEXT_HERE',
+        'api_version'     => 'v25.0',
+        'language'        => 'en',
+        // While this list has numbers in it, ONLY these numbers get messages. Empty it to go live.
+        'test_numbers'    => ['91PASTE_YOUR_OWN_NUMBER'],
+        // Replies to the business number are emailed to mail_notify. false turns that off.
+        'forward_replies' => true,
+    ],
+
     // Marker files that stop a buyer being emailed twice.
     'sent_dir' => __DIR__ . '/razorpay-sent',
 ];

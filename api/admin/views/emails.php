@@ -1,26 +1,31 @@
 <?php
-/** Emails: every template exactly as it is sent, and the log of every reminder. */
+/** Messages: every email and WhatsApp template exactly as it is sent, and the log of every reminder. */
 require_once dirname(__DIR__, 2) . '/razorpay/outbox.php';
 
 return static function (array $d): array {
     $pdo = $d['pdo'];
     $config = $d['config'];
-    $tab = ($_GET['tab'] ?? '') === 'log' ? 'log' : 'templates';
-    $tabs = ui_chips(['templates' => 'Templates', 'log' => 'Send log'], $tab, 'tab', ['view' => 'emails']);
+    $tab = in_array($_GET['tab'] ?? '', ['log', 'whatsapp'], true) ? (string) $_GET['tab'] : 'templates';
+    $tabs = ui_chips(['templates' => 'Email templates', 'whatsapp' => 'WhatsApp', 'log' => 'Send log'], $tab, 'tab', ['view' => 'emails']);
 
     // ---------- Send log ----------
     if ($tab === 'log') {
         $status = in_array($_GET['status'] ?? '', ['sent', 'queued', 'failed', 'cancelled'], true) ? (string) $_GET['status'] : '';
+        $channel = in_array($_GET['channel'] ?? '', ['email', 'whatsapp'], true) ? (string) $_GET['channel'] : '';
         $week = tg_ist($d['now'] - 7 * 86400);
         $k = row($pdo, "SELECT COALESCE(SUM(status = 'sent' AND sent_at >= ?), 0) AS sent, COALESCE(SUM(status IN ('queued', 'sending')), 0) AS waiting,
-                COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ?), 0) AS failed, COALESCE(SUM(status = 'cancelled'), 0) AS stopped
-            FROM outbox", [$week, $week]);
+                COALESCE(SUM(status IN ('failed', 'expired') AND due_at >= ? AND COALESCE(last_error, '') <> 'WhatsApp was off or paused'), 0) AS failed,
+                COALESCE(SUM(status = 'cancelled'), 0) AS stopped,
+                COALESCE(SUM(channel = 'whatsapp' AND status = 'sent' AND sent_at >= ?), 0) AS wa_sent,
+                COALESCE(SUM(channel = 'whatsapp' AND read_at >= ?), 0) AS wa_read
+            FROM outbox", [$week, $week, $week, $week]);
         $body = $tabs . ui_kpis([
-            ['label' => 'Sent this week', 'value' => h(num((int) $k['sent']))],
+            ['label' => 'Sent this week', 'value' => h(num((int) $k['sent'])),
+             'note' => (int) $k['wa_sent'] > 0 ? num((int) $k['wa_sent']) . ' on WhatsApp, ' . num((int) $k['wa_read']) . ' read' : 'Email and WhatsApp'],
             ['label' => 'Waiting to send', 'value' => h(num((int) $k['waiting'])), 'note' => 'Planned for upcoming sessions'],
             ['label' => 'Failed this week', 'value' => h(num((int) $k['failed'])), 'tone' => (int) $k['failed'] > 0 ? 'bad' : null,
              'note' => (int) $k['failed'] > 0 ? 'You got an alert for each' : 'None'],
-            ['label' => 'Stopped by buyers', 'value' => h(num((int) $k['stopped'])), 'note' => 'Clicked "no more reminders"'],
+            ['label' => 'Stopped by buyers', 'value' => h(num((int) $k['stopped'])), 'note' => '"No more reminders", or STOP on WhatsApp'],
         ]);
 
         $where = '1 = 1';
@@ -31,28 +36,44 @@ return static function (array $d): array {
         } elseif ($status !== '') {
             $where = 'o.status = ' . $pdo->quote($status);
         }
-        $list = rows($pdo, "SELECT o.template, o.status, o.to_addr, o.due_at, o.sent_at, o.tries, o.last_error, b.contact_id, b.session_at, c.name, c.email
+        if ($channel !== '') {
+            $where .= ' AND o.channel = ' . $pdo->quote($channel);
+        }
+        $list = rows($pdo, "SELECT o.channel, o.template, o.status, o.to_addr, o.due_at, o.sent_at, o.tries, o.last_error, o.delivered_at, o.read_at,
+                b.contact_id, b.session_at, c.name, c.email
             FROM outbox o LEFT JOIN bookings b ON b.id = o.booking_id LEFT JOIN contacts c ON c.id = b.contact_id
             WHERE {$where} ORDER BY o.status IN ('queued', 'sending'), CASE WHEN o.status IN ('queued', 'sending') THEN o.due_at END ASC, o.due_at DESC, o.id DESC LIMIT 300");
         $table = [];
         foreach ($list as $o) {
-            $label = $o['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$o['template']]['label'] ?? $o['template']);
-            $to = $o['contact_id'] ? m_person($o) . '<small class="sub">' . h($o['to_addr']) . '</small>' : h($o['to_addr']) . '<small class="sub">You</small>';
+            $address = $o['channel'] === 'whatsapp' ? tg_wa_pretty($o['to_addr']) : $o['to_addr'];
+            $to = $o['contact_id'] ? m_person($o) . '<small class="sub">' . h($address) . '</small>'
+                : h($address) . '<small class="sub">' . ($o['channel'] === 'whatsapp' ? 'Test message' : 'You') . '</small>';
+            $note = $o['last_error'] ? '<span class="muted">' . h($o['last_error']) . '</span>'
+                : ($o['read_at'] ? '<span class="muted">Read ' . h(when($o['read_at'], 'g:i A')) . '</span>'
+                : ($o['sent_at'] ? '<span class="muted">Sent ' . h(when($o['sent_at'], 'g:i A')) . '</span>' : ''));
             $table[] = [
                 h(when($o['due_at'])),
-                h($label),
+                m_message_label($config, $o),
                 $to,
                 $o['session_at'] ? h(session_label($o['session_at'])) : '<span class="muted">—</span>',
-                m_outbox_pill($o['status']) . ((int) $o['tries'] > 1 ? '<small class="sub">' . (int) $o['tries'] . ' tries</small>' : ''),
-                $o['last_error'] ? '<span class="muted">' . h($o['last_error']) . '</span>' : ($o['sent_at'] ? '<span class="muted">Sent ' . h(when($o['sent_at'], 'g:i A')) . '</span>' : ''),
+                m_message_status($o) . ((int) $o['tries'] > 1 ? '<small class="sub">' . (int) $o['tries'] . ' tries</small>' : ''),
+                $note,
             ];
         }
-        $body .= ui_grid(ui_card('Send log', ui_chips(['' => 'All', 'sent' => 'Sent', 'queued' => 'Waiting', 'failed' => 'Failed or missed', 'cancelled' => 'Stopped'],
-            $status, 'status', ['view' => 'emails', 'tab' => 'log'])
-            . ui_table([['Due', 'muted nowrap'], ['Email', ''], ['To', ''], ['Session', 'nowrap'], ['Status', ''], ['Note', '']], $table,
-                ['empty' => 'No emails here yet.', 'note' => count($list) === 300 ? 'Showing the newest 300.' : '']),
-            ['wide' => true, 'flush' => true, 'sub' => 'Reminders and your daily summary. Payment confirmations are on the Sales page.']));
+        $filters = ui_chips(['' => 'All', 'sent' => 'Sent', 'queued' => 'Waiting', 'failed' => 'Failed or missed', 'cancelled' => 'Stopped'],
+            $status, 'status', ['view' => 'emails', 'tab' => 'log'] + ($channel !== '' ? ['channel' => $channel] : []))
+            . ui_chips(['' => 'Both', 'email' => 'Email', 'whatsapp' => 'WhatsApp'], $channel, 'channel',
+                ['view' => 'emails', 'tab' => 'log'] + ($status !== '' ? ['status' => $status] : []));
+        $body .= ui_grid(ui_card('Send log', $filters
+            . ui_table([['Due', 'muted nowrap'], ['Message', ''], ['To', ''], ['Session', 'nowrap'], ['Status', ''], ['Note', '']], $table,
+                ['empty' => 'No messages here yet.', 'note' => count($list) === 300 ? 'Showing the newest 300.' : '']),
+            ['wide' => true, 'flush' => true, 'sub' => 'Reminders, WhatsApp messages and your daily summary. Payment confirmation emails are on the Sales page.']));
         return ['body' => $body];
+    }
+
+    // ---------- WhatsApp ----------
+    if ($tab === 'whatsapp') {
+        return ['body' => $tabs . admin_wa_page($pdo, $config, $d['now'])];
     }
 
     // ---------- Templates ----------

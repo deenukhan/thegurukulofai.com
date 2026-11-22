@@ -1,4 +1,4 @@
 # Only the four endpoints can be called from outside.
-<FilesMatch "^(lib|config\.sample)\.php$">
+<FilesMatch "^(lib|whatsapp|config\.sample)\.php$">
   Require all denied
 </FilesMatch>

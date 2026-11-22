@@ -82,7 +82,7 @@ function admin_handle_post(PDO $pdo, array $config): void
             $changed = [];
             foreach ($clean as $name => $value) {
                 $current = admin_setting($config, $name)[0];
-                if (($name === 'coupon.paused' ? (bool) $current : $current) === $value) {
+                if (in_array($name, ['coupon.paused', 'whatsapp.paused'], true) ? (bool) $current === $value : $current === $value) {
                     continue;
                 }
                 if (!admin_setting_write($pdo, $config, $name, $value)) {
@@ -159,8 +159,91 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'resend_confirm':
             admin_resend_confirmation($pdo, $config, (int) ($_POST['booking_id'] ?? 0));
             break;
+
+        // ---------- WhatsApp ----------
+        case 'wa_submit':
+            if (!tg_wa_ready($config)) {
+                break;
+            }
+            $result = tg_wa_submit_templates($config);
+            admin_wa_forget($config);
+            if ($result === null) {
+                admin_flash('bad', 'Meta could not be reached, so nothing was submitted. Check the token in the private config.');
+                break;
+            }
+            tg_audit($config, 'admin', 'whatsapp_submit', implode('; ', array_map(static fn($r) => $r[0] . ': ' . $r[1], $result)));
+            admin_flash('good', 'Sent to Meta. ' . implode('. ', array_map(static fn($r) => $r[0] . ': ' . $r[1], $result)) . '.');
+            break;
+
+        case 'wa_subscribe':
+            if (!tg_wa_ready($config)) {
+                break;
+            }
+            [$status, $body] = tg_wa_graph($config, 'POST', rawurlencode((string) $config['whatsapp']['waba_id']) . '/subscribed_apps');
+            admin_wa_forget($config);
+            $ok = $status >= 200 && $status < 300;
+            tg_audit($config, 'admin', 'whatsapp_subscribe', $ok ? 'connected' : tg_wa_error_text($config, $status, $body));
+            admin_flash($ok ? 'good' : 'bad', $ok ? 'Connected. Meta now sends delivery news and replies to this site.'
+                : 'Meta refused: ' . tg_wa_error_text($config, $status, $body));
+            break;
+
+        case 'wa_register':
+            $pin = (string) ($_POST['pin'] ?? '');
+            if (!tg_wa_ready($config) || !preg_match('/^\d{6}$/', $pin)) {
+                admin_flash('bad', 'The PIN must be 6 digits. Nothing changed.');
+                break;
+            }
+            if (!admin_code_ok($pdo, $config)) {
+                break;
+            }
+            [$status, $body] = tg_wa_graph($config, 'POST', rawurlencode((string) $config['whatsapp']['phone_number_id']) . '/register',
+                ['messaging_product' => 'whatsapp', 'pin' => $pin]);
+            admin_wa_forget($config);
+            $ok = $status >= 200 && $status < 300;
+            tg_audit($config, 'admin', 'whatsapp_register', $ok ? 'registered' : tg_wa_error_text($config, $status, $body));
+            admin_flash($ok ? 'good' : 'bad', $ok ? 'Registered. The number can send now. Save the PIN in your password manager.'
+                : 'Meta refused: ' . tg_wa_error_text($config, $status, $body));
+            break;
+
+        case 'wa_test':
+            admin_wa_test($pdo, $config, (string) ($_POST['template'] ?? ''), (string) ($_POST['to'] ?? ''));
+            break;
     }
     admin_done();
+}
+
+/**
+ * Sends one WhatsApp template to a test number with sample details, and logs it in the
+ * send log so its delivered and read ticks show up there.
+ */
+function admin_wa_test(PDO $pdo, array $config, string $template, string $to): void
+{
+    $to = tg_wa_number($to) ?? '';
+    if (!tg_wa_ready($config) || !isset(tg_wa_templates($config)[$template]) || !in_array($to, tg_wa_test_numbers($config), true)) {
+        admin_flash('bad', 'Only the test numbers in the config can get a test message.');
+        return;
+    }
+    $sample = ['name' => 'Priya Sharma', 'session_at' => rp_next_session(time())->format('Y-m-d H:i:s'), 'join_token' => 'sample0000000000000000ab'];
+    try {
+        $result = tg_wa_send($config, $template, $to, tg_wa_values($config, $template, $sample));
+    } catch (Throwable $e) {
+        admin_flash('bad', 'Not sent: ' . $e->getMessage());
+        return;
+    }
+    $at = tg_ist(time());
+    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id)
+        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?)")
+        ->execute(['wa:test:' . $template . ':' . bin2hex(random_bytes(6)), $template, $to, $at, $at,
+            $result['ok'] ? 'sent' : 'failed', $result['ok'] ? 'Test message' : mb_substr((string) $result['error'], 0, 255),
+            $result['ok'] ? $at : null, $result['id']]);
+    // A test failure is not news for the alert email.
+    if (!$result['ok']) {
+        $pdo->prepare('UPDATE outbox SET alerted_at = ? WHERE id = ?')->execute([$at, (int) $pdo->lastInsertId()]);
+    }
+    tg_audit($config, 'admin', 'whatsapp_test', $template . ' to ' . tg_wa_pretty($to) . ': ' . ($result['ok'] ? 'sent' : $result['error']));
+    admin_flash($result['ok'] ? 'good' : 'bad', $result['ok']
+        ? 'Sent to ' . tg_wa_pretty($to) . '. Check your phone. Delivered and read show in the send log within a minute.'
+        : 'Not sent. ' . $result['error']);
 }
 
 /**

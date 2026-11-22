@@ -246,7 +246,7 @@ function admin_checks(PDO $pdo, array $config, int $now): array
     if ($retrying === 0 && $stuck === 0) {
         $add('ok', 'Emails', 'Every buyer from the last 14 days got a confirmation');
     }
-    $failed = (int) value($pdo, "SELECT COUNT(*) FROM outbox WHERE status IN ('failed', 'expired') AND due_at >= ?", [tg_ist($now - 7 * 86400)]);
+    $failed = (int) value($pdo, "SELECT COUNT(*) FROM outbox WHERE channel = 'email' AND status IN ('failed', 'expired') AND due_at >= ?", [tg_ist($now - 7 * 86400)]);
     if ($failed > 0) {
         $add('warn', 'Emails', $failed . ' reminder email' . ($failed === 1 ? '' : 's') . ' failed this week', 'See the send log for who and why.', 'emails');
     }
@@ -307,6 +307,9 @@ function admin_checks(PDO $pdo, array $config, int $now): array
     } elseif ($lastEvent < (new DateTimeImmutable('@' . ($now - 2 * 86400)))->setTimezone(ist())->format('Y-m-d')) {
         $add('warn', 'Tracking', 'No page visits counted for 2 days', 'Either nobody visited, or the counter stopped.', 'funnel');
     }
+
+    // ---- WhatsApp ----
+    admin_wa_checks($pdo, $config, $now, $add);
 
     // ---- Server ----
     $errors = admin_error_log($config, 200);

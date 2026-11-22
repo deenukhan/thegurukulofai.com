@@ -288,7 +288,7 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
   `js/meta-pixel.js` and in the server config's `meta` block, so change both together. The access token lives only in
   the server config. Leave out the `meta` block, or leave a `PASTE` value, and the server sends nothing.
   `test_event_code` sends server events to Events Manager > Test events only, so remove it after testing.
-- No WhatsApp automation for now. Reminders and the Zoom link go out by hand in the community.
+- WhatsApp messages go straight through Meta's WhatsApp Cloud API: see "Masterclass WhatsApp" below.
 - Media goes to Bunny under `masterclass/` with `scripts/bunny-upload-masterclass.sh`. It needs a
   local `.env`, which is gitignored.
 - Page-sized copies live in `assets/images/masterclass/` (hero background, logo, avatar). Keep them small:
@@ -311,7 +311,7 @@ up, so Deenu should be the one to do it. Lost phone and backup codes: empty the 
 table in phpMyAdmin and sign in again to set it up afresh. Health shows an info line while it is off.
 
 **What it can change (and nothing else):**
-- **Settings page:** the Zoom link, the WhatsApp community link, and the coupon (pause, use limit).
+- **Settings page:** the Zoom link, the WhatsApp community link, the coupon (pause, use limit), and a WhatsApp messages pause switch.
   Each change is checked (plus a fresh authenticator code when two-step is on), logged in `setting_changes` and `audit`,
   and can be undone from the history. Values are saved to the private `razorpay-settings.json`,
   which `rp_config()` lays over the config file (`rp_apply_settings` in `lib.php`), so every
@@ -342,7 +342,43 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 4. `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+- Schema version 5 (WhatsApp message ids, delivered/read times, `wa_inbound`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+
+## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
+
+Sent directly through Meta's WhatsApp Cloud API (no AiSensy or other middleman), from
+**+91 78278 76564**, which is **API only**: it has no WhatsApp app on any phone. Decided by
+Deenu on 21 Nov 2026 (cheaper, data stays in our MySQL, one schedule for email and WhatsApp).
+Deenu's setup steps are in `docs/whatsapp-setup.md`.
+
+- **What goes out:** the seat confirmation (within 5 minutes of paying) and the same four reminders
+  as the emails, as well as the emails, never instead of them. All five are "utility" templates.
+  v1 has no failed-payment notice and no unpaid nudge (Deenu's call); add them only if he asks.
+- **All the wording** is in `tg_wa_templates()` at the top of `whatsapp.php`. Approved wording can't be
+  edited: change it under a **new template name**, then press Submit to Meta on the dashboard.
+  Keep them free of anything promotional, or Meta moves them to the dearer marketing category.
+- **Who gets them:** paid buyers with a consent version (they saw the pop-up wording), a usable number,
+  no STOP, and no "no more reminders" click. While `test_numbers` in the config has numbers, only those
+  get anything. A buyer who paid before WhatsApp was on gets the reminders still ahead, but no late confirmation.
+- **The outbox** plans WhatsApp rows next to the email rows (`channel = 'whatsapp'`, dedupe key `wa:<template>:b<id>:<time>`).
+  Email and WhatsApp fail separately: three WhatsApp failures in a row pause WhatsApp for that run only.
+  Meta's busy and rate-limit errors retry; anything else (bad number, unapproved template) fails at once and alerts Deenu.
+- **The webhook** answers Meta's GET check with `verify_token`, refuses any POST whose `X-Hub-Signature-256` doesn't
+  match `app_secret`, records delivered/read/failed on the outbox row (`provider_id` = Meta's message id), handles
+  STOP/START (and Hinglish "band karo"), and emails Deenu every other message, with a wa.me link to answer from
+  his own WhatsApp. Message text is never stored; `wa_inbound` keeps only id, number and kind, so Meta's repeats are ignored.
+  It also emails Deenu when a template is rejected, paused or moved to marketing.
+- **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
+  and every key filled in. The token and app secret never leave the server; the token goes in an
+  Authorization header, never a URL or a log.
+- **Dashboard:** Messages (was Emails) > WhatsApp shows the number as Meta sees it, template approval,
+  a WhatsApp-style preview, Submit to Meta, Connect webhook, Register number (only when Meta says it's needed)
+  and Send a test (test numbers only). Settings has a WhatsApp pause switch (`whatsapp.paused`). Health checks
+  are in `admin_wa_checks` (`api/admin/lib/whatsapp.php`).
+- **Portfolio:** the ads portfolio's WhatsApp buttons point at this same number, so those enquiries now
+  arrive by email through the webhook.
+
+---
 
 ## Still To Do
 1. Add Google Analytics

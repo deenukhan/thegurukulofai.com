@@ -55,16 +55,17 @@ return static function (array $d): array {
             $list
         ), ['wide' => true, 'flush' => true]);
 
-        $mails = rows($pdo, 'SELECT o.template, o.status, o.due_at, o.sent_at, o.tries, o.last_error FROM outbox o
-            JOIN bookings b ON b.id = o.booking_id WHERE b.contact_id = ? ORDER BY o.due_at DESC LIMIT 50', [$id]);
+        $mails = rows($pdo, 'SELECT o.channel, o.template, o.status, o.due_at, o.sent_at, o.tries, o.last_error, o.delivered_at, o.read_at FROM outbox o
+            JOIN bookings b ON b.id = o.booking_id WHERE b.contact_id = ? ORDER BY o.due_at DESC, o.channel LIMIT 80', [$id]);
         $mailRows = [];
         foreach ($mails as $m) {
-            $mailRows[] = [h(TG_REMINDERS[$m['template']]['label'] ?? $m['template']), m_outbox_pill($m['status']),
+            $mailRows[] = [m_message_label($d['config'], $m), m_message_status($m),
                 h(when($m['sent_at'] ?? $m['due_at'])), $m['last_error'] ? '<span class="muted">' . h($m['last_error']) . '</span>' : ''];
         }
-        $mailCard = ui_card('Reminder emails', ui_table([['Email', ''], ['Status', ''], ['When', 'muted nowrap'], ['Note', '']], $mailRows,
-            ['empty' => 'No reminder emails for this person.']), ['size' => 'two-thirds', 'flush' => true,
-            'sub' => 'The payment confirmation is shown on each booking above.']);
+        $optout = $p['wa_optout_at'] ? '<p class="notice">' . icon('info') . 'Replied STOP on WhatsApp on ' . h(when($p['wa_optout_at'])) . '. Emails still go.</p>' : '';
+        $mailCard = ui_card('Reminders', ui_table([['Message', ''], ['Status', ''], ['When', 'muted nowrap'], ['Note', '']], $mailRows,
+            ['empty' => 'No reminders for this person.']) . $optout, ['size' => 'two-thirds', 'flush' => true,
+            'sub' => 'By email and WhatsApp. The payment confirmation email is shown on each booking above.']);
 
         return [
             'title' => $p['name'] !== '' ? $p['name'] : $p['email'],

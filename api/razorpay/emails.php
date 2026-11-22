@@ -172,6 +172,12 @@ function tg_digest_email(array $config, array $d): array
         '- Waiting to go out in the next 24 hours: ' . $d['queued'],
         '- Failed or missed: ' . $d['failed_msgs'] . ($d['failed_msgs'] > 0 ? ' (you got a separate alert for each)' : ''), '',
     ];
+    if (!empty($d['wa'])) {
+        array_push($lines, 'WHATSAPP',
+            $d['wa']['paused'] ? '- Paused in the dashboard. Nothing goes out on WhatsApp until you switch it back on.'
+                : '- Sent: ' . $d['wa']['sent'] . ' (' . $d['wa']['seen'] . ' read so far)',
+            '- Failed: ' . $d['wa']['failed'], '');
+    }
     if ($d['last_session_label'] !== null) {
         $lines[] = 'LAST SESSION';
         $lines[] = '- ' . $d['last_session_label'] . ': ' . $d['last_clicked'] . ' of ' . $d['last_paid'] . ' buyers opened their join link';
@@ -193,9 +199,12 @@ function tg_digest_email(array $config, array $d): array
  */
 function tg_alert_email(array $config, array $rows): array
 {
+    $wa = count(array_filter($rows, static fn(array $r): bool => ($r['channel'] ?? 'email') === 'whatsapp'));
+    $mail = count($rows) - $wa;
+    $noun = $wa === 0 ? 'email' : ($mail === 0 ? 'WhatsApp message' : 'message');
     $lines = [
-        count($rows) === 1 ? 'One email could not be sent.' : count($rows) . ' emails could not be sent.',
-        'The system tried more than once and has now stopped trying.', '',
+        count($rows) === 1 ? 'One ' . $noun . ' could not be sent.' : count($rows) . ' ' . $noun . 's could not be sent.',
+        $wa === 0 ? 'The system tried more than once and has now stopped trying.' : 'The system has stopped trying.', '',
     ];
     foreach ($rows as $row) {
         $lines[] = '- ' . $row['label'] . ' for ' . $row['session_label'];
@@ -205,9 +214,14 @@ function tg_alert_email(array $config, array $rows): array
     $lines[] = '';
     $lines[] = 'What to do:';
     $lines[] = '1. If the session has not started yet, send these people the Zoom link by hand on WhatsApp or email.';
-    $lines[] = '2. Then check the mailbox: can you send from ' . $config['mail_from'] . ' in Hostinger webmail?';
+    if ($mail > 0) {
+        $lines[] = '2. Then check the mailbox: can you send from ' . $config['mail_from'] . ' in Hostinger webmail?';
+    }
+    if ($wa > 0) {
+        $lines[] = ($mail > 0 ? '3' : '2') . '. WhatsApp: open Messages > Send log in the dashboard for the reason. The same reminder also went by email.';
+    }
     return [
-        'subject' => 'ACTION: ' . count($rows) . ' reminder email' . (count($rows) === 1 ? '' : 's') . ' not sent',
+        'subject' => 'ACTION: ' . count($rows) . ' ' . ($wa === 0 ? 'reminder email' : $noun) . (count($rows) === 1 ? '' : 's') . ' not sent',
         'body'    => implode("\r\n", $lines),
     ];
 }

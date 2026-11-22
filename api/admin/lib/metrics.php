@@ -142,6 +142,29 @@ function m_whatsapp(string $phone): string
 }
 
 /** A reminder email's state as a label. */
+/** "Day-before reminder" with a small Email or WhatsApp tag, for any outbox row. */
+function m_message_label(array $config, array $o): string
+{
+    if (($o['channel'] ?? 'email') === 'whatsapp') {
+        $label = tg_wa_templates($config)[$o['template']]['label'] ?? $o['template'];
+        return h($label) . ' ' . ui_pill('WhatsApp', 'good');
+    }
+    $label = $o['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$o['template']]['label'] ?? $o['template']);
+    return h($label) . ' ' . ui_pill('Email', 'neutral');
+}
+
+/** Status, plus WhatsApp's delivered and read ticks once Meta reports them. */
+function m_message_status(array $o): string
+{
+    if (($o['status'] ?? '') === 'sent' && !empty($o['read_at'])) {
+        return ui_pill('Read', 'good');
+    }
+    if (($o['status'] ?? '') === 'sent' && !empty($o['delivered_at'])) {
+        return ui_pill('Delivered', 'good');
+    }
+    return m_outbox_pill((string) $o['status']);
+}
+
 function m_outbox_pill(string $status): string
 {
     return match ($status) {

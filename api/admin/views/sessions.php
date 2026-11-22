@@ -16,7 +16,7 @@ return static function (array $d): array {
             WHERE b.product = ? AND b.status = 'paid' AND b.session_at = ? ORDER BY c.name", [$d['product'], $at]);
         $sent = [];
         foreach (rows($pdo, "SELECT o.booking_id, o.template, o.status FROM outbox o JOIN bookings b ON b.id = o.booking_id
-            WHERE b.session_at = ? AND b.product = ?", [$at, $d['product']]) as $o) {
+            WHERE b.session_at = ? AND b.product = ? AND o.channel = 'email'", [$at, $d['product']]) as $o) {
             $sent[$o['booking_id']][$o['template']] = $o['status'];
         }
 
@@ -108,7 +108,7 @@ return static function (array $d): array {
         GROUP BY b.session_at ORDER BY b.session_at DESC", [$d['product']]);
     $mail = [];
     foreach (rows($pdo, "SELECT b.session_at, SUM(o.status = 'sent') AS sent, SUM(o.status IN ('failed', 'expired')) AS failed
-        FROM outbox o JOIN bookings b ON b.id = o.booking_id WHERE b.product = ? GROUP BY b.session_at", [$d['product']]) as $m) {
+        FROM outbox o JOIN bookings b ON b.id = o.booking_id WHERE b.product = ? AND o.channel = 'email' GROUP BY b.session_at", [$d['product']]) as $m) {
         $mail[$m['session_at']] = $m;
     }
     $known = array_column($sessions, 'session_at');

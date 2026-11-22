@@ -73,9 +73,11 @@ function tg_db_enabled(array $config): bool
  * Version 2 (Phase 2) adds the outbox and the join and stop fields on bookings.
  * Version 3 (dashboard) adds Razorpay fees and refunds, and the funnel's day counts.
  * Version 4 (dashboard settings) adds two-step sign-in, the settings history and add-on delivery.
+ * Version 5 (WhatsApp) adds Meta's message id and delivery times to the outbox, and
+ * wa_inbound: one row per message someone sent us (for STOP, START and repeats).
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 4;
+const TG_DB_VERSION = 5;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -232,6 +234,36 @@ function tg_db_migrate(PDO $pdo, array $config): void
         new_value VARCHAR(500) NULL COMMENT 'NULL: back to the config file value',
         ip VARCHAR(45) NULL,
         KEY idx_at (at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 5: WhatsApp ----
+    $columns = [
+        'provider_id'  => "VARCHAR(128) NULL COMMENT 'WhatsApp message id from Meta'",
+        'delivered_at' => "DATETIME NULL",
+        'read_at'      => "DATETIME NULL",
+    ];
+    foreach ($columns as $name => $definition) {
+        $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $has->execute(['outbox', $name]);
+        if ((int) $has->fetchColumn() === 0) {
+            tg_db_alter($pdo, "ALTER TABLE outbox ADD COLUMN {$name} {$definition}");
+        }
+    }
+    $index = $pdo->query("SELECT COUNT(*) FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'outbox' AND INDEX_NAME = 'idx_provider'")->fetchColumn();
+    if ((int) $index === 0) {
+        tg_db_alter($pdo, 'ALTER TABLE outbox ADD KEY idx_provider (provider_id)');
+    }
+    // Message text is never kept here: replies are emailed to Deenu, STOP is recorded.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_inbound (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        wa_id VARCHAR(128) NOT NULL COMMENT 'Meta message id, so a repeat is ignored',
+        phone VARCHAR(16) NOT NULL COMMENT 'Sender, country code first, e.g. 919876543210',
+        kind VARCHAR(8) NOT NULL COMMENT 'stop, start, reply or skip',
+        received_at DATETIME NOT NULL,
+        UNIQUE KEY uniq_wa (wa_id),
+        KEY idx_phone (phone, id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     @file_put_contents($marker, (string) time());

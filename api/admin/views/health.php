@@ -19,7 +19,7 @@ return static function (array $d): array {
     ]);
 
     $cards = [];
-    foreach (['Selling', 'Emails', 'Session', 'Automatic tasks', 'Tracking', 'Sign-in', 'Server'] as $area) {
+    foreach (['Selling', 'Emails', 'WhatsApp', 'Session', 'Automatic tasks', 'Tracking', 'Sign-in', 'Server'] as $area) {
         if (!empty($byArea[$area])) {
             $cards[] = ui_card($area, ui_checks($byArea[$area]), ['flush' => true]);
         }
