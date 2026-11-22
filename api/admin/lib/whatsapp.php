@@ -236,7 +236,7 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
                 . ui_field('Choose a 6-digit PIN', 'pin', 'inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off"',
                     'This becomes the number\'s two-step PIN. Keep it in your password manager. Meta allows 10 tries in 3 days.')
                 . ui_code_input(), 'Register number', 'primary', 'stack') : '')
-            . '<p class="notice">' . icon('info') . '<span>Replies to this number show in the <a href="' . h(admin_url(['view' => 'inbox'])) . '">Inbox</a>, where you can answer from the business number. A copy is emailed to you unless you switch that off there.</span></p>',
+            . '<p class="notice">' . icon('info') . '<span>Replies to this number show in the <a href="' . h(admin_url(['view' => 'inbox'])) . '">Inbox</a>, where you can answer from the business number. A copy is emailed to you unless you switch that off under <a href="' . h(admin_url(['view' => 'inbox', 'manage' => '1'])) . '#emails">Quick replies and emails</a>.</span></p>',
             ['id' => 'wa-connection', 'sub' => 'As Meta sees it. Refreshed every 10 minutes.']);
     }
 

@@ -73,6 +73,35 @@ function admin_token_ok(): bool
     return is_string($_POST['csrf'] ?? null) && !empty($_SESSION['csrf']) && hash_equals($_SESSION['csrf'], $_POST['csrf']);
 }
 
+/**
+ * A one-time code for a form that sends something (a WhatsApp reply or template), so a
+ * double click or a resubmitted form sends it once. One code per page load, shared by
+ * that page's send forms; the newest 30 are kept in the session. The session file is
+ * locked for the whole request, so two clicks at once are handled one after the other.
+ */
+function admin_once(): string
+{
+    static $code = null;
+    if ($code === null) {
+        $code = bin2hex(random_bytes(12));
+        $kept = is_array($_SESSION['once'] ?? null) ? $_SESSION['once'] : [];
+        $kept[$code] = time();
+        $_SESSION['once'] = array_slice($kept, -30, null, true);
+    }
+    return $code;
+}
+
+/** Uses up the form's one-time code. False if it is missing or was used already. */
+function admin_once_take(): bool
+{
+    $code = is_string($_POST['once'] ?? null) ? $_POST['once'] : '';
+    if ($code === '' || !is_array($_SESSION['once'] ?? null) || !isset($_SESSION['once'][$code])) {
+        return false;
+    }
+    unset($_SESSION['once'][$code]);
+    return true;
+}
+
 /** Wrong-password counter per address, kept in the private folder. Returns [count, window start]. */
 function admin_fails(array $config, bool $add = false, bool $clear = false): array
 {

@@ -332,6 +332,12 @@ List (no `c`): auto-refresh every 30 seconds.
   or number. Rows: name (contact name, else profile name, else number), pill Buyer / Lead / WhatsApp only, last
   message preview (first 80 characters, or "Text removed", or "[a photo]"), time ago, unread count, window pill
   ("Open, 5 h left" or "Closed"). Newest first, 100 rows.
+- Default chip "Wrote to you" (last_in_at set, sorted by it); "All" is the last chip (review fix).
+- A STOP shows a "Said STOP" pill instead of the window, and is left out of "Windows open" (review fix).
+- The list holds no forms but search (review fix: a 30-second reload wiped half-typed quick replies).
+
+Manage (`?view=inbox&manage=1`, also any `eqr=`): no auto-refresh. KPIs: Quick replies, Reply emails,
+Replies this week, Templates this week.
 - Card "Quick replies" (half): list with Edit and Delete; a form to add one (title, text).
 - Card "Reply emails" (half): the forward_replies switch (`setting_save`).
 

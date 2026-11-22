@@ -74,7 +74,8 @@ function tg_wa_contact_id(PDO $pdo, string $phone, int $now, string $profile = '
 /**
  * Stores one message someone sent us. $m is Meta's message (id, timestamp); $kind is
  * text, image, stop and so on; $text the words or a label such as "[a photo]".
- * Refreshes the 24-hour window, counts it unread and reopens a conversation marked done.
+ * Refreshes the 24-hour window and reopens a conversation marked done. It counts as
+ * unread unless it is a STOP or START, which the webhook has already handled.
  */
 function tg_wa_log_in(PDO $pdo, int $waContactId, array $m, string $kind, string $text): int
 {
@@ -90,9 +91,10 @@ function tg_wa_log_in(PDO $pdo, int $waContactId, array $m, string $kind, string
             return 0;
         }
         $id = (int) $pdo->lastInsertId();
+        $bump = $kind === 'stop' || $kind === 'start' ? 0 : 1;
         $pdo->prepare("UPDATE wa_contacts SET last_in_at = GREATEST(COALESCE(last_in_at, ?), ?), last_msg_at = GREATEST(COALESCE(last_msg_at, ?), ?),
-                unread = LEAST(unread + 1, 9999), closed_at = NULL WHERE id = ?")
-            ->execute([$at, $at, $at, $at, $waContactId]);
+                unread = LEAST(unread + ?, 9999), closed_at = NULL WHERE id = ?")
+            ->execute([$at, $at, $at, $at, $bump, $waContactId]);
         return $id;
     } catch (Throwable $e) {
         error_log('whatsapp inbox: incoming message not saved: ' . $e->getMessage());
@@ -103,7 +105,7 @@ function tg_wa_log_in(PDO $pdo, int $waContactId, array $m, string $kind, string
 /**
  * Stores one message we sent (or tried to). $msg keys: kind (text or template), body,
  * template, category, billable (null works it out), sent_by, wa_id, outbox_id, status,
- * error. Returns its id (0 on error).
+ * error. Returns its id (0 on error, or when this Meta id is already stored).
  */
 function tg_wa_log_out(PDO $pdo, string $phone, array $msg, int $now): int
 {
@@ -122,12 +124,15 @@ function tg_wa_log_out(PDO $pdo, string $phone, array $msg, int $now): int
         }
         $status = (string) ($msg['status'] ?? 'sent');
         $at = tg_ist($now);
-        $pdo->prepare("INSERT IGNORE INTO wa_messages (wa_contact_id, direction, kind, body, template, category, billable, sent_by, wa_id, outbox_id, status, error, created_at)
-            VALUES (?, 'out', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-            ->execute([$waContactId, $kind, isset($msg['body']) ? tg_wa_clean_text((string) $msg['body']) : null,
+        $add = $pdo->prepare("INSERT IGNORE INTO wa_messages (wa_contact_id, direction, kind, body, template, category, billable, sent_by, wa_id, outbox_id, status, error, created_at)
+            VALUES (?, 'out', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $add->execute([$waContactId, $kind, isset($msg['body']) ? tg_wa_clean_text((string) $msg['body']) : null,
                 $msg['template'] ?? null, $category, $billable && $status !== 'failed' ? 1 : 0, (string) ($msg['sent_by'] ?? 'system'),
                 ((string) ($msg['wa_id'] ?? '')) ?: null, $msg['outbox_id'] ?? null, $status,
                 isset($msg['error']) ? mb_substr((string) $msg['error'], 0, 255) : null, $at]);
+        if ($add->rowCount() !== 1) {
+            return 0; // already stored under this Meta message id
+        }
         $id = (int) $pdo->lastInsertId();
         if ($status !== 'failed') {
             $pdo->prepare('UPDATE wa_contacts SET last_out_at = GREATEST(COALESCE(last_out_at, ?), ?), last_msg_at = GREATEST(COALESCE(last_msg_at, ?), ?) WHERE id = ?')
@@ -178,10 +183,14 @@ function tg_wa_stop_at(PDO $pdo, string $phone): ?string
     return is_string($at) && $at !== '' ? $at : null;
 }
 
-/** True if this number ever wrote to us first: a message or a START (wa_inbound, which is never deleted). */
+/**
+ * True if this number ever wrote to us first: a message or a START (wa_inbound, which is
+ * never deleted). A START recorded from the dashboard (wa_id "admin:...") does not count:
+ * that was Deenu, not them.
+ */
 function tg_wa_messaged_us(PDO $pdo, string $phone): bool
 {
-    $q = $pdo->prepare("SELECT 1 FROM wa_inbound WHERE phone = ? AND kind IN ('reply', 'start') LIMIT 1");
+    $q = $pdo->prepare("SELECT 1 FROM wa_inbound WHERE phone = ? AND kind IN ('reply', 'start') AND wa_id NOT LIKE 'admin:%' LIMIT 1");
     $q->execute([$phone]);
     return (bool) $q->fetchColumn();
 }

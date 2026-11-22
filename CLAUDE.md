@@ -426,7 +426,13 @@ emptying `test_numbers`.
   switches: enabled, not paused, the test list, STOP. Quick replies, tags, Mark done, manual STOP/START (START needs a
   "they asked" tick), an unread badge in the menu, and a health warning when someone waited over 12 hours. The list
   reloads every 30 seconds with `auto=1`, which does not count as activity, so the 30-minute idle sign-out still works.
-  Inbox template sends write a final outbox row (dedupe `wa:inbox:...`) so they show in the send log.
+  It holds no forms but search: Quick replies and the reply emails switch live on `?view=inbox&manage=1`, which never
+  reloads, and neither does a conversation. The default list is "Wrote to you" (sorted by their newest message), so
+  session-day reminders don't bury questions; "All" adds everyone we only sent booking messages to.
+  Every send form carries a one-time code (`admin_once` in `index.php`), so a double click sends once. The follow-up
+  template is offered only to people who wrote first (its wording follows up on their message); a dashboard START
+  never counts as "messaged us first". Inbox template sends write a final outbox row (dedupe `wa:inbox:...`) so they
+  show in the send log.
   The dashboard's clock is `rp_now` (the test clock in tests); the idle sign-out stays on real time.
   The rest of the plan (templates, broadcasts, automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`

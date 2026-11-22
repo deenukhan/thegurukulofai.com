@@ -10,14 +10,19 @@
  * The audit names the number and a length, never the words of a message.
  */
 
-/** Templates the inbox may send to one person, key => label, name, approved (Meta's answer, cached 10 minutes). */
+/**
+ * Templates the inbox may send to one person: key => label, name, approved (Meta's answer,
+ * cached 10 minutes) and wrote_first (the wording only fits people who wrote to us).
+ * The follow-up says "following up on your message", so it is never offered to a buyer
+ * who only agreed to booking updates. A neutral template for them comes with Phase 2.
+ */
 function admin_inbox_templates(array $config): array
 {
     $states = tg_wa_ready($config) ? (admin_wa_meta($config)['templates'] ?? null) : null;
     $out = [];
-    foreach (['reopen'] as $key) {
+    foreach (['reopen' => true] as $key => $wroteFirst) {
         $t = tg_wa_templates($config)[$key];
-        $out[$key] = ['label' => $t['label'], 'name' => $t['name'],
+        $out[$key] = ['label' => $t['label'], 'name' => $t['name'], 'wrote_first' => $wroteFirst,
             'approved' => strtoupper((string) ($states[$t['name']]['status'] ?? '')) === 'APPROVED'];
     }
     return $out;
@@ -34,6 +39,22 @@ function admin_inbox_unread(PDO $pdo): int
 }
 
 /**
+ * The kind of the last thing this number sent us (reply, stop or start; reactions left
+ * out), as an SQL subquery on the wa_contacts alias. A dashboard STOP or START counts too.
+ * "stop" here means nothing can go to them: not even a free reply, until they write again.
+ */
+function admin_inbox_last_kind_sql(string $alias = 'wc'): string
+{
+    return "(SELECT wi.kind FROM wa_inbound wi WHERE wi.phone = {$alias}.phone AND wi.kind <> 'skip' ORDER BY wi.id DESC LIMIT 1)";
+}
+
+/** True when the last thing on record for this number is a STOP (from them or the dashboard). */
+function admin_inbox_said_stop(PDO $pdo, string $phone): bool
+{
+    return value($pdo, "SELECT kind FROM wa_inbound WHERE phone = ? AND kind <> 'skip' ORDER BY id DESC LIMIT 1", [$phone]) === 'stop';
+}
+
+/**
  * The SQL for "waiting for you": not marked done, their last message is a real message
  * (not STOP or START) under 24 hours old, and nobody answered it by hand or automatically.
  * One placeholder: the moment 24 hours ago. $alias is the wa_contacts alias.
@@ -43,7 +64,7 @@ function admin_inbox_waiting_sql(string $alias = 'wc'): string
     return "{$alias}.closed_at IS NULL AND {$alias}.last_in_at >= ?
         AND NOT EXISTS (SELECT 1 FROM wa_messages r WHERE r.wa_contact_id = {$alias}.id AND r.direction = 'out'
             AND r.sent_by IN ('admin', 'auto') AND r.status <> 'failed' AND r.created_at >= {$alias}.last_in_at)
-        AND (SELECT wi.kind FROM wa_inbound wi WHERE wi.phone = {$alias}.phone AND wi.kind <> 'skip' ORDER BY wi.id DESC LIMIT 1) = 'reply'";
+        AND " . admin_inbox_last_kind_sql($alias) . " = 'reply'";
 }
 
 /** "This number has a paid seat", as SQL on the wa_contacts alias. One placeholder: the product. */
@@ -57,7 +78,9 @@ function admin_inbox_buyer_sql(string $alias = 'wc'): string
 function admin_inbox_kpis(PDO $pdo, int $now): string
 {
     $day = tg_ist($now - TG_WA_WINDOW);
-    $k = row($pdo, 'SELECT COALESCE(SUM(unread > 0), 0) AS unread, COALESCE(SUM(last_in_at >= ?), 0) AS open FROM wa_contacts', [$day]);
+    $k = row($pdo, "SELECT COALESCE(SUM(wc.unread > 0), 0) AS unread,
+            COALESCE(SUM(wc.last_in_at >= ? AND COALESCE(" . admin_inbox_last_kind_sql() . ", '') <> 'stop'), 0) AS open
+        FROM wa_contacts wc", [$day]);
     $waiting = (int) value($pdo, 'SELECT COUNT(*) FROM wa_contacts wc WHERE ' . admin_inbox_waiting_sql(), [$day]);
     $week = row($pdo, "SELECT COALESCE(SUM(direction = 'in'), 0) AS i, COALESCE(SUM(direction = 'out'), 0) AS o FROM wa_messages WHERE created_at >= ?",
         [tg_ist($now - 7 * 86400)]);
@@ -70,14 +93,21 @@ function admin_inbox_kpis(PDO $pdo, int $now): string
 }
 
 /**
- * Conversations for the list, newest first, up to 100. $filter: show ('' all, unread,
- * waiting, buyers, leads, done) and q (name or number).
+ * Conversations for the list, newest first, up to 100. $filter: show and q (name or number).
+ * show: '' (the default) is people who wrote to us, newest message from them first, so
+ * session-day reminders to every buyer never bury a real question. 'all' adds everyone we
+ * only sent booking messages to. Then unread, waiting, buyers, leads (not buyers) and done.
  */
 function admin_inbox_list(PDO $pdo, array $filter, int $now, string $product): array
 {
     $where = ['1 = 1'];
     $args = [$product];
+    $order = 'COALESCE(wc.last_msg_at, wc.created_at) DESC';
     switch ($filter['show'] ?? '') {
+        case '':
+            $where[] = 'wc.last_in_at IS NOT NULL';
+            $order = 'wc.last_in_at DESC';
+            break;
         case 'unread':
             $where[] = 'wc.unread > 0';
             break;
@@ -108,12 +138,12 @@ function admin_inbox_list(PDO $pdo, array $filter, int $now, string $product): a
         }
     }
     return rows($pdo, 'SELECT wc.*, c.name AS contact_name, lm.direction AS last_dir, lm.body AS last_body, lm.body_gone AS last_gone,
-            ' . admin_inbox_buyer_sql() . ' AS buyer
+            ' . admin_inbox_last_kind_sql() . ' AS last_kind, ' . admin_inbox_buyer_sql() . ' AS buyer
         FROM wa_contacts wc
         LEFT JOIN contacts c ON c.id = wc.contact_id
         LEFT JOIN wa_messages lm ON lm.id = (SELECT MAX(m.id) FROM wa_messages m WHERE m.wa_contact_id = wc.id)
         WHERE ' . implode(' AND ', $where) . '
-        ORDER BY COALESCE(wc.last_msg_at, wc.created_at) DESC, wc.id DESC LIMIT 100', $args);
+        ORDER BY ' . $order . ', wc.id DESC LIMIT 100', $args);
 }
 
 /** One conversation with its linked contact's name and email, or null. */
@@ -149,9 +179,12 @@ function admin_inbox_span(int $seconds): string
     return trim(($h > 0 ? $h . ' h ' : '') . ($m > 0 ? $m . ' min' : ''));
 }
 
-/** "Open, 5 h left", "Closed" or nothing, as a pill. */
-function admin_inbox_window_pill(?string $lastIn, int $now): string
+/** "Said STOP", "Open, 5 h left", "Closed" or nothing, as a pill. A STOP wins: nothing can be sent. */
+function admin_inbox_window_pill(?string $lastIn, int $now, bool $saidStop = false): string
 {
+    if ($saidStop) {
+        return ui_pill('Said STOP', 'warn');
+    }
     $left = tg_wa_window_left($lastIn, $now);
     if ($left > 0) {
         return ui_pill('Open, ' . ($left >= 3600 ? intdiv($left, 3600) . ' h' : max(1, intdiv($left, 60)) . ' min') . ' left', 'good');
@@ -329,6 +362,10 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
                 admin_flash('bad', 'Not sent. ' . $why);
                 return;
             }
+            if (!admin_once_take()) {
+                admin_flash('warn', 'That was already sent, so it was not sent again. Check the conversation below.');
+                return;
+            }
             $sent = tg_wa_send_text_result($config, $phone, $text);
             tg_wa_log_out($pdo, $phone, ['kind' => 'text', 'body' => $text, 'sent_by' => 'admin', 'wa_id' => $sent['id'],
                 'status' => $sent['ok'] ? 'sent' : 'failed', 'error' => $sent['error'], 'billable' => false], $now);
@@ -358,8 +395,16 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
                 admin_flash('bad', 'Not sent. ' . $why);
                 return;
             }
+            if ($allowed[$key]['wrote_first'] && !tg_wa_messaged_us($pdo, $phone)) {
+                admin_flash('bad', $allowed[$key]['name'] . ' follows up on their message, and they have never written to you. Nothing was sent.');
+                return;
+            }
             if (!$allowed[$key]['approved']) {
                 admin_flash('bad', 'Meta has not approved ' . $allowed[$key]['name'] . ' yet, so nothing was sent. Submit it on the WhatsApp tab.');
+                return;
+            }
+            if (!admin_once_take()) {
+                admin_flash('warn', 'That template was already sent, so it was not sent again. Check the conversation below.');
                 return;
             }
             $t = tg_wa_templates($config)[$key];
