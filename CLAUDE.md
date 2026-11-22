@@ -267,9 +267,20 @@ name, email, WhatsApp number and the add-on. Razorpay's own window then takes th
   `api/razorpay/config.sample.php`.
 - `create-order.php` sets the price and saves the buyer's details in the order notes, so unpaid
   checkouts are visible in the Razorpay dashboard for manual follow-up.
-- Coupon: set in the server config (`coupon`), never in this repo. It lowers the seat only, never expires, has
-  an optional `max_uses`, and the field shows only on `/masterclass/?coupon`. The Apply button calls
-  `check-coupon.php`, which uses nothing up; a use is counted when the payment window opens. Remove the block from the config to switch it off.
+- Coupons come from two places, and both lower the seat only (the add-on stays full price):
+  - **Dashboard coupons** (the usual way): made on the dashboard's Coupons page and kept in the `coupons` table.
+    Each has a ₹-off or %-off discount, an optional start, an end (1 hour, 24 hours, 7 days, never, or an exact
+    IST time; it stops at that exact second), an optional use limit, and pause. Codes are stored in capitals
+    with no spaces, so buyers can type them either way. `tg_coupon_claim` in `store.php` checks them.
+  - **The config coupon** (`coupon` block in the server config, never in this repo): never expires, optional
+    `max_uses`, counted in a file. Checked first. Remove the block to switch it off.
+- The coupon field shows only on `/masterclass/?coupon`. A shared link `/masterclass/?coupon=CODE` also fills the
+  code in and applies it when the pop-up opens. The Apply button calls `check-coupon.php`, which uses nothing up.
+  A use is counted when the payment window opens: `create-order.php` takes it in the same database statement
+  that checks the limit (so two buyers can't both take the last use) and gives it back if Razorpay fails.
+  The seat price is always worked out on the server; the browser's number is display only. The seat never
+  drops below ₹1 (Razorpay's minimum). A buyer who closes the payment window and tries again uses a second go.
+  Each booking records which dashboard coupon it used (`bookings.coupon_id`); the code itself never goes to Razorpay.
 - Session dates roll by themselves: every Sunday 3 PM IST from 22 Nov 2026 (the old Wednesday sessions stopped). Sales for a session
   close 15 minutes before it. The rule is in `rp_next_session` (`lib.php`, which decides) and `nextSession` (`js/masterclass.js`, display); change both
   together. Dates in `masterclass/index.html` are placeholders the script replaces, so never type a real date there.
@@ -321,6 +332,12 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
   at a time or a whole past session. Unsent ones from past sessions show as a health warning.
 - **Resend confirmation:** rebuilds the buyer's email exactly as the webhook does and sends it; it
   then counts as sent, so a late Razorpay retry won't send a second copy. Asks to confirm first.
+- **Coupons page:** make one coupon with a typed code, or 2 to 200 random codes at once (a batch, such as
+  INSTA-7KQ4MX, shown as one row that opens into its own list and CSV download of codes and links). Each row
+  shows uses, paid seats, status (active, starts later, paused, used up, expired) and a ready link to copy
+  (click once to select it). Pause, resume and delete (asks first) work on one code or a whole batch.
+  Every change goes through `lib/actions.php` into `lib/coupons.php`, is logged in `audit`, and needs a
+  fresh authenticator code when two-step is on. The config coupon stays on the Settings page.
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
@@ -342,7 +359,7 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 5 (WhatsApp message ids, delivered/read times, `wa_inbound`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+- Schema version 6 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -350,6 +367,16 @@ Sent directly through Meta's WhatsApp Cloud API (no AiSensy or other middleman),
 **+91 78278 76564**, which is **API only**: it has no WhatsApp app on any phone. Decided by
 Deenu on 21 Nov 2026 (cheaper, data stays in our MySQL, one schedule for email and WhatsApp).
 Deenu's setup steps are in `docs/whatsapp-setup.md`.
+
+**Setup status (22 Nov 2026):** steps 1–5 are done. The Meta business portfolio is **Neuraltech AI**
+(verified), not Black Sheep Media. The app is **Gurukul Website** (use case "Connect with customers through
+WhatsApp"), still in Development mode with no webhook yet. The number shows **Registered**: Deenu did it in
+Meta's guided Production setup, so the dashboard's Register form should stay hidden. Meta's newer screens call
+the WABA ID the **Messaging Account ID**. The system user `website-whatsapp` has a never-expiring token with only
+`whatsapp_business_messaging` and `whatsapp_business_management`. The private config has the `whatsapp` block
+with `enabled => false` and `test_numbers` set. Still to do after "push it": the webhook, switching on
+**Subscribe webhooks** in the app's Production setup, publishing the app, Submit to Meta, a real test, then
+emptying `test_numbers`.
 
 - **What goes out:** the seat confirmation (within 5 minutes of paying) and the same four reminders
   as the emails, as well as the emails, never instead of them. All five are "utility" templates.

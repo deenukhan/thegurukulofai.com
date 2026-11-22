@@ -2,9 +2,11 @@
 /**
  * Called by the Apply button. Says whether a coupon is valid and what the seat
  * then costs. It makes no order and uses nothing up: a use is only counted in
- * create-order.php, when the payment window opens.
+ * create-order.php, when the payment window opens. Checks the config coupon and
+ * the ones made on the dashboard.
  */
 require __DIR__ . '/lib.php';
+require __DIR__ . '/store.php'; // coupons made on the dashboard
 
 $config = rp_config();
 rp_cors($config);

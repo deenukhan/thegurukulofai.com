@@ -87,6 +87,7 @@ $bookingId = tg_save_lead($config, [
     'phone'           => $phone,
     'addon'           => $addon,
     'coupon'          => $claim !== null,
+    'coupon_id'       => $claim['coupon_id'] ?? null,
     'amount'          => $amount,
     'session_at'      => $session->getTimestamp(),
     'utm'             => $utm,
@@ -106,6 +107,9 @@ $order = rp_create_order($config, [
 ]);
 tg_attach_order($config, $bookingId, $order['id'] ?? null);
 if ($order === null) {
+    if ($claim !== null) {
+        rp_coupon_release($config, $claim); // no order, so no use counted
+    }
     rp_json(502, ['ok' => false, 'error' => 'order_failed']);
 }
 if ($claim !== null) {

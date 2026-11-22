@@ -10,7 +10,14 @@ reminders (day before, 3 hours, 15 minutes, "we're live"). They also still get e
 **Replies:** this number has no app, so every reply is emailed to deenu@thegurukulofai.com,
 with a wa.me link to answer from your own WhatsApp. STOP and START are handled automatically.
 
-**Order:** steps 1 to 5 can be done now. Step 6 needs the code live ("push it"). Then 7 and 8.
+**Order:** steps 1 to 5 are done (22 Nov 2026). Step 6 needs the code live ("push it"). Then 7 and 8.
+
+**Where things stand (22 Nov 2026):**
+- Business portfolio: **Neuraltech AI** (verified).
+- Meta app: **Gurukul Website**, still in Development mode, no webhook yet.
+- +91 78278 76564: **Registered**, done in Meta's guided Production setup. Payment method added.
+- System user `website-whatsapp`: never-expiring token with only the two WhatsApp permissions.
+- Private config: the `whatsapp` block is in, with `enabled` false and your number in `test_numbers`.
 
 **Cost:** each message is a "utility" message. Meta's India rate was about ₹0.115 to ₹0.145
 per delivered message in late 2026 (check WhatsApp Manager > Insights for the current rate),
@@ -27,9 +34,9 @@ number. +91 83838 40943 stays the "message us" number shown in emails and on the
 
 ---
 
-## 1. Check the number in WhatsApp Manager
+## 1. Check the number in WhatsApp Manager ✅ done
 
-1. Open **business.facebook.com**. Top left, make sure **Black Sheep Media** is selected.
+1. Open **business.facebook.com**. Top left, make sure **Neuraltech AI** is selected.
 2. Click **All tools** (the grid icon), then **WhatsApp Manager**.
 3. In the left menu, click **Account tools**, then **Phone numbers**.
 4. Find **+91 78278 76564**. Check two things:
@@ -39,7 +46,7 @@ number. +91 83838 40943 stays the "message us" number shown in emails and on the
      the dashboard's health page says so; then edit it here under **Display name**.
 5. Tell Claude what the two say (no screenshot of anything else needed).
 
-## 2. Add a payment method
+## 2. Add a payment method ✅ done
 
 Meta won't send business messages without one.
 
@@ -47,23 +54,23 @@ Meta won't send business messages without one.
 2. Look for **Add payment method** (it may also be under **Account tools > Payment settings**).
 3. Add a card. Currency **INR**. Meta charges it monthly for messages sent.
 
-## 3. Make the Meta app and copy two IDs
+## 3. Make the Meta app and copy two IDs ✅ done
 
 1. Open **developers.facebook.com/apps** and click **Create app**.
 2. **App name:** `Gurukul Website`. **Contact email:** deenu@thegurukulofai.com. Click **Next**.
 3. **Use case:** pick **Connect with customers through WhatsApp**. Click **Next**.
-4. **Business portfolio:** choose **Black Sheep Media**. Click **Next**, then **Create app**.
+4. **Business portfolio:** choose **Neuraltech AI**. Click **Next**, then **Create app**.
 5. In the app's left menu, open **WhatsApp**, then **API Setup**.
 6. If it asks for a WhatsApp Business Account, choose the one that holds +91 78278 76564.
 7. In the **From** dropdown, choose **+91 78278 76564**. Under it you'll see:
    - **Phone number ID** (a long number)
-   - **WhatsApp Business Account ID** (another long number)
+   - **WhatsApp Business Account ID** (another long number; Meta's newer screens call it **Messaging Account ID**)
    Keep this tab open. You'll paste both in step 5.
    (Ignore the "temporary access token" on this page. It expires in a day. Step 4 makes a lasting one.)
 
-## 4. Make the lasting token (a "system user")
+## 4. Make the lasting token (a "system user") ✅ done
 
-1. Open **business.facebook.com/settings**. Check **Black Sheep Media** is selected.
+1. Open **business.facebook.com/settings**. Check **Neuraltech AI** is selected.
 2. Left menu: **Users**, then **System users**. Click **Add**.
 3. **Name:** `website-whatsapp`. **Role:** **Admin**. Click **Create system user**.
 4. With it selected, click **Assign assets**.
@@ -74,11 +81,11 @@ Meta won't send business messages without one.
    - **App:** Gurukul Website.
    - **Token expiration:** **Never**.
    - **Permissions:** tick **whatsapp_business_messaging** and **whatsapp_business_management**.
-     If it also offers **business_management**, tick that too.
+     Leave everything else unticked (for example manage_app_solution and whatsapp_business_manage_events).
    - Click **Generate token**.
 6. Meta shows the token **once**. Copy it straight into the config in step 5. Don't paste it anywhere else.
 
-## 5. Paste the values into the private config
+## 5. Paste the values into the private config ✅ done
 
 1. On your Mac, open **Terminal** and run this. It prints a random text for the webhook check:
    ```
@@ -123,7 +130,10 @@ Nothing changes on the site yet: the current live code ignores this block.
    - **messages**
    - **message_template_status_update**
    - **template_category_update** (if it's listed)
-4. **Put the app live.** In **App settings > Basic**, set **Privacy policy URL** to
+4. **Switch on Subscribe webhooks.** In the app's left menu open **WhatsApp**, then **Production setup**
+   (it may be called **API Setup**). Find **Subscribe webhooks** and switch it **on**. Without it Meta
+   sends nothing to the site, even with the Callback URL saved.
+5. **Publish the app.** In **App settings > Basic**, set **Privacy policy URL** to
    `https://thegurukulofai.com/privacy-policy.html`, pick a **Category** (Education), and **Save**.
    Then switch **App mode** at the top from **Development** to **Live** (it may be a **Publish** button
    in the left menu). Meta doesn't send real messages' news to an app in Development mode.
@@ -131,12 +141,13 @@ Nothing changes on the site yet: the current live code ignores this block.
 ## 7. Check it in the dashboard
 
 1. Open `https://thegurukulofai.com/api/admin/`, sign in, then **Messages > WhatsApp**.
-2. **Connection** should show the number and **The Gurukul of AI**.
+2. **Connection** should show the number and its display name, **thegurukulofai**.
    - If it shows a red error, the token or an ID is wrong. Re-check step 5.
-   - If **Webhook** says **Not connected**, click **Connect webhook**.
-   - If it says the number is **not on the Cloud API yet**, choose a 6-digit PIN, type it in the
-     **Register number** box and click **Register number**. Save the PIN in your password manager:
-     it becomes the number's two-step PIN.
+   - If **Webhook** says **Not connected**, click **Connect webhook**. It does the same as the
+     Subscribe webhooks switch in step 6.
+   - The number is already registered (you did it in Meta's Production setup), so the **Register number**
+     box should not appear. If it ever says the number is **not on the Cloud API yet**, choose a 6-digit PIN,
+     type it in that box and click **Register number**. Save the PIN in your password manager.
 3. Under **Templates**, click **Submit to Meta**. All five go for review as "utility".
    Meta usually answers in minutes, sometimes a day. You get an email if one is rejected.
 
@@ -145,7 +156,7 @@ Nothing changes on the site yet: the current live code ignores this block.
 1. When all five templates say **Approved**, open `razorpay-config.php` again and change
    `'enabled' => false` to `'enabled' => true`. Save.
 2. Dashboard > **Messages > WhatsApp > Send a test**. Pick **Seat confirmed**, click **Send test message**.
-   It should arrive on your phone from **The Gurukul of AI** within a minute.
+   It should arrive on your phone from **thegurukulofai** within a minute.
 3. On your phone, reply `hello`. Within a minute an email "WhatsApp from …" should reach you.
 4. Reply `STOP`. You should get "Done. You won't get any more WhatsApp messages…". Then reply `START`.
 5. Check **Messages > Send log** with **WhatsApp** selected: your test should show **Read**.
