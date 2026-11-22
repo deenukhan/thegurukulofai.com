@@ -78,9 +78,11 @@ function tg_db_enabled(array $config): bool
  * wa_inbound: one row per message someone sent us (for STOP, START and repeats).
  * Version 7 (WhatsApp inbox) adds wa_contacts (one row per number), wa_messages (every
  * message in and out, its text kept 30 days), wa_tags and wa_quick_replies.
+ * Version 8 (WhatsApp templates) adds wa_templates: templates written on the dashboard,
+ * their checks, Meta's review status, category and quality.
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 7;
+const TG_DB_VERSION = 8;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -362,6 +364,35 @@ function tg_db_migrate(PDO $pdo, array $config): void
         FROM wa_inbound GROUP BY phone");
     $pdo->exec("UPDATE wa_contacts wc SET contact_id = (SELECT MAX(c.id) FROM contacts c WHERE c.phone = wc.phone OR c.phone = RIGHT(wc.phone, 10))
         WHERE wc.contact_id IS NULL");
+
+    // ---- Version 8: WhatsApp templates written on the dashboard ----
+    // No personal data here: the examples are Deenu's own samples, so nothing is purged.
+    // A deleted row stays (status DELETED), because Meta blocks its name for 30 days.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_templates (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(60) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Meta name: lowercase letters, digits and underscores',
+        language VARCHAR(10) NOT NULL DEFAULT 'en',
+        category VARCHAR(12) NOT NULL COMMENT 'What we asked for: UTILITY or MARKETING',
+        meta_category VARCHAR(12) NULL COMMENT 'What Meta decided, when different',
+        header_text VARCHAR(60) NULL,
+        body TEXT NOT NULL,
+        footer VARCHAR(60) NULL,
+        buttons TEXT NOT NULL COMMENT 'JSON list: type URL or QUICK_REPLY, text, url, example, field',
+        examples TEXT NOT NULL COMMENT 'JSON list, one sample value per body variable',
+        fields TEXT NOT NULL COMMENT 'JSON list, the contact field that fills each body variable',
+        status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' COMMENT 'DRAFT, then Meta''s status',
+        meta_id VARCHAR(40) NULL,
+        reason VARCHAR(255) NULL COMMENT 'Meta''s rejection reason, or why a submit was refused',
+        quality VARCHAR(10) NULL COMMENT 'GREEN, YELLOW, RED or UNKNOWN',
+        copied_from INT UNSIGNED NULL,
+        submitted_at DATETIME NULL,
+        status_at DATETIME NULL,
+        deleted_at DATETIME NULL,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        UNIQUE KEY uniq_name_lang (name, language),
+        KEY idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     @file_put_contents($marker, (string) time());
 }

@@ -40,8 +40,9 @@ return static function (array $d): array {
             $where .= ' AND o.channel = ' . $pdo->quote($channel);
         }
         $list = rows($pdo, "SELECT o.channel, o.template, o.status, o.to_addr, o.due_at, o.sent_at, o.tries, o.last_error, o.delivered_at, o.read_at, o.dedupe_key,
-                b.contact_id, b.session_at, c.name, c.email
+                b.contact_id, b.session_at, c.name, c.email, wt.name AS custom_name
             FROM outbox o LEFT JOIN bookings b ON b.id = o.booking_id LEFT JOIN contacts c ON c.id = b.contact_id
+            LEFT JOIN wa_templates wt ON o.template LIKE 'c:%' AND wt.id = CAST(SUBSTRING(o.template, 3) AS UNSIGNED)
             WHERE {$where} ORDER BY o.status IN ('queued', 'sending'), CASE WHEN o.status IN ('queued', 'sending') THEN o.due_at END ASC, o.due_at DESC, o.id DESC LIMIT 300");
         $table = [];
         foreach ($list as $o) {

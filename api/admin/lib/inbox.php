@@ -11,21 +11,39 @@
  */
 
 /**
- * Templates the inbox may send to one person: key => label, name, approved (Meta's answer,
- * cached 10 minutes) and wrote_first (the wording only fits people who wrote to us).
- * The follow-up says "following up on your message", so it is never offered to a buyer
- * who only agreed to booking updates. A neutral template for them comes with Phase 2.
+ * Templates the inbox may send to one person: key => label, name, approved, wrote_first
+ * (the wording only fits people who wrote to us), category and custom (the wa_templates
+ * row, or null for the built-in follow-up). The follow-up (reopen) says "following up on
+ * your message", so it is never offered to a buyer who only agreed to booking updates.
+ * Approved templates written on the Templates page are keyed c:<id>.
  */
-function admin_inbox_templates(array $config): array
+function admin_inbox_templates(array $config, ?PDO $pdo = null): array
 {
     $states = tg_wa_ready($config) ? (admin_wa_meta($config)['templates'] ?? null) : null;
     $out = [];
     foreach (['reopen' => true] as $key => $wroteFirst) {
         $t = tg_wa_templates($config)[$key];
-        $out[$key] = ['label' => $t['label'], 'name' => $t['name'], 'wrote_first' => $wroteFirst,
-            'approved' => strtoupper((string) ($states[$t['name']]['status'] ?? '')) === 'APPROVED'];
+        $out[$key] = ['label' => $t['label'], 'name' => $t['name'], 'wrote_first' => $wroteFirst, 'custom' => null,
+            'category' => $t['category'] ?? 'UTILITY', 'approved' => strtoupper((string) ($states[$t['name']]['status'] ?? '')) === 'APPROVED'];
+    }
+    foreach ($pdo !== null ? tg_wat_approved($pdo) : [] as $t) {
+        $out['c:' . $t['id']] = ['label' => $t['name'], 'name' => $t['name'], 'wrote_first' => false, 'custom' => $t,
+            'category' => (string) ($t['meta_category'] ?: $t['category']), 'approved' => true];
     }
     return $out;
+}
+
+/** True when everything a custom template needs can be filled for this person (text typed at send time aside). */
+function admin_inbox_fillable(array $config, array $t, array $person, int $now): bool
+{
+    $typed = array_fill_keys(array_keys(array_filter(tg_wat_slots($t), static fn(string $f): bool => $f === 'fixed')), 'x');
+    return tg_wat_values($config, $t, $person, $typed, $now)['missing'] === [];
+}
+
+/** What Meta charges for one template, in words. */
+function admin_inbox_cost(string $category): string
+{
+    return $category === 'MARKETING' ? 'Meta charges for this one: about ₹0.86 for marketing.' : 'Meta charges for this one: about ₹0.15 for utility.';
 }
 
 /** How many conversations have messages Deenu has not opened. For the menu badge. */
@@ -385,9 +403,13 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
 
         case 'wa_send_template':
             $key = (string) ($_POST['template'] ?? '');
-            $allowed = admin_inbox_templates($config);
+            $allowed = admin_inbox_templates($config, $pdo);
             if (!isset($allowed[$key])) {
-                admin_flash('bad', 'That template cannot be sent from the inbox. Nothing was sent.');
+                admin_flash('bad', 'That template cannot be sent from the inbox. It may not be approved yet. Nothing was sent.');
+                return;
+            }
+            if ($allowed[$key]['custom'] !== null) {
+                admin_inbox_send_custom($pdo, $config, $wc, $allowed[$key]['custom'], $now);
                 return;
             }
             $why = tg_wa_can_message($pdo, $config, $phone, 'template', $now);
@@ -482,4 +504,57 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
             admin_flash('good', $action === 'wa_tag_add' ? 'Tag ' . $tag . ' added.' : 'Tag ' . $tag . ' removed.');
             return;
     }
+}
+
+/**
+ * Sends one approved template written on the Templates page to this conversation, filled
+ * from their details and any text typed in the form (fixed[b2], fixed[u0]). Goes straight
+ * to Meta, like the follow-up, and writes an outbox row already final (template c:<id>)
+ * so it shows in the send log. Nothing is queued, so the worker never sends it again.
+ */
+function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, int $now): void
+{
+    $id = (int) $wc['id'];
+    $phone = (string) $wc['phone'];
+    $who = tg_wa_pretty($phone) . ' (c ' . $id . ')';
+    $why = tg_wa_can_message($pdo, $config, $phone, 'template', $now);
+    if ($why !== null) {
+        admin_flash('bad', 'Not sent. ' . $why);
+        return;
+    }
+    // The page may be old: Meta's answer since then counts (webhook or sync).
+    $fresh = tg_wat_get($pdo, (int) $t['id']);
+    if ($fresh === null || $fresh['status'] !== 'APPROVED' || $fresh['deleted_at'] !== null) {
+        admin_flash('bad', $t['name'] . ' is not approved any more, so nothing was sent.');
+        return;
+    }
+    $typed = [];
+    foreach (is_array($_POST['fixed'] ?? null) ? $_POST['fixed'] : [] as $k => $v) {
+        if (is_string($k) && preg_match('/^[bu]\d{1,2}$/', $k) && is_string($v)) {
+            $typed[$k] = mb_substr($v, 0, 1024);
+        }
+    }
+    $values = tg_wat_values($config, $fresh, tg_wat_person($pdo, $config, $phone), $typed, $now);
+    if ($values['missing']) {
+        admin_flash('bad', 'Not sent. Fill in ' . implode(', ', $values['missing']) . '.');
+        return;
+    }
+    if (!admin_once_take()) {
+        admin_flash('warn', 'That template was already sent, so it was not sent again. Check the conversation below.');
+        return;
+    }
+    $result = tg_wat_send($config, $fresh, $phone, $values);
+    $at = tg_ist($now);
+    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at)
+        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
+        ->execute(['wa:inbox:c' . $fresh['id'] . ':c' . $id . ':' . bin2hex(random_bytes(6)), 'c:' . $fresh['id'], $phone, $at, $at,
+            $result['ok'] ? 'sent' : 'failed', $result['ok'] ? null : mb_substr((string) $result['error'], 0, 255),
+            $result['ok'] ? $at : null, $result['id'], $result['ok'] ? null : $at]);
+    $outboxId = (int) $pdo->lastInsertId();
+    tg_wa_log_out($pdo, $phone, ['kind' => 'template', 'body' => tg_wat_text(tg_wat_render($fresh, $values)), 'template' => $fresh['name'],
+        'category' => $fresh['meta_category'] ?: $fresh['category'], 'sent_by' => 'admin', 'wa_id' => $result['id'], 'outbox_id' => $outboxId,
+        'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['error']], $now);
+    tg_audit($config, 'admin', 'whatsapp_template_one', $fresh['name'] . ' to ' . $who . ': ' . ($result['ok'] ? 'sent' : $result['error']));
+    admin_flash($result['ok'] ? 'good' : 'bad', $result['ok'] ? 'Template sent to ' . tg_wa_pretty($phone) . '. When they reply, the window opens again.'
+        : 'Not sent. ' . $result['error']);
 }

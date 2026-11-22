@@ -11,6 +11,8 @@ reminders (day before, 3 hours, 15 minutes, "we're live"). They also still get e
 answer from the business number itself: free text within 24 hours of their last message, or the approved follow-up
 template after that. A copy of each reply is also emailed to deenu@thegurukulofai.com unless you switch that off on
 the Inbox page. Message text is kept 30 days, then deleted. STOP and START are handled automatically.
+**Your own templates:** write them on **WhatsApp > Templates**. The page checks Meta's rules before you submit,
+sends them for review, and shows Meta's answer. Approved ones can be sent from the Inbox once the 24-hour window closes.
 
 **Order:** steps 1 to 5 are done (22 Nov 2026). Step 6 needs the code live ("push it"). Then 7 and 8.
 
@@ -132,6 +134,7 @@ Nothing changes on the site yet: the current live code ignores this block.
    - **messages**
    - **message_template_status_update**
    - **template_category_update** (if it's listed)
+   - **message_template_quality_update** (if it's listed): the quality of templates you write on the dashboard
 4. **Switch on Subscribe webhooks.** In the app's left menu open **WhatsApp**, then **Production setup**
    (it may be called **API Setup**). Find **Subscribe webhooks** and switch it **on**. Without it Meta
    sends nothing to the site, even with the Callback URL saved.

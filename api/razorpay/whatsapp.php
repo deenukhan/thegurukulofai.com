@@ -16,6 +16,7 @@
  * The access token and app secret never leave the server and never reach a log.
  */
 require_once __DIR__ . '/wa_store.php';
+require_once __DIR__ . '/wa_custom.php';
 
 /**
  * The templates, keyed by the outbox's template name. Everything a buyer reads on
@@ -450,19 +451,20 @@ function tg_wa_send_text(array $config, string $to, string $text): bool
     return tg_wa_send_text_result($config, $to, $text)['ok'];
 }
 
-/** What Meta says about each of our templates: name => status, category, reason. Null if Meta can't be read. */
+/**
+ * What Meta says about each template in our language: name => status, category, reason,
+ * quality (GREEN, YELLOW, RED or UNKNOWN) and id. Every page is read (tg_wa_template_list).
+ * Null if Meta can't be read.
+ */
 function tg_wa_template_states(array $config): ?array
 {
-    [$status, $body] = tg_wa_graph($config, 'GET', rawurlencode((string) $config['whatsapp']['waba_id']) . '/message_templates', null, [
-        'fields' => 'name,status,category,language,rejected_reason',
-        'limit'  => 200,
-    ]);
-    if ($status !== 200 || !is_array($body['data'] ?? null)) {
+    $list = tg_wa_template_list($config);
+    if ($list === null) {
         return null;
     }
     $language = (string) ($config['whatsapp']['language'] ?? 'en');
     $out = [];
-    foreach ($body['data'] as $t) {
+    foreach ($list as $t) {
         if (($t['language'] ?? '') !== $language) {
             continue;
         }
@@ -470,6 +472,8 @@ function tg_wa_template_states(array $config): ?array
             'status'   => (string) ($t['status'] ?? ''),
             'category' => (string) ($t['category'] ?? ''),
             'reason'   => (string) ($t['rejected_reason'] ?? ''),
+            'quality'  => tg_wat_quality($t['quality_score'] ?? ''),
+            'id'       => (string) ($t['id'] ?? ''),
         ];
     }
     return $out;

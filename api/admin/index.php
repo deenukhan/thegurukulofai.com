@@ -29,7 +29,7 @@ require __DIR__ . '/lib/actions.php';
 $config = rp_config();
 date_default_timezone_set('Asia/Kolkata'); // the store keeps IST times
 
-const ADMIN_CSS_VERSION = 15;
+const ADMIN_CSS_VERSION = 16;
 
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');

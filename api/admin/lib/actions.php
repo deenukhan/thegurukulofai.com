@@ -9,6 +9,7 @@ require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/coupons.php';
 require_once __DIR__ . '/recordings.php';
 require_once __DIR__ . '/inbox.php';
+require_once __DIR__ . '/wa_templates.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -244,6 +245,15 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'wa_tag_add':
         case 'wa_tag_remove':
             admin_inbox_action($pdo, $config, $action);
+            break;
+
+        // ---------- WhatsApp templates (lib/wa_templates.php) ----------
+        case 'wat_save':
+        case 'wat_submit':
+        case 'wat_duplicate':
+        case 'wat_delete':
+        case 'wat_sync':
+            admin_wat_action($pdo, $config, $action);
             break;
     }
     admin_done();

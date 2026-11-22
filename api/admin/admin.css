@@ -496,6 +496,15 @@ form.make .btn { align-self: flex-start; }
 .wa-button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: #fff;
   color: #027EB5; font-size: 14px; font-weight: 500; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); }
 .wa-button .icon { width: 14px; height: 14px; }
+.wa-head { margin: 0 0 4px; color: #111B21; font: 600 14.5px/1.4 var(--font); word-break: break-word; }
+.wa-reply { color: #027EB5; }
+
+/* ---------- WhatsApp templates (views/wa_templates.php) ---------- */
+.btn-rows { display: flex; flex-direction: column; gap: 14px; }
+.btn-row { padding: 12px; border: 1px solid var(--line-soft); border-radius: 10px; }
+.btn-row legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
+.var-rows .fields + .fields { margin-top: 10px; }
+.tpl-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
 
 /* ---------- WhatsApp inbox (views/inbox.php, ui_chat) ---------- */
 /* The box opens scrolled to the newest message: column-reverse puts its one child's end at the bottom. */

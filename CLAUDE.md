@@ -340,6 +340,8 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
   fresh authenticator code when two-step is on. The config coupon stays on the Settings page.
 - **Inbox:** answer WhatsApp messages from the business number, send the follow-up template after 24 hours,
   quick replies, tags, Mark done, and stop or restart WhatsApp for one number (see "Masterclass WhatsApp").
+- **Templates (WhatsApp):** write, check, submit, duplicate and delete your own WhatsApp templates. The built-in
+  booking templates stay in code and are shown locked (see "Masterclass WhatsApp").
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
@@ -361,8 +363,8 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 7 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
-  7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+- Schema version 8 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
+  7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`; 8 added `wa_templates`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -413,7 +415,8 @@ emptying `test_numbers`.
   link to answer it in the inbox (switch: `whatsapp.forward_replies`, on by default). The automatic STOP/START answers
   go only while WhatsApp is enabled, not paused and (in test mode) to a test number; the STOP itself is always recorded.
   `wa_inbound` keeps only id, number and kind, for good, so Meta's repeats are ignored and STOP is never forgotten.
-  It also emails Deenu when a template is rejected, paused or moved to marketing.
+  It also emails Deenu when a template is rejected, paused, moved to marketing or drops to red quality
+  (`message_template_quality_update`), and keeps the status, category and quality of templates written on the dashboard.
 - **Message text is kept for 30 days, then deleted** (Deenu's decision, 23 Nov 2026). `wa_messages` holds every
   message in and out with its text; the worker's `tg_wa_retention` (`api/razorpay/wa_store.php`) empties `body` after
   30 days and keeps the row, so counts, ticks and spend estimates don't change. Nightly, reconcile clears the profile
@@ -434,6 +437,22 @@ emptying `test_numbers`.
   never counts as "messaged us first". Inbox template sends write a final outbox row (dedupe `wa:inbox:...`) so they
   show in the send log.
   The dashboard's clock is `rp_now` (the test clock in tests); the idle sign-out stays on real time.
+- **Templates** (dashboard > WhatsApp > Templates, `views/wa_templates.php`, `lib/wa_templates.php`; rules and Meta calls in
+  `api/razorpay/wa_custom.php`; table `wa_templates`, schema 8): Deenu writes text templates (header, message with
+  `{{1}}`-style variables, footer, up to 3 buttons: links or quick replies), utility or marketing, in the config's one
+  language. `tg_wat_check` lists in plain English what Meta would refuse (name format, a built-in name, a name used or
+  deleted in the last 30 days, a variable at the start or end even before a full stop, two variables together, a gap in
+  the numbers, a missing example, a variable in the header or footer, header newlines or emoji, button text over 25, a
+  WhatsApp link in a button, a link variable not at the very end) and warns on offer words in a utility template.
+  Errors block submitting; warnings don't. Each variable is filled at send time from a field (`TG_WA_FIELDS`: first
+  name, full name, their paid session, the next session, the event name, or text typed when sending). Submitted
+  templates are never edited: "Duplicate" makes `<name>_v2`. Deleting a draft just removes it; deleting a submitted
+  one deletes it at Meta too and keeps the row, because Meta blocks the name for about 30 days. Status, category and
+  quality come from the webhook and from reading Meta's list (all pages) when the page opens, at most every 10 minutes,
+  or at once with "Refresh from Meta". The seven built-in templates are never rows here, so nothing on the page can
+  change them. Approved templates show in the inbox (once the window has closed) for anyone whose details fill them;
+  a send goes straight to Meta and writes a final outbox row with template `c:<id>`, so the worker never sends it again.
+  Media headers need Meta's upload API and the app id, so they are left for later.
   The rest of the plan (templates, broadcasts, automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
   and every key filled in. The token and app secret never leave the server; the token goes in an

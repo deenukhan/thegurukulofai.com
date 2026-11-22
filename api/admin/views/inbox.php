@@ -93,28 +93,49 @@ return static function (array $d): array {
                 $compose .= '<p class="notice notice-bad">' . icon('alert') . h($templateWhy) . '</p>';
             } else {
                 // The follow-up's wording ("following up on your message") fits only people who wrote first.
+                // Approved templates from the Templates page fit anyone whose details can fill them.
                 $wrote = tg_wa_messaged_us($pdo, $phone);
-                $fit = array_filter(admin_inbox_templates($config), static fn(array $t): bool => !$t['wrote_first'] || $wrote);
+                $person = tg_wat_person($pdo, $config, $phone);
+                $all = admin_inbox_templates($config, $pdo);
                 $options = [];
-                foreach ($fit as $key => $t) {
-                    if ($t['approved']) {
-                        $options[$key] = $t['label'] . ' (' . $t['name'] . ')';
+                foreach ($all as $key => $t) {
+                    if (!$t['approved'] || ($t['wrote_first'] && !$wrote) || ($t['custom'] !== null && !admin_inbox_fillable($config, $t['custom'], $person, $now))) {
+                        continue;
                     }
+                    $options[$key] = $t['custom'] !== null ? $t['name'] : $t['label'] . ' (' . $t['name'] . ')';
                 }
-                if (!$fit) {
+                $unfit = count(array_filter($all, static fn(array $t): bool => $t['custom'] !== null)) - count(array_filter(array_keys($options), static fn($k): bool => str_starts_with((string) $k, 'c:')));
+                $more = '<p class="muted small"><a class="row-link" href="' . h(admin_url(['view' => 'wa_templates'])) . '">Write your own templates</a></p>';
+                if (!$options && !$wrote) {
                     $compose .= '<p class="notice">' . icon('info') . 'The follow-up template (gurukul_follow_up) says you are following up on their message. '
                         . 'They agreed to booking updates but have never written to you, so it is not offered here. '
-                        . 'A template for buyers who have not written comes with the Templates page.</p>';
+                        . ($unfit > 0 ? 'Your approved templates need details they don\'t have, such as a paid session. ' : 'Write a template for them on the Templates page. ')
+                        . '</p>' . $more;
                 } elseif (!$options) {
                     $compose .= '<p class="notice notice-bad">' . icon('alert') . 'Meta has not approved the follow-up template (gurukul_follow_up) yet. '
-                        . 'Submit it on the <a href="' . h(admin_url(['view' => 'emails', 'tab' => 'whatsapp'])) . '#wa-templates">WhatsApp tab</a>.</p>';
+                        . 'Submit it on the <a href="' . h(admin_url(['view' => 'emails', 'tab' => 'whatsapp'])) . '#wa-templates">WhatsApp tab</a>.</p>' . $more;
                 } else {
-                    $first = array_key_first($options);
-                    $name = admin_inbox_name($wc) === tg_wa_pretty($phone) ? '' : admin_inbox_name($wc);
-                    $compose .= ui_post('wa_send_template', ['c' => $c, 'once' => admin_once(), '#' => 'reply'],
-                        ui_select('Template', 'template', $options, (string) $first, 'Meta charges for this one: about ₹0.15 for utility.')
-                        . '<p class="muted small">They will see:</p>' . ui_wa_bubble(tg_wa_render($config, $first, tg_wa_values($config, $first, ['name' => $name]))),
-                        'Send template', 'primary', 'stack');
+                    $pick = isset($options[(string) ($_GET['tpl'] ?? '')]) ? (string) $_GET['tpl'] : (string) array_key_first($options);
+                    $chosen = $all[$pick];
+                    $fields = '';
+                    if ($chosen['custom'] !== null) {
+                        $t = $chosen['custom'];
+                        $preview = tg_wat_render($t, tg_wat_values($config, $t, $person, [], $now));
+                        foreach (tg_wat_slots($t) as $slot => $field) {
+                            if ($field === 'fixed') {
+                                $fields .= ui_field($slot[0] === 'b' ? 'Text for {{' . substr($slot, 1) . '}}' : 'End of the link in button ' . ((int) substr($slot, 1) + 1),
+                                    'fixed[' . $slot . ']', 'maxlength="200" required autocomplete="off"', $slot[0] === 'b' ? 'Typed for this message only.' : 'Added to the end of the link, without spaces.');
+                            }
+                        }
+                    } else {
+                        $name = admin_inbox_name($wc) === tg_wa_pretty($phone) ? '' : admin_inbox_name($wc);
+                        $preview = tg_wa_render($config, $pick, tg_wa_values($config, $pick, ['name' => $name]));
+                    }
+                    $compose .= (count($options) > 1 ? '<p class="muted small">Pick a template:</p>' . ui_chips($options, $pick, 'tpl', $here) : '')
+                        . ui_post('wa_send_template', ['c' => $c, 'template' => $pick, 'once' => admin_once(), '#' => 'reply'],
+                            '<p class="muted small">' . h(admin_inbox_cost((string) $chosen['category'])) . '</p>' . $fields
+                            . '<p class="muted small">They will see' . ($fields !== '' ? ', with your text in place of the {{n}}' : '') . ':</p>' . ui_wa_bubble($preview),
+                            'Send template', 'primary', 'stack') . $more;
                 }
             }
         } else {

@@ -146,7 +146,9 @@ function m_whatsapp(string $phone): string
 function m_message_label(array $config, array $o): string
 {
     if (($o['channel'] ?? 'email') === 'whatsapp') {
-        $label = tg_wa_templates($config)[$o['template']]['label'] ?? $o['template'];
+        // A template written on the dashboard is stored as c:<id>; the send log joins its name.
+        $label = str_starts_with((string) $o['template'], 'c:') ? (string) ($o['custom_name'] ?? 'Your template')
+            : (tg_wa_templates($config)[$o['template']]['label'] ?? $o['template']);
         return h($label) . ' ' . ui_pill('WhatsApp', 'good');
     }
     $label = $o['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$o['template']]['label'] ?? $o['template']);

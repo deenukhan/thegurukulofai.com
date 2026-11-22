@@ -25,6 +25,8 @@ return [
                    'intro' => 'Every email and WhatsApp message the system sends, and what happened to each one.'],
     'inbox'    => ['label' => 'Inbox',         'icon' => 'whatsapp',  'group' => 'WhatsApp', 'range' => false,
                    'intro' => 'Every WhatsApp conversation. Answer from the business number.'],
+    'wa_templates' => ['label' => 'Templates', 'icon' => 'list', 'group' => 'WhatsApp', 'range' => false,
+                   'intro' => 'Write WhatsApp templates, send them to Meta, and see which are approved.'],
     'ads'      => ['label' => 'Ads',           'icon' => 'megaphone', 'group' => 'Growth',   'range' => true,
                    'intro' => 'Which ads bring paying buyers, and what they cost.'],
     'coupons'  => ['label' => 'Coupons',       'icon' => 'tag',       'group' => 'Growth',   'range' => false,

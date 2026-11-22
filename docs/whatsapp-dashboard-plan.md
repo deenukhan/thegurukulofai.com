@@ -12,7 +12,7 @@ Where the plan disagrees with the critic, the reason is under "Risks and decisio
 | Phase | What | Schema | Status |
 |---|---|---|---|
 | 1 | Inbox | v7 | built (see "Phase 1 as built") |
-| 2 | Templates | v8 | not started |
+| 2 | Templates | v8 | built (see "Phase 2 as built") |
 | 3 | Broadcasts | v9 | not started |
 | 4 | Automations | v10 | not started |
 | 5 | Contacts and WhatsApp overview | none (v10) | not started |
@@ -601,6 +601,43 @@ The page reads Meta through the existing 10-minute cache (`admin_cached`); "Refr
 
 Templates suite green, inbox suite still green, baselines hold, CLAUDE.md "WhatsApp templates" paragraph and
 schema 8, commit "add whatsapp template builder with pre-submit checks".
+
+### Phase 2 as built (builder's notes, 23 Nov 2026)
+
+Where the code differs from the text above, or settles something it left open:
+- **Function shapes.** `tg_wat_values(array $config, array $t, array $person, array $fixed, int $now)` takes the
+  person from the new `tg_wat_person(PDO, $config, $phone)` (name from the booking form, else the WhatsApp name; their
+  latest paid session) and returns `body`, `buttons` and `missing`. Fields per slot come from the row itself, so there is
+  no separate `$fields` argument. `tg_wat_slots($t)` lists what a template needs (`b2` for `{{2}}`, `u0` for the first
+  button's link); typed text arrives as `fixed[b2]` / `fixed[u0]`. `tg_wat_submit` and `tg_wat_delete` take `$now`.
+  `tg_wat_check` takes an optional list of names Meta already has (from the cached template list) and refuses a draft
+  that would clash. `tg_wat_event` handles the three template webhooks in one place.
+- **A URL button's `{{1}}` has its own field** (stored in the button's JSON as `field`), chosen once the link ends in `{{1}}`.
+- **Saving.** A draft needs a name to be saved (the name is the unique key). A name already used by another row, or
+  deleted at Meta in the last 30 days, is refused at save time with the reason; after 30 days the old deleted row is
+  renamed `<name>_old<id>` so the name is free. Lengths are capped before saving (header and footer 60, button text 40,
+  body 2,000), so the checks can still name a body over 1,024 or button text over 25. Non-ASCII in a name becomes `?`,
+  so the name check reports it.
+- **Deleting a draft removes the row** with no Meta call, and its name is free at once: it never reached Meta. Only a
+  submitted template is deleted at Meta and kept as `DELETED` (the name block).
+- **New templates start with the STOP footer** filled in (no JavaScript, so it can't follow the category choice);
+  a marketing template without "stop" in the footer or body gets a warning.
+- **Quick reply buttons must sit together** (an error otherwise), as Meta requires.
+- **Sync.** `tg_wa_template_list` reads every page (up to 5) for both our templates and the built-in states, so
+  `tg_wa_template_states` follows paging too and also returns `quality` and `id`. A submitted template Meta no longer
+  lists is marked `DELETED`, but only when every page was read. The page syncs at most every 10 minutes when it opens;
+  "Refresh from Meta" syncs at once and marks the sync done, so the page after it does not read Meta again.
+- **Inbox.** When the window is closed, the follow-up and every approved custom template that can be filled for this
+  person are offered as chips (`&tpl=`), each with its own preview and a box for each typed field. A custom template is
+  offered to anyone the `template` purpose rule allows (consent or messaged us); quiet hours are not applied to a
+  one-off inbox send, only to broadcasts and rules (Phase 3). The send re-reads the row, so a template paused since the
+  page loaded is refused.
+- **Webhook.** A `DELETED` or `PENDING_DELETION` status no longer emails Deenu (he did it). A marketing template that
+  Meta moves to utility does not email either. A quality drop to RED emails him. Notes about a dashboard template link
+  to the Templates page instead of the WhatsApp tab.
+- **Health** warns when one of your templates is rejected, paused or disabled.
+- **Send log** labels `c:<id>` rows with the template's name.
+- Test suite `dashboard_templates.py`: 103 checks. No existing kit check changed.
 
 ---
 

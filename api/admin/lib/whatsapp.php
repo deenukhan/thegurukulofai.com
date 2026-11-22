@@ -116,6 +116,15 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
     } else {
         $add('ok', 'WhatsApp', 'All ' . $t['total'] . ' WhatsApp templates are approved');
     }
+    try {
+        $mine = (int) value($pdo, "SELECT COUNT(*) FROM wa_templates WHERE status IN ('REJECTED', 'PAUSED', 'DISABLED') AND deleted_at IS NULL");
+    } catch (Throwable $e) {
+        $mine = 0;
+    }
+    if ($mine > 0) {
+        $add('warn', 'WhatsApp', $mine . ' of your WhatsApp templates ' . ($mine === 1 ? 'was' : 'were') . ' rejected or paused',
+            'They can\'t be sent. See Meta\'s reason on the Templates page, then duplicate and fix.', 'wa_templates');
+    }
     if ($t['recategorised'] > 0) {
         $add('warn', 'WhatsApp', 'Meta moved a template out of "utility"', 'Each of those messages now costs the marketing rate. See the WhatsApp tab.', 'emails');
     }
@@ -172,15 +181,24 @@ function admin_wa_state_pill(?array $s): string
     };
 }
 
-/** One WhatsApp message as the buyer sees it. */
+/**
+ * One WhatsApp message as the buyer sees it. $msg: body, and optional header (a bold
+ * line on top), footer and buttons (text, and url for a link button; none for a quick reply).
+ */
 function ui_wa_bubble(array $msg): string
 {
     $buttons = '';
-    foreach ($msg['buttons'] as $b) {
-        $buttons .= '<span class="wa-button" title="' . h($b['url']) . '">' . icon('arrow') . h($b['text']) . '</span>';
+    foreach ($msg['buttons'] ?? [] as $b) {
+        $url = (string) ($b['url'] ?? '');
+        $buttons .= $url !== ''
+            ? '<span class="wa-button" title="' . h($url) . '">' . icon('arrow') . h($b['text']) . '</span>'
+            : '<span class="wa-button wa-reply">' . icon('back') . h($b['text']) . '</span>';
     }
-    return '<div class="wa-chat"><div class="wa-bubble"><p class="wa-text">' . h($msg['body']) . '</p>'
-        . '<p class="wa-foot">' . h($msg['footer']) . '</p></div>'
+    $header = (string) ($msg['header'] ?? '');
+    $footer = (string) ($msg['footer'] ?? '');
+    return '<div class="wa-chat"><div class="wa-bubble">' . ($header !== '' ? '<p class="wa-head">' . h($header) . '</p>' : '')
+        . '<p class="wa-text">' . h($msg['body']) . '</p>'
+        . ($footer !== '' ? '<p class="wa-foot">' . h($footer) . '</p>' : '') . '</div>'
         . ($buttons !== '' ? '<div class="wa-buttons">' . $buttons . '</div>' : '') . '</div>';
 }
 

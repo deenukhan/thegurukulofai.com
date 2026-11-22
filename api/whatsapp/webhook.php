@@ -9,7 +9,9 @@
  *       - STOP or START from a buyer (never message them again, or again),
  *       - any other message: shown in the dashboard's inbox, and emailed to Deenu
  *         unless he switched reply emails off (this number has no app),
- *       - template reviews: a rejected, paused or re-categorised template is emailed.
+ *       - template news: a review result, a new category or a quality change. Templates
+ *         written on the dashboard (wa_templates) are updated; a rejected, paused or
+ *         re-categorised template, or one whose quality drops to red, is emailed.
  * Message text is kept for 30 days in wa_messages so Deenu can answer from the inbox,
  * then removed by the worker; wa_inbound keeps only id, number and kind, for good.
  * The automatic STOP and START answers go only while WhatsApp is on, not paused, and
@@ -68,6 +70,7 @@ if ($pdo === null) {
 
 $later = [];   // replies and emails, done after Meta has its answer
 $notes = [];   // template news for Deenu
+$custom = false; // a note is about a template written on the dashboard
 try {
     foreach ($event['entry'] ?? [] as $entry) {
         foreach ($entry['changes'] ?? [] as $change) {
@@ -93,17 +96,32 @@ try {
             } elseif ($field === 'message_template_status_update') {
                 $name = rp_clean($v['message_template_name'] ?? '', 80);
                 $what = strtoupper(rp_clean($v['event'] ?? '', 30));
+                $mine = tg_wat_event($pdo, $config, $field, $v, rp_now($config));
                 tg_audit($config, 'system', 'whatsapp_template', $name . ': ' . $what);
-                if (!in_array($what, ['APPROVED', 'PENDING', 'IN_APPEAL'], true)) {
+                if (!in_array($what, ['APPROVED', 'PENDING', 'IN_APPEAL', 'DELETED', 'PENDING_DELETION'], true)) {
                     $notes[] = 'Template ' . $name . ' is now ' . strtolower($what)
                         . (!empty($v['reason']) && $v['reason'] !== 'NONE' ? ' (Meta says: ' . rp_clean($v['reason'], 200) . ')' : '') . '.';
+                    $custom = $custom || $mine !== null;
                 }
             } elseif ($field === 'template_category_update') {
                 $name = rp_clean($v['message_template_name'] ?? '', 80);
                 $new = strtolower(rp_clean($v['new_category'] ?? ($v['correct_category'] ?? ''), 30));
+                $mine = tg_wat_event($pdo, $config, $field, $v, rp_now($config));
                 tg_audit($config, 'system', 'whatsapp_template', $name . ': category ' . $new);
-                if ($new !== '' && $new !== 'utility') {
+                // A template we wrote as marketing moving to utility is good news: no email.
+                if ($new !== '' && $new !== 'utility' && strtolower((string) ($mine['category'] ?? 'utility')) !== $new) {
                     $notes[] = 'Meta moved template ' . $name . ' to the ' . $new . ' category, so each message now costs more.';
+                    $custom = $custom || $mine !== null;
+                }
+            } elseif ($field === 'message_template_quality_update') {
+                $name = rp_clean($v['message_template_name'] ?? '', 80);
+                $new = tg_wat_quality($v['new_quality_score'] ?? '');
+                $mine = tg_wat_event($pdo, $config, $field, $v, rp_now($config));
+                tg_audit($config, 'system', 'whatsapp_template', $name . ': quality ' . strtolower($new));
+                if ($new === 'RED') {
+                    $notes[] = 'Template ' . $name . ' has low quality now: people blocked or reported it. Meta may pause it. '
+                        . 'Send it to fewer people, or only to people who asked for it.';
+                    $custom = $custom || $mine !== null;
                 }
             }
         }
@@ -140,6 +158,6 @@ foreach ($later as $r) {
 if ($notes) {
     $body = implode("\r\n", array_merge($notes, ['',
         'Until it is fixed, that message does not go out on WhatsApp. The email reminders are not affected.',
-        'Open the dashboard: ' . tg_site($config) . '/api/admin/?view=emails&tab=whatsapp']));
+        'Open the dashboard: ' . tg_site($config) . '/api/admin/?view=' . ($custom ? 'wa_templates' : 'emails&tab=whatsapp')]));
     rp_mail($config, $config['mail_notify'], 'ACTION: a WhatsApp template needs you', $body);
 }
