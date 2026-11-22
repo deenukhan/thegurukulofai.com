@@ -11,6 +11,7 @@ require_once __DIR__ . '/recordings.php';
 require_once __DIR__ . '/inbox.php';
 require_once __DIR__ . '/wa_templates.php';
 require_once __DIR__ . '/broadcasts.php';
+require_once __DIR__ . '/automations.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -270,6 +271,16 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'bc_resend':
         case 'bc_delete':
             admin_bc_action($pdo, $config, $action);
+            break;
+
+        // ---------- WhatsApp automations (lib/automations.php) ----------
+        case 'rule_save':
+        case 'rule_on':
+        case 'rule_off':
+        case 'rule_test':
+        case 'rule_delete':
+        case 'preset_template':
+            admin_rule_action($pdo, $config, $action);
             break;
     }
     admin_done();

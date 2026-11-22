@@ -1,6 +1,7 @@
 <?php
 /**
- * WhatsApp to many people at once: broadcasts (schema version 9), and later rules.
+ * WhatsApp to many people at once: broadcasts (schema version 9), and the audience and
+ * daily limit that automation rules (wa_rules.php) share.
  * Required by whatsapp.php, so the worker, the webhook and the dashboard share it.
  *
  * A broadcast is one approved template (written on the Templates page) sent to a group.
@@ -125,7 +126,8 @@ function tg_wa_cap_state(PDO $pdo, array $config, int $now): array
 {
     $cap = tg_wa_daily_cap($config);
     $used = [];
-    $q = $pdo->prepare("SELECT to_addr, MAX(sent_at) AS last FROM outbox WHERE channel = 'whatsapp' AND status = 'sent' AND sent_at > ? GROUP BY to_addr");
+    // Free text (a keyword rule's reply, template 'text') is not a business-started template: it never counts.
+    $q = $pdo->prepare("SELECT to_addr, MAX(sent_at) AS last FROM outbox WHERE channel = 'whatsapp' AND status = 'sent' AND template <> 'text' AND sent_at > ? GROUP BY to_addr");
     $q->execute([tg_ist($now - 86400)]);
     foreach ($q->fetchAll() as $r) {
         $used[(string) $r['to_addr']] = tg_wa_ts((string) $r['last']) + 86400;

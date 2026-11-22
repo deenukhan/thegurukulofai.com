@@ -148,7 +148,7 @@ function m_message_label(array $config, array $o): string
     if (($o['channel'] ?? 'email') === 'whatsapp') {
         // A template written on the dashboard is stored as c:<id>; the send log joins its name.
         $label = str_starts_with((string) $o['template'], 'c:') ? (string) ($o['custom_name'] ?? 'Your template')
-            : (tg_wa_templates($config)[$o['template']]['label'] ?? $o['template']);
+            : ($o['template'] === 'text' ? 'Keyword reply' : (tg_wa_templates($config)[$o['template']]['label'] ?? $o['template']));
         return h($label) . ' ' . ui_pill('WhatsApp', 'good');
     }
     $label = $o['template'] === 'digest' ? 'Daily summary' : (TG_REMINDERS[$o['template']]['label'] ?? $o['template']);
@@ -162,6 +162,8 @@ function m_wa_origin(string $key): string
         str_starts_with($key, 'wa:inbox:')  => 'From the inbox',
         str_starts_with($key, 'wa:bctest:') => 'Broadcast test',
         str_starts_with($key, 'wa:bc')      => 'Broadcast',
+        str_starts_with($key, 'wa:rtest:')  => 'Rule test',
+        str_starts_with($key, 'wa:r')       => 'Automation rule',
         default                             => 'Test message',
     };
 }

@@ -31,6 +31,9 @@
  * on, the template still approved, quiet hours for marketing and the daily limit. A row
  * that has to wait gets next_try_at; one that may not go is cancelled with the reason.
  *
+ * Automation rules (wa_rules.php) plan their messages in step 2c as bulk rows too
+ * (source 'automation'), so they get the same checks, plus "the rule is still on".
+ *
  * All times are worked out here in PHP and passed to SQL, never SQL's NOW(),
  * so the test clock (`test_now`) moves everything together.
  */
@@ -136,6 +139,11 @@ function tg_outbox_run(array $config, int $now): array
                 tg_ist($tried + TG_NUDGE_AFTER), tg_ist($tried + TG_NUDGE_LOOKBACK)]);
             $sum['planned'] += $planWa->rowCount() === 1 ? 1 : 0;
         }
+    }
+
+    // 2c. Automation rules: what happened since each was switched on becomes bulk rows.
+    if ($wa) {
+        $sum['planned'] += tg_rules_plan($pdo, $config, $now);
     }
 
     // 3. Deenu's summary, at 9 AM IST, sendable until noon.
@@ -414,6 +422,20 @@ function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$
                 $cancel('Broadcast cancelled');
                 continue;
             }
+        } elseif ($source === 'automation') {
+            // Its rule is still on (switching it off cancels its rows; this catches the rest).
+            $key = 'r' . $sourceId;
+            if (!array_key_exists($key, $sources)) {
+                try {
+                    $sources[$key] = tg_wa_value($pdo, 'SELECT enabled FROM wa_rules WHERE id = ?', [$sourceId]);
+                } catch (Throwable $e) {
+                    $sources[$key] = '1'; // before version 10: nothing to check
+                }
+            }
+            if ((int) $sources[$key] !== 1) {
+                $cancel($sources[$key] === null ? 'Rule deleted' : 'Rule switched off');
+                continue;
+            }
         }
 
         // 5. A row that is only for people who have not paid (a rule's), checked again now.
@@ -421,6 +443,12 @@ function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$
         $params = is_array($params) ? $params : null;
         if (!empty($params['check_paid']) && !empty($params['booking']) && tg_nudge_paid_since($pdo, (int) $params['booking'], $now)) {
             $cancel('Paid in the meantime');
+            continue;
+        }
+        // A rule row about a paid seat: the seat must still be paid (not refunded or moved).
+        if (!empty($params['need_paid']) && !empty($params['booking'])
+            && tg_wa_value($pdo, 'SELECT status FROM bookings WHERE id = ?', [(int) $params['booking']]) !== 'paid') {
+            $cancel('The booking is no longer paid');
             continue;
         }
 
@@ -471,6 +499,9 @@ function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$
             if (!isset($used[$to])) {
                 $room--;
                 $used[$to] = $now + 86400;
+            }
+            if ($source === 'automation') {
+                $pdo->prepare('UPDATE wa_rules SET sent = sent + 1 WHERE id = ?')->execute([$sourceId]);
             }
         } else {
             $code = (int) ($sent['code'] ?? 0);

@@ -18,6 +18,7 @@
 require_once __DIR__ . '/wa_store.php';
 require_once __DIR__ . '/wa_custom.php';
 require_once __DIR__ . '/wa_bulk.php';
+require_once __DIR__ . '/wa_rules.php';
 
 /**
  * The templates, keyed by the outbox's template name. Everything a buyer reads on
@@ -676,10 +677,12 @@ function tg_wa_inbound(PDO $pdo, array $config, array $m, array $profiles): ?arr
     if ($kind !== 'skip') {
         $logKind = $kind === 'stop' || $kind === 'start' ? $kind
             : (in_array($type, ['text', 'image', 'video', 'audio', 'document', 'sticker', 'location', 'contacts', 'button', 'interactive'], true) ? $type : 'other');
-        tg_wa_log_in($pdo, $waContactId, ['id' => $id, 'timestamp' => $sentAt], $logKind, $label);
+        $messageId = tg_wa_log_in($pdo, $waContactId, ['id' => $id, 'timestamp' => $sentAt], $logKind, $label);
     }
+    // words: what they typed (or a caption), for keyword rules; never a label such as "[a photo]".
     return ['kind' => $kind, 'from' => $from, 'name' => $profile, 'text' => mb_substr($label, 0, 2000), 'contacts' => $contacts,
-        'wa_contact_id' => $waContactId, 'wa_id' => $id];
+        'wa_contact_id' => $waContactId, 'wa_id' => $id, 'words' => mb_substr($text !== '' ? $text : $caption, 0, 2000),
+        'message_id' => $messageId ?? 0, 'sent_at' => $sentAt];
 }
 
 /** The email Deenu gets for a WhatsApp message, because this number has no app to read it in. */

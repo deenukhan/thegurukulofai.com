@@ -83,9 +83,11 @@ function tg_db_enabled(array $config): bool
  * Version 9 (WhatsApp broadcasts) adds wa_broadcasts, and to the outbox the values of a
  * custom template (params), where a bulk row came from (source, source_id); and
  * wa_contacts.marketing_off_at (they turned off our marketing in WhatsApp).
+ * Version 10 (WhatsApp automations) adds wa_rules: messages that send themselves when
+ * something happens, with the two ready-made rules (off, no template yet).
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 9;
+const TG_DB_VERSION = 10;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -446,6 +448,37 @@ function tg_db_migrate(PDO $pdo, array $config): void
         cancelled_at DATETIME NULL,
         KEY idx_status (status, send_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ---- Version 10: WhatsApp automations ----
+    // A rule sends one template (or, for a keyword, a short text) when something happens.
+    // Its messages are bulk rows in the outbox (source 'automation', source_id the rule).
+    // Only things that happen after enabled_at count: switching a rule on never reaches back.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS wa_rules (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(80) NOT NULL,
+        trigger_type VARCHAR(16) NOT NULL COMMENT 'paid, addon_paid, unpaid, before_session, after_session, joined, not_joined, tag_added, keyword',
+        trigger_value VARCHAR(320) NOT NULL DEFAULT '' COMMENT 'Minutes (unpaid), hours (before or after), a tag, or keywords',
+        delay_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+        action VARCHAR(8) NOT NULL DEFAULT 'template' COMMENT 'template, or text (keyword rules only)',
+        template_id INT UNSIGNED NULL COMMENT 'wa_templates.id',
+        fields TEXT NULL COMMENT 'JSON: the field for each variable, and fixed texts',
+        reply_text VARCHAR(1000) NULL COMMENT 'Keyword auto-reply, free text',
+        audience TEXT NULL COMMENT 'JSON: tag_in, tag_out, addon (yes or no), offers_box',
+        enabled TINYINT(1) NOT NULL DEFAULT 0,
+        enabled_at DATETIME NULL COMMENT 'Only things that happen after this count',
+        preset VARCHAR(20) NULL COMMENT 'Ready-made rule key',
+        sent INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        UNIQUE KEY uniq_preset (preset),
+        KEY idx_enabled (enabled, trigger_type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    // The ready-made rules, off and without a template until Deenu makes one. Seeded once
+    // by their key; they can be switched off but not deleted, so they never come back unasked.
+    $seedAt = tg_ist(function_exists('rp_now') ? (rp_now($config) ?: time()) : time());
+    $pdo->prepare("INSERT IGNORE INTO wa_rules (name, trigger_type, trigger_value, delay_minutes, action, audience, enabled, preset, created_at, updated_at) VALUES
+        ('Recording offer after class', 'after_session', '2', 0, 'template', '{\"addon\":\"no\"}', 0, 'recording_offer', ?, ?),
+        ('Feedback request', 'joined', '', 1440, 'template', '{}', 0, 'feedback', ?, ?)")->execute([$seedAt, $seedAt, $seedAt, $seedAt]);
 
     @file_put_contents($marker, (string) time());
 }

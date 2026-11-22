@@ -19,6 +19,11 @@ your daily limit (Settings, 250 to start), never marketing between 9 PM and 9 AM
 broadcast**, decide about the checkout pop-up's offers box: send marketing only to people who ticked it, or ask Claude
 for new pop-up wording that mentions WhatsApp offers. Once `test_numbers` is empty, set your own number in Settings
 so broadcast tests have somewhere to go.
+**Automations:** rules on **WhatsApp > Automations** send a template by themselves when something happens (someone
+pays, a checkout is not paid, before or after the class, joined or not, a tag, a keyword such as "price"). Each starts
+off; switch it on once its template is approved and a test looks right. Only things that happen after you switch a
+rule on count. The two ready-made rules (recording offer, feedback) need their template first: press "Make its
+template", add your own link to its button, and submit it. The booking messages are listed there too, locked.
 
 **Order:** steps 1 to 5 are done (22 Nov 2026). Step 6 needs the code live ("push it"). Then 7 and 8.
 

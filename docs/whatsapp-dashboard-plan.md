@@ -14,7 +14,7 @@ Where the plan disagrees with the critic, the reason is under "Risks and decisio
 | 1 | Inbox | v7 | built (see "Phase 1 as built") |
 | 2 | Templates | v8 | built (see "Phase 2 as built") |
 | 3 | Broadcasts | v9 | built (see "Phase 3 as built") |
-| 4 | Automations | v10 | not started |
+| 4 | Automations | v10 | built (see "Phase 4 as built") |
 | 5 | Contacts and WhatsApp overview | none (v10) | not started |
 
 Each phase ships alone: its own schema version, pages, actions, tests and CLAUDE.md update. Nothing in a
@@ -1089,6 +1089,51 @@ Template sends and free text, as earlier phases. No new calls.
 
 Automation suite green, earlier suites green, baselines hold, CLAUDE.md "Automations" paragraph and schema 10,
 commit "add whatsapp automations with built-in and ready-made rules".
+
+### Phase 4 as built (builder's notes, 23 Nov 2026)
+
+Where the code differs from the text above, or settles something it left open:
+- **Files.** The rules live in a new `api/razorpay/wa_rules.php` (required by `whatsapp.php`), not in `wa_bulk.php`, which
+  was already long: `tg_rules_plan` (worker step 2c), `tg_rule_subjects`, `tg_rule_plan_one`, `tg_rules_keyword`
+  (webhook), `tg_rule_check_value`, `tg_rule_trigger_text`, `TG_RULE_PRESETS`. Dashboard: `api/admin/lib/automations.php`
+  (`admin_rule_action`) and `api/admin/views/automations.php`. The menu icon is a new `bolt` (`pulse` is System health).
+- **Planning only once the moment has passed.** A trigger's moment (paid_at, session − X h, class end, created_at + X min,
+  added_at) must be after `enabled_at` and within the last 24 hours; the row's `due_at` is the moment plus the wait. So a
+  "24 hours before" rule plans its rows at that moment, not days ahead. Rows whose expiry has already passed are skipped.
+- **Booking triggers count only seats paid by the moment** (before the moment for "before the class"; before the class
+  ended for after, joined and not joined), the same rule the booking reminders follow. A late buyer gets later rules only.
+- **People who may not get it get a cancelled row with the reason** at planning time (no consent and never messaged us,
+  STOP, the test list, marketing off, a field that can't be filled), so the rule page explains, and the same event never
+  plans twice. The audience filter (tags, add-on, offers box) leaves people out silently, as broadcasts do.
+- **Seat rows are re-checked too**: rows from booking triggers carry `params.need_paid` and are cancelled "The booking is
+  no longer paid" if the seat was refunded or failed meanwhile (the plan only re-checked not-paid rows). The worker also
+  cancels a rule's row "Rule switched off" or "Rule deleted" if the rule changed without the usual cancel.
+- **Not paid** uses started, failed and order_failed checkouts, the same as the broadcast audience (the checkout coupon
+  uses started and failed only).
+- **Keyword rules: the first matching rule acts**, so one message never gets two automatic answers. A text reply is a
+  final outbox row with template `text` (it shows in the send log as "Keyword reply" and on the rule page); the daily
+  limit now ignores template `text`, since free replies are not business-started. A failed reply is marked told (no alert
+  email). Keywords allow letters (any script), numbers, spaces, hyphens and apostrophes; they are stored lowercase.
+- **The form field is `send_as`**, not `action` (that name carries the POST's own action).
+- **A rule may be saved with an unapproved template only if it is the rule's own** (a ready-made rule's draft waiting for
+  Meta); the select lists approved templates plus that one. Switching on needs it approved. The plan's table said
+  "template approved" on save, which would have blocked setting up a ready-made rule before Meta answered.
+- **Ready-made rules can be switched off but not deleted**, so a later migration's seed never brings back one Deenu
+  removed. "Make its template" writes `recording_offer` (marketing) or `class_feedback` (utility), with the STOP footer and
+  one link button whose URL is empty, then opens the draft. If the name is taken, the next free `_v2` name is used.
+- **Lists.** "Your rules" lists every rule, ready-made ones with a pill, with Edit, Switch on/off, Send a test and Delete
+  (custom rules only). "New rule" is a half card on the list page; a saved rule opens on `?r=ID` with its own four KPIs
+  (Status, Sent, Read rate, Waiting), the form, "What it does" (switch, preview, test), the reasons and its messages.
+- **Built-in messages** list the six automatic booking templates (the inbox follow-up is left out: it is sent by hand),
+  sent and read in the last 30 days (test sends left out), "Locked", and the checkout coupon's own on/off form
+  (`setting_save`, back to this page).
+- **Tests** of a text rule send the text (it reaches the phone only if Deenu wrote in the last 24 hours, which the form
+  says). Test rows are final outbox rows with dedupe `wa:rtest:<id>:...`, no source.
+- **Health** warns when a rule is on but its template is not approved any more.
+- **"Waiting for you" in the inbox** now counts only an answer by hand or an automatic text (a STOP/START answer or a
+  keyword reply). Before, any `sent_by = 'auto'` message counted, which would have let a rule's template (also `auto`)
+  hide someone who was waiting for Deenu.
+- Test suite `dashboard_automations.py`: 116 checks. No existing kit check changed.
 
 ---
 

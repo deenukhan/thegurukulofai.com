@@ -33,6 +33,7 @@ function icon(string $name): string
         'send'     => '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
         'video'    => '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>',
         'tag'      => '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/>',
+        'bolt'     => '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
     ];
     return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
         . ($paths[$name] ?? '') . '</svg>';

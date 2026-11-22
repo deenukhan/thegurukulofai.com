@@ -173,6 +173,19 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
             'They are dropped 48 hours after their time. Raise the limit in Settings, or cancel the broadcast.', 'broadcasts');
     }
 
+    // A rule that is on but whose template Meta no longer approves plans nothing.
+    try {
+        $stuck = rows($pdo, "SELECT r.name FROM wa_rules r LEFT JOIN wa_templates t ON t.id = r.template_id
+            WHERE r.enabled = 1 AND r.action = 'template' AND (t.id IS NULL OR t.status <> 'APPROVED' OR t.deleted_at IS NOT NULL) ORDER BY r.id LIMIT 5");
+    } catch (Throwable $e) {
+        $stuck = [];
+    }
+    if ($stuck) {
+        $add('warn', 'WhatsApp', count($stuck) === 1 ? 'The rule "' . $stuck[0]['name'] . '" is on, but its template is not approved any more'
+            : count($stuck) . ' rules are on, but their templates are not approved any more',
+            'Nothing goes out from ' . (count($stuck) === 1 ? 'it' : 'them') . ' until the template is approved again. Switch it off, or pick another template.', 'automations');
+    }
+
     if (empty($config['whatsapp']['enabled'])) {
         $add('info', 'WhatsApp', 'WhatsApp sending is switched off in the config', 'Set \'enabled\' => true in the whatsapp block when the templates are approved.');
     } elseif (tg_wa_paused($config)) {

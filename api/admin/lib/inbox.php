@@ -81,14 +81,15 @@ function admin_inbox_said_stop(PDO $pdo, string $phone): bool
 
 /**
  * The SQL for "waiting for you": not marked done, their last message is a real message
- * (not STOP or START) under 24 hours old, and nobody answered it by hand or automatically.
+ * (not STOP or START) under 24 hours old, and nobody answered it by hand or with an automatic text (a keyword
+ * reply). A template a rule sent on its own is not an answer.
  * One placeholder: the moment 24 hours ago. $alias is the wa_contacts alias.
  */
 function admin_inbox_waiting_sql(string $alias = 'wc'): string
 {
     return "{$alias}.closed_at IS NULL AND {$alias}.last_in_at >= ?
         AND NOT EXISTS (SELECT 1 FROM wa_messages r WHERE r.wa_contact_id = {$alias}.id AND r.direction = 'out'
-            AND r.sent_by IN ('admin', 'auto') AND r.status <> 'failed' AND r.created_at >= {$alias}.last_in_at)
+            AND (r.sent_by = 'admin' OR (r.sent_by = 'auto' AND r.kind = 'text')) AND r.status <> 'failed' AND r.created_at >= {$alias}.last_in_at)
         AND " . admin_inbox_last_kind_sql($alias) . " = 'reply'";
 }
 

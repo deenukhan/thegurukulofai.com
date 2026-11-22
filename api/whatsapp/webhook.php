@@ -7,8 +7,9 @@
  * POST: news from Meta, signed with the app secret. We act on:
  *       - delivery news for our messages (sent, delivered, read, failed),
  *       - STOP or START from a buyer (never message them again, or again),
- *       - any other message: shown in the dashboard's inbox, and emailed to Deenu
- *         unless he switched reply emails off (this number has no app),
+ *       - any other message: shown in the dashboard's inbox, answered by the first
+ *         keyword rule it matches (Automations), and emailed to Deenu unless he
+ *         switched reply emails off (this number has no app),
  *       - template news: a review result, a new category or a quality change. Templates
  *         written on the dashboard (wa_templates) are updated; a rejected, paused or
  *         re-categorised template, or one whose quality drops to red, is emailed.
@@ -146,6 +147,12 @@ foreach ($later as $r) {
                 'status' => 'sent', 'billable' => false], rp_now($config));
         }
         continue;
+    }
+    // Keyword rules answer first, so the person hears back at once (wa_rules.php).
+    try {
+        tg_rules_keyword($pdo, $config, $r, rp_now($config));
+    } catch (Throwable $e) {
+        error_log('whatsapp webhook: keyword rule not run: ' . $e->getMessage());
     }
     if (($wa['forward_replies'] ?? true) === false) {
         continue;

@@ -29,6 +29,8 @@ return [
                    'intro' => 'Write WhatsApp templates, send them to Meta, and see which are approved.'],
     'broadcasts' => ['label' => 'Broadcasts', 'icon' => 'send', 'group' => 'WhatsApp', 'range' => false,
                    'intro' => 'Send one template to a group, with a test first.'],
+    'automations' => ['label' => 'Automations', 'icon' => 'bolt', 'group' => 'WhatsApp', 'range' => false,
+                   'intro' => 'Messages that send themselves when something happens.'],
     'ads'      => ['label' => 'Ads',           'icon' => 'megaphone', 'group' => 'Growth',   'range' => true,
                    'intro' => 'Which ads bring paying buyers, and what they cost.'],
     'coupons'  => ['label' => 'Coupons',       'icon' => 'tag',       'group' => 'Growth',   'range' => false,

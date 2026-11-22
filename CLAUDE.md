@@ -345,6 +345,9 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
 - **Broadcasts (WhatsApp):** send one approved template to a group, tested first, with a typed confirmation of the
   count; cancel the rest; resend to people who did not read (see "Masterclass WhatsApp"). Settings has the daily
   limit (`whatsapp.daily_cap`) and your own test number (`whatsapp.my_number`).
+- **Automations (WhatsApp):** rules that send a template (or, for a keyword, a short text) when something happens;
+  switch each on or off, test, edit, delete. The built-in booking messages are shown locked, with the checkout
+  coupon's on/off switch (see "Masterclass WhatsApp").
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
@@ -366,9 +369,10 @@ the same. Every change goes through `lib/actions.php` (POST, page token, audit, 
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 9 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
+- Schema version 10 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
   7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`; 8 added `wa_templates`; 9 added
-  `wa_broadcasts`, `outbox.params`/`source`/`source_id` and `wa_contacts.marketing_off_at`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+  `wa_broadcasts`, `outbox.params`/`source`/`source_id` and `wa_contacts.marketing_off_at`; 10 added `wa_rules` with the two
+  ready-made rules). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -494,7 +498,39 @@ emptying `test_numbers`.
     unticked by default, so many people chose not to get offers. Either send marketing only with "Only people who
     ticked the offers box" on, or add a new `TG_CONSENT_VERSIONS` wording that mentions occasional WhatsApp offers. A
     health info line and a note on the Broadcasts page repeat this until one of the two is done.
-  The rest of the plan (automations, contacts) is in `docs/whatsapp-dashboard-plan.md`.
+- **Automations** (dashboard > WhatsApp > Automations, `views/automations.php`, `lib/automations.php`; planning and
+  keyword replies in `api/razorpay/wa_rules.php`; table `wa_rules`, schema 10): a rule is a trigger, a wait (0 minutes
+  to 7 days), one approved template with what fills each variable (as broadcasts), and an optional filter (tag in, tag
+  out, add-on yes or no, ticked the offers box). Triggers: paid, paid with the add-on, a checkout still not paid after
+  X minutes (10 to 1,440), X hours before the class (1 to 168; the wait must land before the start), X hours after the
+  class ends (the class is 3 hours), joined (opened their join link) or did not join (both at the class end), a tag
+  added, and a keyword in a message.
+  - **Never reaches back:** only things that happen after the rule was switched on (`enabled_at`) and within the last
+    24 hours count. Editing a rule that is on switches it off and cancels its waiting messages; switching off cancels
+    them too. One message per rule per person and event (dedupe `wa:r<id>:b<booking>`, `:c<contact>:<session>`,
+    `:t<wa_contact>:<tag>`, `:m<message>`). Booking triggers count only seats paid by the trigger's moment (like the
+    reminders).
+  - **Planning** (worker step 2c, `tg_rules_plan`, only while WhatsApp is on and not paused): each trigger becomes a bulk
+    outbox row (`source` automation, `source_id` the rule, `booking_id` NULL, the booking in `params`). Someone who may
+    not get it (no consent and never messaged us, STOP, the test list, marketing off, a field that can't be filled) gets a
+    row already cancelled with the reason, so the rule's page says why. Sending is `tg_outbox_bulk`, as for broadcasts
+    (quiet hours, daily limit, template status, one-person errors), plus: the rule still on, "Paid in the meantime" for
+    not-paid rows, "The booking is no longer paid" for seat rows. Rows expire 24 hours after their time, a before-class row
+    at the start and a not-paid row at the session it was for. A rule whose template is no longer approved plans nothing
+    (health warning).
+  - **Keyword rules** run in the webhook after Meta has its 200: the whole message or a whole word or phrase, any case,
+    up to 10 keywords of 2 to 30 characters, never a STOP or START word. Only the first matching rule acts. A text reply
+    is free (their window just opened) and is written as a final outbox row with template `text`, which the daily limit
+    ignores; a template is planned for the worker. Never to a STOP number, once per rule per number in 6 hours, only
+    while WhatsApp is on, not paused and the number allowed.
+  - **Ready-made rules** (seeded off, can't be deleted): "Recording offer after class" (2 hours after the class, people
+    without the add-on, marketing) and "Feedback request" (a day after the class, people who joined). "Make its template"
+    writes a suggested draft with the link button empty, so it can't be submitted until Deenu adds his own page. A rule
+    can be saved with its own draft, but switched on only once the template is approved.
+  - **Tests** go to the test list while it is set, else to `whatsapp.my_number`, filled with the newest matching buyer
+    (or "Priya"). A template used by a rule that is on can't be deleted.
+  - A rule's template does not count as answering someone in the inbox's "Waiting for you"; a keyword text reply does.
+  The rest of the plan (contacts) is in `docs/whatsapp-dashboard-plan.md`.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
   and every key filled in. The token and app secret never leave the server; the token goes in an
   Authorization header, never a URL or a log.

@@ -478,6 +478,16 @@ function admin_wat_action(PDO $pdo, array $config, string $action): void
                     . ' scheduled or sending. Cancel ' . ($using === 1 ? 'it' : 'them') . ' first. Nothing changed.');
                 return;
             }
+            try {
+                $rules = (int) value($pdo, 'SELECT COUNT(*) FROM wa_rules WHERE template_id = ? AND enabled = 1', [$t['id']]);
+            } catch (Throwable $e) {
+                $rules = 0;
+            }
+            if ($rules > 0) {
+                admin_flash('bad', $t['name'] . ' is used by ' . $rules . ' rule' . ($rules === 1 ? '' : 's') . ' that ' . ($rules === 1 ? 'is' : 'are')
+                    . ' on. Switch ' . ($rules === 1 ? 'it' : 'them') . ' off in Automations first. Nothing changed.');
+                return;
+            }
             if ($t['status'] !== 'DRAFT' && !tg_wa_ready($config)) {
                 admin_flash('bad', 'WhatsApp is not set up, so Meta can\'t be asked to delete it. Nothing changed.');
                 return;
