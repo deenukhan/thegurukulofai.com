@@ -390,6 +390,7 @@ emptying `test_numbers`.
 - **Join button only in the last two WhatsApp messages** (15-minute and "We're live"), Deenu's call on 23 Nov 2026.
   The confirmation, day-before (`mc_reminder_day_before`) and 3-hour (`mc_reminder_3_hours`) messages say the
   joining link comes at 2:45 PM instead. The emails still carry the join link as before.
+- **Meta's template rules learned the hard way:** a body can't start or end on a `{{n}}` (the 3-hour one was refused for ending "…at {{4}}."), and buttons can't link to WhatsApp. Refusals show Meta's detailed reason in the Activity log.
 - **Who gets them:** paid buyers with a consent version (they saw the pop-up wording), a usable number,
   no STOP, and no "no more reminders" click. While `test_numbers` in the config has numbers, only those
   get anything. A buyer who paid before WhatsApp was on gets the reminders still ahead, but no late confirmation.

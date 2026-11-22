@@ -66,7 +66,7 @@ function tg_wa_templates(array $config): array
             'label'   => '3-hour reminder',
             'when'    => '3 hours before',
             'body'    => "Hi {{1}}, your {{2}} starts today at {{3}}, live on Zoom.\n\n"
-                . "Charge your laptop and sign in to Claude before we start. Your personal joining link will come here at {{4}}.",
+                . "Charge your laptop and sign in to Claude before we start. Your personal joining link will come here at {{4}}, 15 minutes before we start.",
             'example' => ['Priya', $event, '3 PM IST', '2:45 PM IST'],
             'buttons' => [],
         ],
@@ -222,8 +222,11 @@ function tg_wa_error_text(array $config, int $status, ?array $body): string
     if (!is_array($e)) {
         return 'WhatsApp: HTTP ' . $status;
     }
-    $details = (string) ($e['error_data']['details'] ?? '');
-    $text = 'WhatsApp ' . (int) ($e['code'] ?? 0) . ': ' . (string) ($e['message'] ?? 'error') . ($details !== '' ? ' (' . $details . ')' : '');
+    // Meta often puts the real reason in error_user_title / error_user_msg, not in message.
+    $extra = array_values(array_unique(array_filter(array_map('strval', [
+        $e['error_data']['details'] ?? '', $e['error_user_title'] ?? '', $e['error_user_msg'] ?? '',
+    ]), static fn($x) => trim($x) !== '')));
+    $text = 'WhatsApp ' . (int) ($e['code'] ?? 0) . ': ' . (string) ($e['message'] ?? 'error') . ($extra !== [] ? ' (' . implode('. ', $extra) . ')' : '');
     return mb_substr(str_replace((string) $config['whatsapp']['access_token'], '***', $text), 0, 250);
 }
 
