@@ -384,6 +384,12 @@ emptying `test_numbers`.
 - **All the wording** is in `tg_wa_templates()` at the top of `whatsapp.php`. Approved wording can't be
   edited: change it under a **new template name**, then press Submit to Meta on the dashboard.
   Keep them free of anything promotional, or Meta moves them to the dearer marketing category.
+  Meta did exactly that to `mc_class_live` (23 Nov 2026), so "We're live" is now `mc_class_started`.
+  Template buttons can't link to WhatsApp (`chat.whatsapp.com` was refused as "Invalid parameter"), so the
+  seat confirmation's community button goes to `/join/community/?t=<token>`, which forwards to the invite link.
+- **Join button only in the last two WhatsApp messages** (15-minute and "We're live"), Deenu's call on 23 Nov 2026.
+  The confirmation, day-before (`mc_reminder_day_before`) and 3-hour (`mc_reminder_3_hours`) messages say the
+  joining link comes at 2:45 PM instead. The emails still carry the join link as before.
 - **Who gets them:** paid buyers with a consent version (they saw the pop-up wording), a usable number,
   no STOP, and no "no more reminders" click. While `test_numbers` in the config has numbers, only those
   get anything. A buyer who paid before WhatsApp was on gets the reminders still ahead, but no late confirmation.

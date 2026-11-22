@@ -38,13 +38,18 @@ function tg_wa_templates(array $config): array
             'when'    => 'Right after payment',
             'body'    => "Hi {{1}}, your seat for the {{2}} is confirmed.\n\n"
                 . "When: {{3}}\nWhere: Live on Zoom\n\n"
-                . "On the day, tap \"Join the class\" below. It is your personal link, so please keep it to yourself.\n\n"
+                . "Your personal joining link will come here on WhatsApp on the day at {{4}}, 15 minutes before we start.\n\n"
                 . "Your receipt and calendar invite are in your email. Tap \"WhatsApp community\" to join the other buyers.",
-            'example' => ['Priya', $event, 'Sunday, 22 November, 3 PM to 6 PM IST'],
-            'buttons' => [$join, ['text' => 'WhatsApp community', 'url' => 'https://chat.whatsapp.com/{{1}}', 'example' => 'https://chat.whatsapp.com/AbCdEfGhIjKlMnOpQrStUv']],
+            'example' => ['Priya', $event, 'Sunday, 22 November, 3 PM to 6 PM IST', '2:45 PM IST'],
+            // No join button until 15 minutes before (Deenu, 23 Nov 2026): the link comes with
+            // the last two messages only. Meta refuses WhatsApp links in template buttons, so
+            // the community button goes through the site (/join/community/), which forwards on.
+            'buttons' => [['text' => 'WhatsApp community', 'url' => $site . '/join/community/?t={{1}}', 'example' => $site . '/join/community/?t=0a1b2c3d4e5f6a7b8c9d0e1f']],
         ],
         'remind24' => [
-            'name'    => 'mc_reminder_tomorrow',
+            // Renamed from mc_reminder_tomorrow when the join button moved to the last two
+            // messages: wording sent to Meta can't be changed under the same name.
+            'name'    => 'mc_reminder_day_before',
             'label'   => 'Day-before reminder',
             'when'    => '24 hours before the session',
             'body'    => "Hi {{1}}, a reminder that your {{2}} is tomorrow, {{3}}, live on Zoom.\n\n"
@@ -52,18 +57,18 @@ function tg_wa_templates(array $config): array
                 . "- Use a laptop. A phone screen is too small for the hands-on parts.\n"
                 . "- Keep a paid Claude plan ready (Pro or higher).\n"
                 . "- Join 5 minutes early.\n\n"
-                . "Your personal join link is the button below.",
-            'example' => ['Priya', $event, 'Sunday, 3 PM to 6 PM IST'],
-            'buttons' => [$join],
+                . "Your personal joining link will come here tomorrow at {{4}}, 15 minutes before we start.",
+            'example' => ['Priya', $event, 'Sunday, 3 PM to 6 PM IST', '2:45 PM IST'],
+            'buttons' => [],
         ],
         'remind3' => [
-            'name'    => 'mc_reminder_today',
+            'name'    => 'mc_reminder_3_hours',
             'label'   => '3-hour reminder',
             'when'    => '3 hours before',
             'body'    => "Hi {{1}}, your {{2}} starts today at {{3}}, live on Zoom.\n\n"
-                . "Charge your laptop and sign in to Claude before we start. Your personal join link is the button below.",
-            'example' => ['Priya', $event, '3 PM IST'],
-            'buttons' => [$join],
+                . "Charge your laptop and sign in to Claude before we start. Your personal joining link will come here at {{4}}.",
+            'example' => ['Priya', $event, '3 PM IST', '2:45 PM IST'],
+            'buttons' => [],
         ],
         'remind15' => [
             'name'    => 'mc_reminder_15min',
@@ -73,12 +78,14 @@ function tg_wa_templates(array $config): array
             'example' => ['Priya'],
             'buttons' => [$join],
         ],
+        // mc_class_live was moved to "marketing" by Meta (23 Nov 2026), so this plainer
+        // wording goes under a new name. Approved or reviewed wording can't be edited.
         'live' => [
-            'name'    => 'mc_class_live',
+            'name'    => 'mc_class_started',
             'label'   => '"We\'re live" message',
             'when'    => 'When the session starts',
-            'body'    => "Hi {{1}}, we are live now. Tap the button below to join the masterclass. Come in even if you are a few minutes late.",
-            'example' => ['Priya'],
+            'body'    => "Hi {{1}}, your {{2}} has started on Zoom. Your personal join link is the button below.",
+            'example' => ['Priya', $event],
             'buttons' => [$join],
         ],
     ];
@@ -243,17 +250,21 @@ function tg_wa_values(array $config, string $template, array $row): array
     $first = tg_first_name((string) ($row['name'] ?? ''));
     $when = tg_session_parts((string) $row['session_at']);
     $token = (string) $row['join_token'];
+    // When the joining link arrives: the 15-minute reminder, e.g. "2:45 PM IST".
+    $early = (new DateTimeImmutable('@' . ($when['unix'] - 900)))->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('g:i A') . ' IST';
     switch ($template) {
         case 'confirm':
             $invite = (string) ($config['community_url'] ?? '');
-            if (!preg_match('~^https://chat\.whatsapp\.com/([A-Za-z0-9]{10,40})$~', $invite, $m)) {
+            if (!preg_match('~^https://chat\.whatsapp\.com/[A-Za-z0-9]{10,40}$~', $invite)) {
                 throw new RuntimeException('The WhatsApp community link is not set. Add it in Settings.');
             }
-            return ['body' => [$first, $event, $when['day'] . ', ' . $when['span']], 'buttons' => [$token, $m[1]]];
+            return ['body' => [$first, $event, $when['day'] . ', ' . $when['span'], $early], 'buttons' => [$token]];
         case 'remind24':
-            return ['body' => [$first, $event, (new DateTimeImmutable('@' . $when['unix']))->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('l') . ', ' . $when['span']], 'buttons' => [$token]];
+            return ['body' => [$first, $event, (new DateTimeImmutable('@' . $when['unix']))->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('l') . ', ' . $when['span'], $early], 'buttons' => []];
         case 'remind3':
-            return ['body' => [$first, $event, $when['time'] . ' IST'], 'buttons' => [$token]];
+            return ['body' => [$first, $event, $when['time'] . ' IST', $early], 'buttons' => []];
+        case 'live':
+            return ['body' => [$first, $event], 'buttons' => [$token]];
         default:
             return ['body' => [$first], 'buttons' => [$token]];
     }
@@ -364,7 +375,7 @@ function tg_wa_template_request(array $config, array $t): array
         'components' => [
             ['type' => 'BODY', 'text' => $t['body'], 'example' => ['body_text' => [$t['example']]]],
             ['type' => 'FOOTER', 'text' => TG_WA_FOOTER],
-            ['type' => 'BUTTONS', 'buttons' => $buttons],
+            ...($buttons !== [] ? [['type' => 'BUTTONS', 'buttons' => $buttons]] : []),
         ],
     ];
 }

@@ -181,6 +181,10 @@ function admin_handle_post(PDO $pdo, array $config): void
             if (!tg_wa_ready($config)) {
                 break;
             }
+            // Up to five calls to Meta, 15 seconds each at worst: finish and log even if
+            // the browser gives up first.
+            ignore_user_abort(true);
+            @set_time_limit(120);
             $result = tg_wa_submit_templates($config);
             admin_wa_forget($config);
             if ($result === null) {
