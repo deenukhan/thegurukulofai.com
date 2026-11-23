@@ -34,6 +34,7 @@ function icon(string $name): string
         'video'    => '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>',
         'tag'      => '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/>',
         'bolt'     => '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+        'chart'    => '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
     ];
     return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
         . ($paths[$name] ?? '') . '</svg>';
@@ -414,4 +415,50 @@ function ui_chat(array $messages, int $now): string
             . $text . $error . '<p class="chat-meta">' . $meta . '</p></div>';
     }
     return '<div class="chat-scroll" tabindex="0" aria-label="Conversation"><div class="chat">' . $html . '</div></div>';
+}
+
+/**
+ * A form that changes something, with more than one button: each button sends its own
+ * value in one field (such as op=add or op=remove). $inner holds the fields (html), which
+ * may include a table of checkboxes. $buttons: list of [label, field, value, kind].
+ * Like ui_post it carries the page token and comes back to this page ($hidden['#'] for an anchor).
+ */
+function ui_form(string $action, array $hidden, string $inner, array $buttons, string $class = ''): string
+{
+    $anchor = (string) ($hidden['#'] ?? '');
+    unset($hidden['#']);
+    $fields = '<input type="hidden" name="action" value="' . h($action) . '">'
+        . '<input type="hidden" name="csrf" value="' . h(admin_token()) . '">'
+        . '<input type="hidden" name="back" value="' . h(admin_here() . ($anchor !== '' ? '#' . $anchor : '')) . '">';
+    foreach ($hidden as $k => $v) {
+        $fields .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
+    }
+    $html = '';
+    foreach ($buttons as [$label, $name, $value, $kind]) {
+        $html .= '<button type="submit" class="btn btn-' . h($kind) . '" name="' . h($name) . '" value="' . h($value) . '">' . h($label) . '</button>';
+    }
+    return '<form method="post" class="' . h(trim('post ' . $class)) . '">' . $fields . $inner . '<div class="form-buttons">' . $html . '</div></form>';
+}
+
+/** A tick box for one row of a table inside ui_form. $label is read by screen readers only. */
+function ui_tick(string $name, string $value, string $label): string
+{
+    return '<label class="row-tick"><input type="checkbox" name="' . h($name) . '" value="' . h($value) . '"><span class="visually-hidden">' . h($label) . '</span></label>';
+}
+
+/**
+ * "Newer" and "Older" links under a long table, with "Page 2 of 3". $base holds the page's
+ * other query values; page 1 is the newest. $anchor is the element id to reopen at.
+ */
+function ui_pager(int $page, int $pages, array $base, string $anchor = ''): string
+{
+    if ($pages <= 1) {
+        return '';
+    }
+    $hash = $anchor !== '' ? '#' . $anchor : '';
+    return '<nav class="pager" aria-label="Pages">'
+        . ($page > 1 ? ui_button('Newer', admin_url($base + ['p' => $page - 1 > 1 ? $page - 1 : '']) . $hash, 'quiet', 'back') : '<span></span>')
+        . '<span class="muted">Page ' . $page . ' of ' . $pages . '</span>'
+        . ($page < $pages ? ui_button('Older', admin_url($base + ['p' => $page + 1]) . $hash, 'quiet', 'arrow') : '<span></span>')
+        . '</nav>';
 }

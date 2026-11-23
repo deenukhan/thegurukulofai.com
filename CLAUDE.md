@@ -348,13 +348,15 @@ table in phpMyAdmin and sign in again to set it up afresh. Health shows an info 
 - **Automations (WhatsApp):** rules that send a template (or, for a keyword, a short text) when something happens;
   switch each on or off, test, edit, delete. The built-in booking messages are shown locked, with the checkout
   coupon's on/off switch (see "Masterclass WhatsApp").
+- **Contacts (WhatsApp):** add or remove a tag for the people ticked on one page of the list (up to 100), and
+  download the list as CSV (see "Masterclass WhatsApp"). The WhatsApp **Overview** only shows.
 - CSV downloads (logged) and WhatsApp chat links.
 
 **Adding a page:** one line in `api/admin/lib/sections.php` (menu label, icon, group, period picker)
 and one file `api/admin/views/<key>.php` that returns a closure giving `body` (and optionally
 `title`, `intro`, `actions`, `back`). Build pages only from `lib/ui.php` parts (KPIs, cards, tables,
-pills, column chart, bars, facts, chips, checks, mail preview, `ui_post` forms), so every page looks
-the same. Every change goes through `lib/actions.php` (POST, page token, audit, message, back).
+pills, column chart, bars, facts, chips, checks, mail preview, `ui_post` forms, `ui_form` for a form with
+several buttons, `ui_tick` row boxes, `ui_pager`), so every page looks the same. Every change goes through `lib/actions.php` (POST, page token, audit, message, back).
 
 - **Layout rule:** one row of four KPIs, then cards on a six-column grid sized `third`, `half`,
   `two-thirds` or `full`. Styles live only in `api/admin/admin.css` (bump `ADMIN_CSS_VERSION` in
@@ -530,7 +532,30 @@ emptying `test_numbers`.
   - **Tests** go to the test list while it is set, else to `whatsapp.my_number`, filled with the newest matching buyer
     (or "Priya"). A template used by a rule that is on can't be deleted.
   - A rule's template does not count as answering someone in the inbox's "Waiting for you"; a keyword text reply does.
-  The rest of the plan (contacts) is in `docs/whatsapp-dashboard-plan.md`.
+- **Contacts** (dashboard > WhatsApp > Contacts, `views/wa_contacts.php`, `lib/wa_contacts.php`; no schema change):
+  one row per WhatsApp number, merging the contact store (numbers as typed, normalised with `tg_wa_number`) with
+  `wa_contacts`; a number in both shows once, with the newest contact's name and email. Type: Buyer (a paid seat),
+  Lead, or WhatsApp only. KPIs: Reachable (consent or messaged us, no STOP: the person part of the template rule),
+  Said STOP, Marketing off, Tagged. Search (name, email, number) and chips (All, Buyers, Leads, Messaged us, STOP, one
+  per tag, Ticked the offers box) narrow the list; 100 rows a page (`&p=N`). Tick rows, type a tag, then "Add tag to
+  ticked" or "Remove tag from ticked" (`wac_tag`, at most 100 numbers, every one a valid WhatsApp number or nothing
+  changes). Adding makes the `wa_contacts` row if there is none, and can fire a "tag added" rule switched on before it.
+  Audited with counts ("tag vip added to 12 of 12 ticked"). "Download CSV" (logged) gives the current chip and search:
+  name, number, email, type, tags, consent version, STOP, marketing off, last message time. Never message text.
+- **Overview** (dashboard > WhatsApp > Overview, `views/wa_overview.php`, first in the WhatsApp menu, with a period
+  picker): Conversations (numbers with a message in the period), Estimated spend (billable `wa_messages` not failed ×
+  ₹0.86 marketing or ₹0.15 utility; always called an estimate, Meta's invoice is the truth), Quality (Meta's rating,
+  green, yellow or red) and Messaging limit (Meta's tier, plus how many different people got a business-started
+  template in the last 24 hours, the count the daily limit uses). Cards: messages per day, spend by category, best and
+  weakest templates (read rate then reply rate, at least 10 sends in the period, test sends left out; Meta's template
+  quality beside each), the Connection card (shared with the WhatsApp tab) and the WhatsApp health checks.
+  - `admin_wa_meta` asks the number for `messaging_limit_tier` and `throughput` too; if Meta refuses those fields it asks
+    again without them, then for the basics. Quality is read from `quality_rating`, or `quality_score.score` on newer
+    Graph versions.
+  - The webhook handles `phone_number_quality_update` (`tg_wa_number_event` in `wa_store.php`): it saves the news in the
+    private `whatsapp-quality.last` (the overview falls back to that limit when Meta won't say), forgets the dashboard's
+    saved copy so the next page reads Meta again, and emails Deenu when the number is flagged or its limit goes down
+    ("ACTION: Meta lowered your WhatsApp number's rating") or changes. Subscribe the Meta app to that webhook field.
 - **Config:** the private config's `whatsapp` block (see `config.sample.php`). Sending needs `'enabled' => true`
   and every key filled in. The token and app secret never leave the server; the token goes in an
   Authorization header, never a URL or a log.

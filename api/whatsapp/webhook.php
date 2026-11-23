@@ -13,6 +13,9 @@
  *       - template news: a review result, a new category or a quality change. Templates
  *         written on the dashboard (wa_templates) are updated; a rejected, paused or
  *         re-categorised template, or one whose quality drops to red, is emailed.
+ *       - number news (phone_number_quality_update): flagged, or the messaging limit went
+ *         down or up. Saved for the dashboard's WhatsApp overview, which then reads Meta
+ *         again; a drop or a limit change is emailed.
  * Message text is kept for 30 days in wa_messages so Deenu can answer from the inbox,
  * then removed by the worker; wa_inbound keeps only id, number and kind, for good.
  * The automatic STOP and START answers go only while WhatsApp is on, not paused, and
@@ -72,6 +75,7 @@ if ($pdo === null) {
 $later = [];   // replies and emails, done after Meta has its answer
 $notes = [];   // template news for Deenu
 $custom = false; // a note is about a template written on the dashboard
+$numberMail = null; // news about the number's quality or limit, for Deenu
 try {
     foreach ($event['entry'] ?? [] as $entry) {
         foreach ($entry['changes'] ?? [] as $change) {
@@ -114,6 +118,10 @@ try {
                     $notes[] = 'Meta moved template ' . $name . ' to the ' . $new . ' category, so each message now costs more.';
                     $custom = $custom || $mine !== null;
                 }
+            } elseif ($field === 'phone_number_quality_update') {
+                $numberMail = tg_wa_number_event($config, $v, rp_now($config)) ?? $numberMail;
+                tg_audit($config, 'system', 'whatsapp_number', strtolower(rp_clean($v['event'] ?? '', 30)) . ' '
+                    . strtolower(rp_clean($v['current_limit'] ?? '', 30)));
             } elseif ($field === 'message_template_quality_update') {
                 $name = rp_clean($v['message_template_name'] ?? '', 80);
                 $new = tg_wat_quality($v['new_quality_score'] ?? '');
@@ -167,4 +175,7 @@ if ($notes) {
         'Until it is fixed, that message does not go out on WhatsApp. The email reminders are not affected.',
         'Open the dashboard: ' . tg_site($config) . '/api/admin/?view=' . ($custom ? 'wa_templates' : 'emails&tab=whatsapp')]));
     rp_mail($config, $config['mail_notify'], 'ACTION: a WhatsApp template needs you', $body);
+}
+if ($numberMail !== null) {
+    rp_mail($config, $config['mail_notify'], $numberMail['subject'], $numberMail['body']);
 }

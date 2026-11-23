@@ -146,6 +146,8 @@ Nothing changes on the site yet: the current live code ignores this block.
    - **message_template_status_update**
    - **template_category_update** (if it's listed)
    - **message_template_quality_update** (if it's listed): the quality of templates you write on the dashboard
+   - **phone_number_quality_update** (if it's listed): the number being flagged, or its messaging limit going down
+     or up. The dashboard's WhatsApp overview shows it, and you get an email when it drops.
 4. **Switch on Subscribe webhooks.** In the app's left menu open **WhatsApp**, then **Production setup**
    (it may be called **API Setup**). Find **Subscribe webhooks** and switch it **on**. Without it Meta
    sends nothing to the site, even with the Callback URL saved.

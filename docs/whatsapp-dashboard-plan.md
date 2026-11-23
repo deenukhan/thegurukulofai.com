@@ -15,7 +15,7 @@ Where the plan disagrees with the critic, the reason is under "Risks and decisio
 | 2 | Templates | v8 | built (see "Phase 2 as built") |
 | 3 | Broadcasts | v9 | built (see "Phase 3 as built") |
 | 4 | Automations | v10 | built (see "Phase 4 as built") |
-| 5 | Contacts and WhatsApp overview | none (v10) | not started |
+| 5 | Contacts and WhatsApp overview | none (v10) | built (see "Phase 5 as built") |
 
 Each phase ships alone: its own schema version, pages, actions, tests and CLAUDE.md update. Nothing in a
 phase may need a later phase to work. Menu items for Phase 3 to 5 appear only once their phase lands.
@@ -1210,6 +1210,40 @@ refuses the new fields (code 100) proves the fallback.
 
 Contacts suite green, all earlier suites green, baselines hold, CLAUDE.md "WhatsApp contacts and overview",
 commit "add whatsapp contacts with tags and an overview page".
+
+### Phase 5 as built (builder's notes, 23 Nov 2026)
+
+Where the code differs from the text above, or settles something it left open:
+- **Files.** `api/admin/lib/wa_contacts.php` (the merged list, chips, KPIs, CSV, `admin_wac_action`, the overview numbers
+  and the ranked-template table), `views/wa_contacts.php`, `views/wa_overview.php`. Number news lives in
+  `api/razorpay/wa_store.php` (`tg_wa_number_event`, `tg_wa_number_news`, `tg_wa_tier_people`, `tg_wa_tier_text`,
+  `tg_wa_dash_cache_file`, which `admin_wa_forget` now uses too). The Connection card moved into
+  `admin_wa_connection_card()`, shared by the WhatsApp tab and the overview.
+- **Search and chips run in PHP on the merged list**, not in SQL: numbers in `contacts` are stored as typed, so they must
+  be normalised with `tg_wa_number` before they can be merged or matched. The list is built from six queries (contacts,
+  paid seats, wa_contacts, tags, STOP/START, messaged us), never one per row, so it stays quick into the tens of thousands.
+  A search with only digits, spaces, `+`, `(`, `)` and `-` matches the number; anything else matches name, email or
+  WhatsApp name.
+- **Chips**: All, Buyers, Leads, Messaged us, STOP, one chip per tag in use (`show=t:<tag>`, up to 30, shown as `#tag`),
+  Ticked the offers box. An unknown chip falls back to All.
+- **"Reachable"** counts the person part of the template rule (consent or messaged us, no STOP). It ignores the switches
+  and the test list on purpose, so it still tells Deenu his audience while WhatsApp is off; in test mode its note says
+  only the test numbers get messages.
+- **Bulk tags** refuse the whole change if any ticked value is not a WhatsApp number exactly as the list sends it
+  (`tg_wa_number($p) === $p`), so a 10-digit form is refused too. The flash says how many were new ("1 person had it
+  already"); the audit holds the tag and the counts, never names.
+- **CSV** numbers are digits only (`919876543210`), so they need no formula guard. The chip and search apply; all pages.
+- **Overview.** The page title is "WhatsApp overview" (the menu label stays "Overview") and its icon is a new `chart`,
+  since the Inbox already uses the WhatsApp icon. Small sums show paise (₹15.26) below ₹1,000. Template "sends" are
+  every template message that did not fail, booking reminders included, minus test sends. Best and weakest split the
+  ranked list (best: the top half, at most 5; weakest: the rest from the bottom, at most 5), so no template shows in
+  both. The messaging-limit KPI turns amber when the last 24 hours reach 80% of Meta's tier.
+- **Number news.** `phone_number_quality_update` emails "ACTION: Meta lowered your WhatsApp number's rating" for FLAGGED
+  and DOWNGRADE, and "WhatsApp: Meta changed your messaging limit" for UPGRADE or a limit different from the last news;
+  UNFLAGGED with the same limit sends nothing. When Meta refuses `messaging_limit_tier`, the overview shows the limit
+  from the last news, marked as such. Meta reworked messaging limits in 2025 (they may now be per business portfolio),
+  so the live field may be missing; Deenu should check it once on the real number.
+- Test suite `dashboard_contacts.py`: 93 checks. No existing kit check changed.
 
 ---
 

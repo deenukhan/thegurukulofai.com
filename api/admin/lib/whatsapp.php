@@ -15,21 +15,46 @@ function admin_wa_cache_key(array $config): string
 /** Forgets the saved answer, so the next page shows Meta's latest after a change. */
 function admin_wa_forget(array $config): void
 {
-    @unlink(admin_private($config) . '/razorpay-dash-cache/' . hash('sha256', admin_wa_cache_key($config)) . '.json');
+    @unlink(tg_wa_dash_cache_file($config));
+}
+
+/** The number's fields as plain text: objects such as throughput {level} and quality_score {score} become their one value. */
+function admin_wa_phone_fields(array $phone): array
+{
+    $out = [];
+    foreach ($phone as $k => $v) {
+        if (is_array($v)) {
+            $v = $v['level'] ?? ($v['score'] ?? '');
+        }
+        $out[(string) $k] = is_scalar($v) ? (string) $v : '';
+    }
+    // Newer Graph versions rate the number in quality_score; older ones in quality_rating.
+    if (($out['quality_rating'] ?? '') === '' && ($out['quality_score'] ?? '') !== '') {
+        $out['quality_rating'] = $out['quality_score'];
+    }
+    return $out;
 }
 
 /**
  * The number, the templates and the webhook link as Meta sees them.
  * Returns ok, error, phone (fields), templates (name => state, or null) and subscribed (count, or null).
+ * phone also has messaging_limit_tier and throughput when Meta answers them; if Meta refuses
+ * those fields, it asks again without them, then for the basics only.
  */
 function admin_wa_meta(array $config): array
 {
     return admin_cached($config, admin_wa_cache_key($config), ADMIN_WA_CACHE, static function () use ($config): array {
         $id = rawurlencode((string) $config['whatsapp']['phone_number_id']);
-        [$status, $phone] = tg_wa_graph($config, 'GET', $id, null, ['fields' => 'display_phone_number,verified_name,name_status,quality_rating,platform_type,status']);
-        if ($status !== 200) {
-            // Older or newer Graph versions may not know every field; ask for the basics.
-            [$status, $phone] = tg_wa_graph($config, 'GET', $id, null, ['fields' => 'display_phone_number,verified_name,quality_rating']);
+        $phone = null;
+        $status = 0;
+        foreach (['display_phone_number,verified_name,name_status,quality_rating,platform_type,status,messaging_limit_tier,throughput',
+                  'display_phone_number,verified_name,name_status,quality_rating,platform_type,status',
+                  'display_phone_number,verified_name,quality_rating'] as $fields) {
+            // Older or newer Graph versions may not know every field; ask for fewer each time.
+            [$status, $phone] = tg_wa_graph($config, 'GET', $id, null, ['fields' => $fields]);
+            if ($status === 200 && is_array($phone)) {
+                break;
+            }
         }
         if ($status !== 200 || !is_array($phone)) {
             return ['ok' => false, 'error' => tg_wa_error_text($config, $status, $phone)];
@@ -37,7 +62,7 @@ function admin_wa_meta(array $config): array
         [$s2, $subs] = tg_wa_graph($config, 'GET', rawurlencode((string) $config['whatsapp']['waba_id']) . '/subscribed_apps');
         return [
             'ok'         => true,
-            'phone'      => array_map(static fn($v) => is_scalar($v) ? (string) $v : '', $phone),
+            'phone'      => admin_wa_phone_fields($phone),
             'templates'  => tg_wa_template_states($config),
             'subscribed' => $s2 === 200 && is_array($subs['data'] ?? null) ? count($subs['data']) : null,
         ];
@@ -261,33 +286,7 @@ function admin_wa_page(PDO $pdo, array $config, int $now): string
         ['label' => 'Said STOP', 'value' => h(num($stops)), 'note' => 'They get emails only'],
     ]);
 
-    // ---- Connection ----
-    if (!$ready) {
-        $connection = ui_card('Connection', ui_empty('Not connected yet', 'Paste the values from Meta into the whatsapp block of the private config. The steps are in docs/whatsapp-setup.md.'));
-    } elseif (empty($meta['ok'])) {
-        $connection = ui_card('Connection', '<p class="notice notice-bad">' . icon('alert') . h((string) ($meta['error'] ?? 'Meta did not answer.')) . '</p>'
-            . '<p class="notice">' . icon('info') . 'Check the access token and the phone number ID in the private config.</p>');
-    } else {
-        $p = $meta['phone'];
-        $heard = admin_wa_heard($config);
-        $nameStatus = strtoupper($p['name_status'] ?? '');
-        $connection = ui_card('Connection', ui_facts([
-            ['Number', h($p['display_phone_number'] ?? '') . (!empty($p['verified_name']) ? ' <span class="muted">· ' . h($p['verified_name']) . '</span>' : '')],
-            ['Display name', $nameStatus === '' ? '<span class="muted">Meta did not say</span>'
-                : ($nameStatus === 'APPROVED' ? ui_pill('Approved', 'good') : ui_pill(ucfirst(strtolower(str_replace('_', ' ', $nameStatus))), 'warn'))],
-            ['Quality', h(ucfirst(strtolower($p['quality_rating'] ?? 'unknown')))],
-            ['Webhook', ($meta['subscribed'] === 0 ? ui_pill('Not connected', 'bad') : ($meta['subscribed'] === null ? ui_pill('Unknown', 'neutral') : ui_pill('Connected', 'good')))
-                . ' <span class="muted">' . ($heard ? 'Meta last called ' . h(ago($heard, $now)) : 'Meta has not called yet') . '</span>'],
-            ['Test numbers', $test ? h(implode(', ', array_map('tg_wa_pretty', $test))) : '<span class="muted">None: every buyer who agreed gets messages</span>'],
-        ]) . ($meta['subscribed'] === 0 ? ui_post('wa_subscribe', ['#' => 'wa-connection'], '', 'Connect webhook', 'primary', 'stack') : '')
-            . (admin_wa_needs_register($p) ? ui_post('wa_register', ['#' => 'wa-connection'],
-                '<p class="notice notice-bad">' . icon('alert') . 'Meta says this number is not on the Cloud API yet. Register it once to start sending.</p>'
-                . ui_field('Choose a 6-digit PIN', 'pin', 'inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off"',
-                    'This becomes the number\'s two-step PIN. Keep it in your password manager. Meta allows 10 tries in 3 days.')
-                . ui_code_input(), 'Register number', 'primary', 'stack') : '')
-            . '<p class="notice">' . icon('info') . '<span>Replies to this number show in the <a href="' . h(admin_url(['view' => 'inbox'])) . '">Inbox</a>, where you can answer from the business number. A copy is emailed to you unless you switch that off under <a href="' . h(admin_url(['view' => 'inbox', 'manage' => '1'])) . '#emails">Quick replies and emails</a>.</span></p>',
-            ['id' => 'wa-connection', 'sub' => 'As Meta sees it. Refreshed every 10 minutes.']);
-    }
+    $connection = admin_wa_connection_card($config, $now, $meta);
 
     // ---- Templates ----
     $rows = [];
@@ -383,4 +382,82 @@ function admin_nudge_card(PDO $pdo, array $config, int $now): string
     return ui_card('Checkout coupon', $facts . ui_table([['Person', ''], ['Coupon', ''], ['Result', '']], $rows,
         ['empty' => 'No checkout coupons sent yet.']), ['id' => 'wa-nudge', 'size' => 'full',
         'sub' => 'A personal ₹' . (int) (TG_NUDGE_OFF_PAISE / 100) . '-off coupon on WhatsApp, 20 minutes after an unpaid checkout.']);
+}
+
+/**
+ * The Connection card: the number, display name, quality, messaging limit, webhook and
+ * test numbers, as Meta sees them. On the WhatsApp tab and the WhatsApp overview.
+ * $meta is admin_wa_meta's answer, or null when WhatsApp is not set up.
+ */
+function admin_wa_connection_card(array $config, int $now, ?array $meta): string
+{
+    $test = tg_wa_test_numbers($config);
+    if (!tg_wa_ready($config)) {
+        return ui_card('Connection', ui_empty('Not connected yet', 'Paste the values from Meta into the whatsapp block of the private config. The steps are in docs/whatsapp-setup.md.'));
+    }
+    if (empty($meta['ok'])) {
+        return ui_card('Connection', '<p class="notice notice-bad">' . icon('alert') . h((string) ($meta['error'] ?? 'Meta did not answer.')) . '</p>'
+            . '<p class="notice">' . icon('info') . 'Check the access token and the phone number ID in the private config.</p>');
+    }
+    $p = $meta['phone'];
+    $heard = admin_wa_heard($config);
+    $nameStatus = strtoupper($p['name_status'] ?? '');
+    return ui_card('Connection', ui_facts([
+        ['Number', h($p['display_phone_number'] ?? '') . (!empty($p['verified_name']) ? ' <span class="muted">· ' . h($p['verified_name']) . '</span>' : '')],
+        ['Display name', $nameStatus === '' ? '<span class="muted">Meta did not say</span>'
+            : ($nameStatus === 'APPROVED' ? ui_pill('Approved', 'good') : ui_pill(ucfirst(strtolower(str_replace('_', ' ', $nameStatus))), 'warn'))],
+        ['Quality', admin_wa_quality_pill((string) ($p['quality_rating'] ?? ''))],
+        ['Messaging limit', admin_wa_limit_html($config, $p, $now)],
+        ['Webhook', ($meta['subscribed'] === 0 ? ui_pill('Not connected', 'bad') : ($meta['subscribed'] === null ? ui_pill('Unknown', 'neutral') : ui_pill('Connected', 'good')))
+            . ' <span class="muted">' . ($heard ? 'Meta last called ' . h(ago($heard, $now)) : 'Meta has not called yet') . '</span>'],
+        ['Test numbers', $test ? h(implode(', ', array_map('tg_wa_pretty', $test))) : '<span class="muted">None: every buyer who agreed gets messages</span>'],
+    ]) . ($meta['subscribed'] === 0 ? ui_post('wa_subscribe', ['#' => 'wa-connection'], '', 'Connect webhook', 'primary', 'stack') : '')
+        . (admin_wa_needs_register($p) ? ui_post('wa_register', ['#' => 'wa-connection'],
+            '<p class="notice notice-bad">' . icon('alert') . 'Meta says this number is not on the Cloud API yet. Register it once to start sending.</p>'
+            . ui_field('Choose a 6-digit PIN', 'pin', 'inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off"',
+                'This becomes the number\'s two-step PIN. Keep it in your password manager. Meta allows 10 tries in 3 days.')
+            . ui_code_input(), 'Register number', 'primary', 'stack') : '')
+        . '<p class="notice">' . icon('info') . '<span>Replies to this number show in the <a href="' . h(admin_url(['view' => 'inbox'])) . '">Inbox</a>, where you can answer from the business number. A copy is emailed to you unless you switch that off under <a href="' . h(admin_url(['view' => 'inbox', 'manage' => '1'])) . '#emails">Quick replies and emails</a>.</span></p>',
+        ['id' => 'wa-connection', 'sub' => 'As Meta sees it. Refreshed every 10 minutes.']);
+}
+
+/** Meta's quality rating for the number as a toned pill: green good, yellow warn, red bad. */
+function admin_wa_quality_pill(string $rating): string
+{
+    $r = strtoupper(trim($rating));
+    return match ($r) {
+        'GREEN', 'HIGH'  => ui_pill('Green', 'good'),
+        'YELLOW', 'MEDIUM' => ui_pill('Yellow', 'warn'),
+        'RED', 'LOW'     => ui_pill('Red', 'bad'),
+        ''               => '<span class="muted">Meta did not say</span>',
+        default          => ui_pill(ucfirst(strtolower(str_replace('_', ' ', $r))), 'neutral'),
+    };
+}
+
+/**
+ * The number's messaging limit tier: from Meta's answer, or else from Meta's last
+ * webhook news about it. [tier, where from ('meta', 'news' or '')].
+ */
+function admin_wa_tier(array $config, array $phone): array
+{
+    $tier = strtoupper((string) ($phone['messaging_limit_tier'] ?? ''));
+    if ($tier !== '') {
+        return [$tier, 'meta'];
+    }
+    $news = tg_wa_number_news($config);
+    return ($news['limit'] ?? '') !== '' ? [strtoupper((string) $news['limit']), 'news'] : ['', ''];
+}
+
+/** The messaging limit in words, with the throughput when Meta gave it. */
+function admin_wa_limit_html(array $config, array $phone, int $now): string
+{
+    [$tier, $from] = admin_wa_tier($config, $phone);
+    if ($tier === '') {
+        return '<span class="muted">Meta did not say</span>';
+    }
+    $news = $from === 'news' ? tg_wa_number_news($config) : null;
+    $through = strtolower((string) ($phone['throughput'] ?? ''));
+    return h(tg_wa_tier_text($tier))
+        . ($through !== '' ? ' <span class="muted">· ' . h(ucfirst($through)) . ' speed</span>' : '')
+        . ($news !== null ? ' <span class="muted">· from Meta\'s news ' . h(ago((int) $news['at'], $now)) . '</span>' : '');
 }

@@ -12,6 +12,7 @@ require_once __DIR__ . '/inbox.php';
 require_once __DIR__ . '/wa_templates.php';
 require_once __DIR__ . '/broadcasts.php';
 require_once __DIR__ . '/automations.php';
+require_once __DIR__ . '/wa_contacts.php';
 
 /** A short message for the next page: tone good, warn or bad. */
 function admin_flash(string $tone, string $text, array $extra = []): void
@@ -281,6 +282,11 @@ function admin_handle_post(PDO $pdo, array $config): void
         case 'rule_delete':
         case 'preset_template':
             admin_rule_action($pdo, $config, $action);
+            break;
+
+        // ---------- WhatsApp contacts (lib/wa_contacts.php) ----------
+        case 'wac_tag':
+            admin_wac_action($pdo, $config, $action);
             break;
     }
     admin_done();

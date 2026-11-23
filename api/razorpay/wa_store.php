@@ -328,3 +328,96 @@ function tg_wa_anonymise(PDO $pdo, int $now): int
     $q->execute([tg_ist($now - TG_WA_FORGET_NAME_DAYS * 86400)]);
     return $q->rowCount();
 }
+
+// ---------------------------------------------------------------------------
+// The number as Meta rates it: quality and messaging limit (Phase 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * The dashboard's saved copy of what Meta says about the number (refreshed every
+ * 10 minutes). The webhook deletes it when Meta reports a quality or limit change, so
+ * the next page reads Meta again. Same name the dashboard's admin_cached uses.
+ */
+function tg_wa_dash_cache_file(array $config): string
+{
+    $key = 'wa:' . (string) ($config['whatsapp']['phone_number_id'] ?? '') . ':' . (string) ($config['whatsapp']['waba_id'] ?? '');
+    return dirname($config['sent_dir']) . '/razorpay-dash-cache/' . hash('sha256', $key) . '.json';
+}
+
+/** Meta's last news about the number's quality or limit (private file), or null. Keys: at, event, limit. */
+function tg_wa_number_news(array $config): ?array
+{
+    $data = json_decode((string) @file_get_contents(dirname($config['sent_dir']) . '/whatsapp-quality.last'), true);
+    return is_array($data) && isset($data['at']) ? $data : null;
+}
+
+/**
+ * How many different people a messaging limit tier allows in 24 hours: TIER_250 → 250,
+ * TIER_1K → 1000. Null for unlimited, 0 when the tier is unknown.
+ */
+function tg_wa_tier_people(string $tier): ?int
+{
+    $tier = strtoupper(trim($tier));
+    if ($tier === 'TIER_UNLIMITED' || $tier === 'UNLIMITED') {
+        return null;
+    }
+    if (preg_match('/^TIER_(\d+)(K|M)?$/', $tier, $m)) {
+        return (int) $m[1] * (($m[2] ?? '') === 'K' ? 1000 : (($m[2] ?? '') === 'M' ? 1000000 : 1));
+    }
+    return 0;
+}
+
+/** A messaging limit tier for people: "1,000 people a day", "Unlimited", or the tier itself. */
+function tg_wa_tier_text(string $tier): string
+{
+    if (trim($tier) === '') {
+        return 'Not known';
+    }
+    $n = tg_wa_tier_people($tier);
+    if ($n === null) {
+        return 'Unlimited';
+    }
+    if ($n === 0) {
+        return ucfirst(strtolower(str_replace('_', ' ', $tier)));
+    }
+    $digits = (string) $n;
+    $pretty = strlen($digits) > 3 ? preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', substr($digits, 0, -3)) . ',' . substr($digits, -3) : $digits;
+    return $pretty . ' people a day';
+}
+
+/**
+ * Meta's phone_number_quality_update webhook: the number was flagged or unflagged, or its
+ * messaging limit went down or up. Saves the news (private file, for the dashboard),
+ * forgets the dashboard's saved copy so the next page reads Meta again, and returns an
+ * email for Deenu when the quality dropped or the limit changed, else null.
+ */
+function tg_wa_number_event(array $config, array $v, int $now): ?array
+{
+    $event = strtoupper(preg_replace('/[^A-Za-z_]/', '', (string) ($v['event'] ?? '')) ?? '');
+    $limit = strtoupper(preg_replace('/[^A-Za-z0-9_]/', '', (string) ($v['current_limit'] ?? ($v['messaging_limit_tier'] ?? ''))) ?? '');
+    $before = tg_wa_number_news($config);
+    @file_put_contents(dirname($config['sent_dir']) . '/whatsapp-quality.last',
+        json_encode(['at' => $now, 'event' => mb_substr($event, 0, 30), 'limit' => mb_substr($limit, 0, 30)]), LOCK_EX);
+    @unlink(tg_wa_dash_cache_file($config));
+
+    $changed = $limit !== '' && $before !== null && (string) ($before['limit'] ?? '') !== '' && (string) $before['limit'] !== $limit;
+    $limitLine = $limit !== '' ? 'Messaging limit now: ' . tg_wa_tier_text($limit) . '.' : '';
+    $link = 'Open the dashboard: ' . tg_site($config) . '/api/admin/?view=wa_overview';
+    if ($event === 'FLAGGED' || $event === 'DOWNGRADE') {
+        return ['subject' => 'ACTION: Meta lowered your WhatsApp number\'s rating',
+            'body' => implode("\r\n", array_merge([
+                $event === 'FLAGGED'
+                    ? 'Meta flagged the WhatsApp number: its quality is low because people blocked or reported messages.'
+                    : 'Meta lowered the WhatsApp number\'s messaging limit.',
+            ], $limitLine !== '' ? [$limitLine] : [], [
+                'Booking messages matter most. Hold marketing broadcasts until the rating recovers, and send only to people who asked.',
+                '', $link,
+            ]))];
+    }
+    if ($event === 'UPGRADE' || $changed) {
+        return ['subject' => 'WhatsApp: Meta changed your messaging limit',
+            'body' => implode("\r\n", ['Meta changed how many different people the WhatsApp number may start conversations with in 24 hours.',
+                $limitLine !== '' ? $limitLine : 'Meta did not say the new limit.', 'Your own daily limit in Settings stays as it is.', '', $link])];
+    }
+    return null;
+}

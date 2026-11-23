@@ -553,3 +553,17 @@ form.tag-remove { display: inline; }
   .chat-msg { max-width: 88%; }
   .quick { flex-direction: column; align-items: flex-start; }
 }
+/* WhatsApp contacts and overview */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.row-tick { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; cursor: pointer; }
+.row-tick input { width: 16px; height: 16px; margin: 0; accent-color: var(--teal-ink); cursor: pointer; }
+th.tick-col, td.tick-col { width: 40px; padding-right: 0; }
+.tag-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+.form-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.bulk-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
+.bulk-form > .table-wrap { flex-basis: 100%; }
+.bulk-form > .bulk { flex: 1 1 260px; max-width: 420px; padding: 14px 0 14px 18px; }
+.bulk-form > .form-buttons { padding: 0 18px 14px 18px; }
+@media (max-width: 860px) {
+  .bulk-form > .bulk { flex-basis: 100%; max-width: none; padding: 14px 18px 0; }
+}
