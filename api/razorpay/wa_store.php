@@ -300,12 +300,17 @@ function tg_wa_mark_read(array $config, string $waId): void
  * Removes the words of messages older than 30 days, up to 2,000 a run, and the filled-in
  * values (names, sessions) of broadcast and rule rows finished over 30 days ago. Only rows
  * in a final state lose their values, by the times PHP set (sent, or else due), so a send
- * still waiting never does. The rows stay. Returns how many messages lost their text.
+ * still waiting never does. The rows stay. Returns how many old messages it cleared.
+ *
+ * It runs every 5 minutes, so it must not get slower as history grows. Each old message
+ * is visited once: body_gone becomes 1 (text removed) or 2 (it had no text), and the
+ * index (body_gone, created_at) reads only rows still at 0. The outbox part reads only
+ * rows that still have params, through the params(1) prefix index (version 11).
  */
 function tg_wa_retention(PDO $pdo, int $now): int
 {
     try {
-        $q = $pdo->prepare('UPDATE wa_messages SET body = NULL, body_gone = 1 WHERE body IS NOT NULL AND created_at < ? LIMIT 2000');
+        $q = $pdo->prepare('UPDATE wa_messages SET body_gone = IF(body IS NULL, 2, 1), body = NULL WHERE body_gone = 0 AND created_at < ? LIMIT 2000');
         $q->execute([tg_ist($now - TG_WA_KEEP_TEXT_DAYS * 86400)]);
         $pdo->prepare("UPDATE outbox SET params = NULL WHERE params IS NOT NULL AND status IN ('sent', 'failed', 'expired', 'cancelled')
             AND COALESCE(sent_at, due_at) < ? LIMIT 2000")->execute([tg_ist($now - TG_WA_KEEP_TEXT_DAYS * 86400)]);

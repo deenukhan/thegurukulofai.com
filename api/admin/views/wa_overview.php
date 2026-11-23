@@ -26,7 +26,7 @@ return static function (array $d): array {
 
     $body = ui_kpis([
         ['label' => 'Conversations', 'value' => h(num($data['conversations'])),
-         'note' => num($data['in']) . ' in · ' . num($data['out']) . ' out, ' . ($range['days'] === null ? 'all time' : ($range['key'] === 'today' ? 'today' : 'last ' . $period))],
+         'note' => num($data['in']) . ' in · ' . num($data['out']) . ' out' . ($data['failed'] > 0 ? ' · ' . num($data['failed']) . ' failed' : '') . ', ' . ($range['days'] === null ? 'all time' : ($range['key'] === 'today' ? 'today' : 'last ' . $period))],
         ['label' => 'Estimated spend', 'value' => h($rupees($data['spend'])),
          'note' => 'Estimate: marketing ' . $rupees($by['MARKETING'][1]) . ' · utility ' . $rupees($by['UTILITY'][1])],
         ['label' => 'Quality', 'value' => $meta === null ? ui_pill('Not set up', 'neutral') : (empty($meta['ok']) ? ui_pill('Not read', 'neutral') : admin_wa_quality_pill($rating)),

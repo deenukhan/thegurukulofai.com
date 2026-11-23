@@ -47,6 +47,12 @@ if ($sum['paused']) {
 if ($sum['wa_paused']) {
     $parts[] = 'paused: WhatsApp kept failing';
 }
+if (!empty($sum['wa_paused_now'])) {
+    $parts[] = 'stopped: WhatsApp was paused in Settings during the run';
+}
+if (!empty($sum['out_of_time'])) {
+    $parts[] = 'stopped: out of time, the rest go next run';
+}
 if ($parts) {
     echo date('Y-m-d H:i'), ' ', implode(', ', $parts), "\n";
 }

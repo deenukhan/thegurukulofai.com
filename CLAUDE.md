@@ -371,10 +371,10 @@ several buttons, `ui_tick` row boxes, `ui_pager`), so every page looks the same.
   `api/razorpay/track.php`, live domain only. Only day totals are kept (`events` table).
 - **Fees and refunds:** the webhook saves Razorpay's fee; the nightly reconcile fills any missing fee
   and refreshes refunds (`fee_paise`, `tax_paise`, `refunded_paise` on `bookings`).
-- Schema version 10 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
+- Schema version 11 (5 added `coupons` and `bookings.coupon_id`; 6 added WhatsApp message ids, delivered/read times and `wa_inbound`;
   7 added the inbox: `wa_contacts`, `wa_messages`, `wa_tags`, `wa_quick_replies`; 8 added `wa_templates`; 9 added
   `wa_broadcasts`, `outbox.params`/`source`/`source_id` and `wa_contacts.marketing_off_at`; 10 added `wa_rules` with the two
-  ready-made rules). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
+  ready-made rules; 11 added the cleanup indexes `wa_messages (body_gone, created_at)` and `outbox params(1)`). `api/admin/lib` and `api/admin/views` return 404 from the web (`.htaccess`).
 
 ## Masterclass WhatsApp (`api/razorpay/whatsapp.php`, `api/whatsapp/webhook.php`)
 
@@ -419,6 +419,10 @@ emptying `test_numbers`.
 - **The outbox** plans WhatsApp rows next to the email rows (`channel = 'whatsapp'`, dedupe key `wa:<template>:b<id>:<time>`).
   Email and WhatsApp fail separately: three WhatsApp failures in a row pause WhatsApp for that run only.
   Meta's busy and rate-limit errors retry; anything else (bad number, unapproved template) fails at once and alerts Deenu.
+  A run stops sending after 150 seconds (`outbox.run_seconds`) and leaves the rest queued, so it never outlives the
+  5-minute cron. Before each WhatsApp row it reads the Settings file again (`tg_wa_paused_now`), so a pause set
+  mid-run stops the rest of that batch. Test sends (WhatsApp tab, broadcast and rule tests) are outbox rows with
+  `source = 'test'`, marked told from the start: never in the 9 AM summary's counts, never in an alert email.
 - **The webhook** answers Meta's GET check with `verify_token`, refuses any POST whose `X-Hub-Signature-256` doesn't
   match `app_secret`, records delivered/read/failed on the outbox row (`provider_id` = Meta's message id), handles
   STOP/START (and Hinglish "band karo"), stores every other message in the inbox, and emails Deenu a copy with a
@@ -427,9 +431,11 @@ emptying `test_numbers`.
   `wa_inbound` keeps only id, number and kind, for good, so Meta's repeats are ignored and STOP is never forgotten.
   It also emails Deenu when a template is rejected, paused, moved to marketing or drops to red quality
   (`message_template_quality_update`), and keeps the status, category and quality of templates written on the dashboard.
+  The email says "does not go out" only for rejected, paused or disabled; for quality and category news, "It still sends for now".
 - **Message text is kept for 30 days, then deleted** (Deenu's decision, 23 Nov 2026). `wa_messages` holds every
   message in and out with its text; the worker's `tg_wa_retention` (`api/razorpay/wa_store.php`) empties `body` after
-  30 days and keeps the row, so counts, ticks and spend estimates don't change. Nightly, reconcile clears the profile
+  30 days and keeps the row, so counts, ticks and spend estimates don't change. `body_gone` is 1 (text removed) or 2
+  (there was no text), so each old row is visited once; it runs before the sends in every worker run. Nightly, reconcile clears the profile
   name of WhatsApp-only conversations quiet for 90 days. Nothing WhatsApp is deleted by age. The privacy policy says so.
   Audit and error-log lines name the number and a length, never the words of a message.
 - **Inbox** (dashboard > WhatsApp > Inbox, `views/inbox.php`, `lib/inbox.php`): every conversation (`wa_contacts`,
@@ -462,6 +468,9 @@ emptying `test_numbers`.
   or at once with "Refresh from Meta". The seven built-in templates are never rows here, so nothing on the page can
   change them. Approved templates show in the inbox (once the window has closed) for anyone whose details fill them;
   a send goes straight to Meta and writes a final outbox row with template `c:<id>`, so the worker never sends it again.
+  A marketing one follows the marketing rules (not 9 PM to 9 AM, not to someone who turned off our marketing), and
+  Meta's 131050 answer marks the number marketing-off. When Meta does not answer at all, the flash says to try again
+  in a minute and to open System health if it keeps failing (`admin_wa_next_step`).
   Media headers need Meta's upload API and the app id, so they are left for later.
 - **Broadcasts** (dashboard > WhatsApp > Broadcasts, `views/broadcasts.php`, `lib/broadcasts.php`; audience, limit and
   rules in `api/razorpay/wa_bulk.php`; sending in `tg_outbox_bulk` in `outbox.php`; table `wa_broadcasts`, schema 9):
@@ -509,8 +518,9 @@ emptying `test_numbers`.
   added, and a keyword in a message.
   - **Never reaches back:** only things that happen after the rule was switched on (`enabled_at`) and within the last
     24 hours count. Editing a rule that is on switches it off and cancels its waiting messages; switching off cancels
-    them too. One message per rule per person and event (dedupe `wa:r<id>:b<booking>`, `:c<contact>:<session>`,
-    `:t<wa_contact>:<tag>`, `:m<message>`). Booking triggers count only seats paid by the trigger's moment (like the
+    them too. One message per rule per person and event (dedupe `wa:r<id>:<trigger><value>:b<booking>`,
+    `wa:r<id>:unpaid<minutes>:c<contact>:<session>`, `:t<wa_contact>:<tag>`, `:m<message>`). The trigger is in the key, so
+    after a trigger edit (say 1 day before becomes 3 hours before) the new moment is a new message. Booking triggers count only seats paid by the trigger's moment (like the
     reminders).
   - **Planning** (worker step 2c, `tg_rules_plan`, only while WhatsApp is on and not paused): each trigger becomes a bulk
     outbox row (`source` automation, `source_id` the rule, `booking_id` NULL, the booking in `params`). Someone who may
@@ -539,7 +549,9 @@ emptying `test_numbers`.
   Said STOP, Marketing off, Tagged. Search (name, email, number) and chips (All, Buyers, Leads, Messaged us, STOP, one
   per tag, Ticked the offers box) narrow the list; 100 rows a page (`&p=N`). Tick rows, type a tag, then "Add tag to
   ticked" or "Remove tag from ticked" (`wac_tag`, at most 100 numbers, every one a valid WhatsApp number or nothing
-  changes). Adding makes the `wa_contacts` row if there is none, and can fire a "tag added" rule switched on before it.
+  changes). Adding makes the `wa_contacts` row if there is none. A tag added here (`added_by` 'list') never starts a
+  "tag is added" rule: that would message a page of people with no test and no typed confirmation. The form and the
+  flash say so, naming the rule; only a tag added in someone's chat (`added_by` 'admin') starts it.
   Audited with counts ("tag vip added to 12 of 12 ticked"). "Download CSV" (logged) gives the current chip and search:
   name, number, email, type, tags, consent version, STOP, marketing off, last message time. Never message text.
 - **Overview** (dashboard > WhatsApp > Overview, `views/wa_overview.php`, first in the WhatsApp menu, with a period

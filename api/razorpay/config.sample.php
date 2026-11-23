@@ -99,6 +99,8 @@ return [
         'pause_ms'        => 200,
         // WhatsApp broadcast rows sent per 5-minute run, after the booking messages.
         'wa_bulk_per_run' => 200,
+        // Seconds a run may spend sending; the rest wait for the next run.
+        'run_seconds'     => 150,
     ],
 
     // WhatsApp messages through Meta's WhatsApp Cloud API: the seat confirmation and the

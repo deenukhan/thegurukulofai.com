@@ -12,6 +12,18 @@ function admin_wa_cache_key(array $config): string
     return 'wa:' . (string) ($config['whatsapp']['phone_number_id'] ?? '') . ':' . (string) ($config['whatsapp']['waba_id'] ?? '');
 }
 
+/**
+ * Meta's reason for a failed send, with what to do next when Meta did not answer at all
+ * (a timeout or no connection), so the flash never ends at "Meta did not answer".
+ */
+function admin_wa_next_step(string $error): string
+{
+    if ($error === 'WhatsApp: Meta did not answer') {
+        return 'Meta did not answer. Try again in a minute. If it keeps failing, open System health.';
+    }
+    return $error;
+}
+
 /** Forgets the saved answer, so the next page shows Meta's latest after a change. */
 function admin_wa_forget(array $config): void
 {

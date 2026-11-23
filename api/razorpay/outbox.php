@@ -8,9 +8,11 @@
  *   2. plans the four reminders for each paid booking, from its own session time,
  *   3. plans the 9 AM summary for Deenu,
  *   4. cancels reminders a buyer stopped, and drops any whose time has passed,
- *   5. sends what is due, a limited number per run,
+ *   5. sends what is due, a limited number per run, for up to 150 seconds,
  *   6. retries failures every 5 minutes until the message's window closes,
  *   7. emails Deenu once about anything that finally failed.
+ * Old inbox text is removed before the sends (tg_wa_retention), so a run that stops
+ * early never skips it. A pause set in Settings during a run stops its WhatsApp sends.
  *
  * WhatsApp (whatsapp.php) rides along: while it is switched on, each paid buyer who
  * agreed to booking updates gets the confirmation and the same four reminders on
@@ -53,13 +55,16 @@ function tg_unix(string $ist): int
 function tg_outbox_run(array $config, int $now): array
 {
     $sum = ['planned' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'expired' => 0, 'cancelled' => 0, 'alerted' => 0, 'undelivered' => 0,
-        'paused' => false, 'wa_paused' => false];
+        'paused' => false, 'wa_paused' => false, 'wa_paused_now' => false, 'out_of_time' => false];
     $pdo = tg_db($config);
     if ($pdo === null) {
         return $sum + ['error' => 'The contact store is off or unreachable.'];
     }
     $at = tg_ist($now);
     $wa = tg_wa_enabled($config) && !tg_wa_paused($config);
+    // Wall-clock time, not the test clock: a run stops sending once this passes, so it
+    // never outlives the 5-minute cron. What is left stays queued for the next run.
+    $deadline = microtime(true) + tg_outbox_budget($config);
 
     // 1. Personal tokens for any paid booking without one (for example, added by reconcile).
     $missing = $pdo->query("SELECT id FROM bookings WHERE status = 'paid' AND join_token IS NULL")->fetchAll(PDO::FETCH_COLUMN);
@@ -204,6 +209,10 @@ function tg_outbox_run(array $config, int $now): array
     $expire->execute([$at]);
     $sum['expired'] = $expire->rowCount() + $bulkExpire->rowCount();
 
+    // The inbox keeps message text for 30 days only. Done before the sends, so a run
+    // that runs out of time (or is stopped by the host) never skips it.
+    tg_wa_retention($pdo, $now);
+
     // 5. Send what is due: booking messages first. A limited number per run keeps the
     // mailbox under its sending limits. Broadcast rows (source set) go after, in 5b.
     $max = max(1, (int) ($config['outbox']['max_per_run'] ?? 60));
@@ -223,8 +232,20 @@ function tg_outbox_run(array $config, int $now): array
     // Failures in a row, per channel. Three means that channel is down: its rest wait for the next run.
     $streak = ['email' => 0, 'whatsapp' => 0];
     foreach ($due->fetchAll() as $row) {
+        if (microtime(true) >= $deadline) {
+            $sum['out_of_time'] = true;
+            break; // out of time: the rest wait for the next run
+        }
         $channel = $row['channel'] === 'whatsapp' ? 'whatsapp' : 'email';
         if ($streak[$channel] >= 3) {
+            continue;
+        }
+        // Paused in Settings while this run was going: no more WhatsApp from it.
+        if ($channel === 'whatsapp' && $wa && tg_wa_paused_now($config)) {
+            $wa = false;
+            $sum['wa_paused_now'] = true;
+        }
+        if ($channel === 'whatsapp' && !$wa) {
             continue;
         }
         // Checked again at the last moment: the test list may have changed, or they said STOP.
@@ -300,16 +321,32 @@ function tg_outbox_run(array $config, int $now): array
 
     // 5b. Broadcast rows, after the booking messages, while WhatsApp is not failing.
     if ($wa && $streak['whatsapp'] < 3) {
-        tg_outbox_bulk($pdo, $config, $now, $sum, $streak);
+        tg_outbox_bulk($pdo, $config, $now, $sum, $streak, $deadline);
     }
     tg_bc_finish($pdo, $now);
 
     // 6. One alert to Deenu about everything that finally failed or was missed.
     $sum['alerted'] = tg_outbox_alert($pdo, $config, $now);
-
-    // 7. The inbox keeps message text for 30 days only.
-    tg_wa_retention($pdo, $now);
     return $sum;
+}
+
+/**
+ * Seconds a run may spend before it stops sending (outbox.run_seconds, default 150).
+ * Cron starts a new run every 5 minutes and shared hosting may stop a long one, so a
+ * slow Meta never leaves a row stuck half-sent. At least 1.
+ */
+function tg_outbox_budget(array $config): int
+{
+    return max(1, (int) ($config['outbox']['run_seconds'] ?? 150));
+}
+
+/**
+ * Is WhatsApp paused right now? Reads the Settings file again (the run's $config was
+ * loaded when it started), so a pause Deenu sets mid-run stops the rest of the batch.
+ */
+function tg_wa_paused_now(array $config): bool
+{
+    return tg_wa_paused(rp_apply_settings($config));
 }
 
 /** Stores one booking WhatsApp message in the inbox, with the words the buyer saw. */
@@ -346,8 +383,10 @@ function tg_outbox_log_wa(PDO $pdo, array $config, array $row, ?array $values, b
  * that fails a check is cancelled with the reason, or waits (next_try_at) until it may go.
  * A Meta error about one person (TG_WA_PERSON_ERRORS) fails just that row, with no alert
  * and without counting toward "WhatsApp is down"; anything else counts, as for bookings.
+ * Before each row it stops if the run is out of time, or if WhatsApp was paused in
+ * Settings since the run started; the rest stay queued.
  */
-function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$streak): void
+function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$streak, ?float $deadline = null): void
 {
     $at = tg_ist($now);
     $max = max(1, (int) ($config['outbox']['wa_bulk_per_run'] ?? 200));
@@ -376,6 +415,14 @@ function tg_outbox_bulk(PDO $pdo, array $config, int $now, array &$sum, array &$
     foreach ($rows as $row) {
         if ($streak['whatsapp'] >= 3) {
             break; // WhatsApp is failing: the rest wait for the next run
+        }
+        if ($deadline !== null && microtime(true) >= $deadline) {
+            $sum['out_of_time'] = true;
+            break; // out of time: the rest wait for the next run
+        }
+        if (tg_wa_paused_now($config)) {
+            $sum['wa_paused_now'] = true;
+            break; // paused in Settings while this run was going: the rest wait
         }
         $id = (int) $row['id'];
         $to = (string) $row['to_addr'];
@@ -610,6 +657,8 @@ function tg_bulk_label(PDO $pdo, array $r): string
                 $name = null;
             }
             return 'WhatsApp rule "' . ($name ?? $tpl) . '"';
+        case 'test':
+            return 'WhatsApp test of ' . $tpl;
         default:
             return 'WhatsApp inbox template ' . $tpl;
     }

@@ -192,8 +192,9 @@ function admin_wac_export(PDO $pdo, array $config, array $filter): void
 /**
  * wac_tag: adds or removes one tag for up to 100 ticked numbers (the rows of one page).
  * Every number must be a WhatsApp number as the list shows it. Adding makes the
- * wa_contacts row when there is none; a tag added here can fire a "tag added" rule
- * (only rules switched on before it, as always).
+ * wa_contacts row when there is none. A tag added here (added_by 'list') never starts a
+ * "tag is added" rule: that would message a page of people with no test send and no
+ * typed confirmation. To message a tagged group, send a broadcast to the tag.
  */
 function admin_wac_action(PDO $pdo, array $config, string $action): void
 {
@@ -231,7 +232,7 @@ function admin_wac_action(PDO $pdo, array $config, string $action): void
     }
     $changed = 0;
     if ($op === 'add') {
-        $add = $pdo->prepare("INSERT IGNORE INTO wa_tags (wa_contact_id, tag, added_at, added_by) VALUES (?, ?, ?, 'admin')");
+        $add = $pdo->prepare("INSERT IGNORE INTO wa_tags (wa_contact_id, tag, added_at, added_by) VALUES (?, ?, ?, 'list')");
         foreach (array_keys($phones) as $p) {
             $id = tg_wa_contact_id($pdo, (string) $p, $now);
             if ($id > 0) {
@@ -251,9 +252,22 @@ function admin_wac_action(PDO $pdo, array $config, string $action): void
         'tag ' . $tag . ' ' . ($op === 'add' ? 'added to ' : 'removed from ') . $changed . ' of ' . $n . ' ticked');
     $people = static fn(int $k): string => num($k) . ($k === 1 ? ' person' : ' people');
     if ($op === 'add') {
-        admin_flash('good', 'Tag ' . $tag . ' added to ' . $people($changed) . '.' . ($changed < $n ? ' ' . $people($n - $changed) . ' had it already.' : ''));
+        $rules = admin_wac_tag_rules($pdo, $tag);
+        admin_flash('good', 'Tag ' . $tag . ' added to ' . $people($changed) . '.' . ($changed < $n ? ' ' . $people($n - $changed) . ' had it already.' : '')
+            . ($rules !== [] && $changed > 0 ? ' No rule message went: tags added here never start the rule ' . implode(', ', $rules) . '.' : ''));
     } else {
         admin_flash('good', 'Tag ' . $tag . ' removed from ' . $people($changed) . '.' . ($changed < $n ? ' ' . $people($n - $changed) . ' did not have it.' : ''));
+    }
+}
+
+/** Names of the rules that are on and start when this tag is added (or every such rule, when $tag is null). */
+function admin_wac_tag_rules(PDO $pdo, ?string $tag = null): array
+{
+    try {
+        return array_map(static fn(array $r): string => '"' . $r['name'] . '"', rows($pdo, "SELECT name FROM wa_rules WHERE enabled = 1 AND trigger_type = 'tag_added'"
+            . ($tag !== null ? ' AND trigger_value = ?' : '') . ' ORDER BY id', $tag !== null ? [$tag] : []));
+    } catch (Throwable $e) {
+        return []; // before version 10
     }
 }
 
@@ -277,7 +291,7 @@ function admin_wa_chart_days(PDO $pdo, array $range, int $now): array
 }
 
 /**
- * Everything the overview shows for the period. Returns conversations, in, out, spend
+ * Everything the overview shows for the period. Returns conversations, in, out (sent, not failed), failed, spend
  * (paise), by_category (MARKETING and UTILITY => [messages, paise]), started (different
  * people sent a business-started template in the last 24 hours, as the daily limit counts
  * them), cap, days (chart points), templates (ranked, best first: name, category, sends,
@@ -286,7 +300,9 @@ function admin_wa_chart_days(PDO $pdo, array $range, int $now): array
 function admin_wa_overview_data(PDO $pdo, array $config, array $range, int $now): array
 {
     [$cond, $args] = in_range($range, 'm.created_at');
-    $k = row($pdo, "SELECT COUNT(DISTINCT m.wa_contact_id) AS convs, COALESCE(SUM(m.direction = 'in'), 0) AS i, COALESCE(SUM(m.direction = 'out'), 0) AS o
+    // A message Meta never accepted (failed) is counted apart, not as one we sent.
+    $k = row($pdo, "SELECT COUNT(DISTINCT m.wa_contact_id) AS convs, COALESCE(SUM(m.direction = 'in'), 0) AS i,
+            COALESCE(SUM(m.direction = 'out' AND m.status <> 'failed'), 0) AS o, COALESCE(SUM(m.direction = 'out' AND m.status = 'failed'), 0) AS f
         FROM wa_messages m WHERE {$cond}", $args);
 
     // Meta bills a delivered template by its category. A free reply, a utility template
@@ -337,6 +353,7 @@ function admin_wa_overview_data(PDO $pdo, array $config, array $range, int $now)
         'conversations' => (int) $k['convs'],
         'in'            => (int) $k['i'],
         'out'           => (int) $k['o'],
+        'failed'        => (int) $k['f'],
         'spend'         => $by['MARKETING'][1] + $by['UTILITY'][1],
         'by_category'   => $by,
         'started'       => count($cap['used']),

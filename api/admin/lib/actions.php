@@ -321,16 +321,14 @@ function admin_wa_test(PDO $pdo, array $config, string $template, string $to): v
         return;
     }
     $at = tg_ist(time());
-    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id)
-        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?)")
+    // Source 'test': never in the summary's counts. A test failure, now or later from Meta,
+    // is not news for the alert email, so it is marked told from the start.
+    $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
+        VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'test')")
         ->execute(['wa:test:' . $template . ':' . bin2hex(random_bytes(6)), $template, $to, $at, $at,
             $result['ok'] ? 'sent' : 'failed', $result['ok'] ? 'Test message' : mb_substr((string) $result['error'], 0, 255),
-            $result['ok'] ? $at : null, $result['id']]);
+            $result['ok'] ? $at : null, $result['id'], $at]);
     $outboxId = (int) $pdo->lastInsertId();
-    // A test failure is not news for the alert email.
-    if (!$result['ok']) {
-        $pdo->prepare('UPDATE outbox SET alerted_at = ? WHERE id = ?')->execute([$at, $outboxId]);
-    }
     $t = tg_wa_templates($config)[$template];
     tg_wa_log_out($pdo, $to, ['kind' => 'template', 'body' => tg_wa_render($config, $template, tg_wa_values($config, $template, $sample))['body'],
         'template' => $t['name'], 'category' => $t['category'] ?? 'UTILITY', 'sent_by' => 'test', 'wa_id' => $result['id'],
@@ -338,7 +336,7 @@ function admin_wa_test(PDO $pdo, array $config, string $template, string $to): v
     tg_audit($config, 'admin', 'whatsapp_test', $template . ' to ' . tg_wa_pretty($to) . ': ' . ($result['ok'] ? 'sent' : $result['error']));
     admin_flash($result['ok'] ? 'good' : 'bad', $result['ok']
         ? 'Sent to ' . tg_wa_pretty($to) . '. Check your phone. Delivered and read show in the send log within a minute.'
-        : 'Not sent. ' . $result['error']);
+        : 'Not sent. ' . admin_wa_next_step((string) $result['error']));
 }
 
 /**

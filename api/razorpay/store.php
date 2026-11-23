@@ -85,9 +85,11 @@ function tg_db_enabled(array $config): bool
  * wa_contacts.marketing_off_at (they turned off our marketing in WhatsApp).
  * Version 10 (WhatsApp automations) adds wa_rules: messages that send themselves when
  * something happens, with the two ready-made rules (off, no template yet).
+ * Version 11 adds two indexes so the 5-minute text cleanup (tg_wa_retention) only reads
+ * rows it still has to clear: wa_messages (body_gone, created_at) and outbox params(1).
  */
 /** The table layout version. Raise it with every change below. */
-const TG_DB_VERSION = 10;
+const TG_DB_VERSION = 11;
 
 function tg_db_migrate(PDO $pdo, array $config): void
 {
@@ -350,7 +352,7 @@ function tg_db_migrate(PDO $pdo, array $config): void
         wa_contact_id INT UNSIGNED NOT NULL,
         tag VARCHAR(30) NOT NULL COMMENT 'Lowercase a-z, 0-9 and hyphens',
         added_at DATETIME NOT NULL,
-        added_by VARCHAR(10) NOT NULL COMMENT 'admin or broadcast',
+        added_by VARCHAR(10) NOT NULL COMMENT 'admin (one chat), list (contacts page) or broadcast',
         PRIMARY KEY (wa_contact_id, tag),
         KEY idx_tag (tag, added_at),
         CONSTRAINT fk_wa_tag_contact FOREIGN KEY (wa_contact_id) REFERENCES wa_contacts (id) ON DELETE CASCADE
@@ -479,6 +481,23 @@ function tg_db_migrate(PDO $pdo, array $config): void
     $pdo->prepare("INSERT IGNORE INTO wa_rules (name, trigger_type, trigger_value, delay_minutes, action, audience, enabled, preset, created_at, updated_at) VALUES
         ('Recording offer after class', 'after_session', '2', 0, 'template', '{\"addon\":\"no\"}', 0, 'recording_offer', ?, ?),
         ('Feedback request', 'joined', '', 1440, 'template', '{}', 0, 'feedback', ?, ?)")->execute([$seedAt, $seedAt, $seedAt, $seedAt]);
+
+    // ---- Version 11: indexes for the text cleanup ----
+    // body_gone: 0 = text kept, 1 = text removed after 30 days, 2 = there was no text to remove.
+    // With (body_gone, created_at) the cleanup reads only old rows not yet cleared. The outbox's
+    // params is TEXT, so a one-character prefix index lets "params IS NOT NULL" skip every row
+    // already cleared (or never filled): the cleanup reads about 30 days of bulk rows, not all.
+    $indexes = [
+        ['wa_messages', 'idx_gone', 'ALTER TABLE wa_messages ADD KEY idx_gone (body_gone, created_at)'],
+        ['outbox', 'idx_params', 'ALTER TABLE outbox ADD KEY idx_params (params(1))'],
+    ];
+    foreach ($indexes as [$table, $name, $sql]) {
+        $has = $pdo->prepare('SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?');
+        $has->execute([$table, $name]);
+        if ((int) $has->fetchColumn() === 0) {
+            tg_db_alter($pdo, $sql);
+        }
+    }
 
     @file_put_contents($marker, (string) time());
 }

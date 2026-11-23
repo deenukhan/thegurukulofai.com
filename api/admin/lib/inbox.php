@@ -108,8 +108,9 @@ function admin_inbox_kpis(PDO $pdo, int $now): string
             COALESCE(SUM(wc.last_in_at >= ? AND COALESCE(" . admin_inbox_last_kind_sql() . ", '') <> 'stop'), 0) AS open
         FROM wa_contacts wc", [$day]);
     $waiting = (int) value($pdo, 'SELECT COUNT(*) FROM wa_contacts wc WHERE ' . admin_inbox_waiting_sql(), [$day]);
-    $week = row($pdo, "SELECT COALESCE(SUM(direction = 'in'), 0) AS i, COALESCE(SUM(direction = 'out'), 0) AS o FROM wa_messages WHERE created_at >= ?",
-        [tg_ist($now - 7 * 86400)]);
+    // A message Meta never accepted (failed) is not one we sent.
+    $week = row($pdo, "SELECT COALESCE(SUM(direction = 'in'), 0) AS i, COALESCE(SUM(direction = 'out' AND status <> 'failed'), 0) AS o
+        FROM wa_messages WHERE created_at >= ?", [tg_ist($now - 7 * 86400)]);
     return ui_kpis([
         ['label' => 'Unread', 'value' => h(num((int) $k['unread'])), 'note' => 'Conversations with new messages', 'tone' => (int) $k['unread'] > 0 ? 'warn' : null],
         ['label' => 'Waiting for you', 'value' => h(num($waiting)), 'note' => 'They wrote last, under 24 hours ago', 'tone' => $waiting > 0 ? 'warn' : null],
@@ -405,7 +406,7 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
             } elseif ($sent['code'] === 131047) {
                 admin_flash('bad', 'The 24-hour window has closed. Send a template instead.');
             } else {
-                admin_flash('bad', 'Not sent. ' . $sent['error']);
+                admin_flash('bad', 'Not sent. ' . admin_wa_next_step((string) $sent['error']));
             }
             return;
 
@@ -457,7 +458,7 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
                 'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['error']], $now);
             tg_audit($config, 'admin', 'whatsapp_template_one', $t['name'] . ' to ' . $who . ': ' . ($result['ok'] ? 'sent' : $result['error']));
             admin_flash($result['ok'] ? 'good' : 'bad', $result['ok'] ? 'Template sent to ' . tg_wa_pretty($phone) . '. When they reply, the window opens again.'
-                : 'Not sent. ' . $result['error']);
+                : 'Not sent. ' . admin_wa_next_step((string) $result['error']));
             return;
 
         case 'wa_thread_done':
@@ -523,20 +524,23 @@ function admin_inbox_action(PDO $pdo, array $config, string $action): void
  * from their details and any text typed in the form (fixed[b2], fixed[u0]). Goes straight
  * to Meta, like the follow-up, and writes an outbox row already final (template c:<id>)
  * so it shows in the send log (source 'inbox'). Nothing is queued, so the worker never
- * sends it again. It counts toward the daily limit like every template.
+ * sends it again. It counts toward the daily limit like every template. A marketing
+ * template follows the marketing rules, as broadcasts do: not to someone who turned off
+ * our marketing in WhatsApp, and not between 9 PM and 9 AM.
  */
 function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, int $now): void
 {
     $id = (int) $wc['id'];
     $phone = (string) $wc['phone'];
     $who = tg_wa_pretty($phone) . ' (c ' . $id . ')';
-    $why = tg_wa_can_message($pdo, $config, $phone, 'template', $now);
+    // The page may be old: Meta's answer since then counts (webhook or sync).
+    $fresh = tg_wat_get($pdo, (int) $t['id']);
+    $marketing = $fresh !== null && tg_wat_category($fresh) === 'MARKETING';
+    $why = tg_wa_can_message($pdo, $config, $phone, $marketing ? 'marketing' : 'template', $now);
     if ($why !== null) {
         admin_flash('bad', 'Not sent. ' . $why);
         return;
     }
-    // The page may be old: Meta's answer since then counts (webhook or sync).
-    $fresh = tg_wat_get($pdo, (int) $t['id']);
     if ($fresh === null || $fresh['status'] !== 'APPROVED' || $fresh['deleted_at'] !== null) {
         admin_flash('bad', $t['name'] . ' is not approved any more, so nothing was sent.');
         return;
@@ -561,6 +565,10 @@ function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, i
         return;
     }
     $result = tg_wat_send($config, $fresh, $phone, $values);
+    if (!$result['ok'] && (int) ($result['code'] ?? 0) === 131050) {
+        // They turned off our marketing in WhatsApp: no marketing template goes to them again.
+        tg_wa_set_marketing_off($pdo, $phone, $now);
+    }
     $at = tg_ist($now);
     $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
         VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'inbox')")
@@ -573,5 +581,5 @@ function admin_inbox_send_custom(PDO $pdo, array $config, array $wc, array $t, i
         'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['error']], $now);
     tg_audit($config, 'admin', 'whatsapp_template_one', $fresh['name'] . ' to ' . $who . ': ' . ($result['ok'] ? 'sent' : $result['error']));
     admin_flash($result['ok'] ? 'good' : 'bad', $result['ok'] ? 'Template sent to ' . tg_wa_pretty($phone) . '. When they reply, the window opens again.'
-        : 'Not sent. ' . $result['error']);
+        : 'Not sent. ' . admin_wa_next_step((string) $result['error']));
 }

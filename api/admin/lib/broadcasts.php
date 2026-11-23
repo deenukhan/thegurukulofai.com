@@ -585,10 +585,11 @@ function admin_bc_action(PDO $pdo, array $config, string $action): void
             }
             $first = $plan['people'][0];
             $result = tg_wat_send($config, $t, $to, $first['values']);
-            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at)
-                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
+            // Source 'test': never in the summary's counts, and a late failure from Meta never alerts.
+            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
+                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'test')")
                 ->execute(['wa:bctest:' . $id . ':' . bin2hex(random_bytes(6)), 'c:' . $t['id'], $to, $at, $at, $result['ok'] ? 'sent' : 'failed',
-                    $result['ok'] ? 'Broadcast test' : mb_substr((string) $result['error'], 0, 255), $result['ok'] ? $at : null, $result['id'], $result['ok'] ? null : $at]);
+                    $result['ok'] ? 'Broadcast test' : mb_substr((string) $result['error'], 0, 255), $result['ok'] ? $at : null, $result['id'], $at]);
             tg_wa_log_out($pdo, $to, ['kind' => 'template', 'body' => tg_wat_text(tg_wat_render($t, $first['values'])), 'template' => $t['name'],
                 'category' => $plan['category'], 'sent_by' => 'test', 'wa_id' => $result['id'], 'outbox_id' => (int) $pdo->lastInsertId(),
                 'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['ok'] ? null : $result['error']], $now);
@@ -599,7 +600,7 @@ function admin_bc_action(PDO $pdo, array $config, string $action): void
             tg_audit($config, 'admin', 'broadcast_test', $label . ' to ' . tg_wa_pretty($to) . ': ' . ($result['ok'] ? 'sent' : $result['error']));
             admin_flash($result['ok'] ? 'good' : 'bad', $result['ok']
                 ? 'Test sent to ' . tg_wa_pretty($to) . ', filled with ' . ($first['name'] !== '' ? tg_first_name($first['name']) . '\'s' : 'the first person\'s') . ' details. Check your phone.'
-                : 'The test was not sent. ' . $result['error']);
+                : 'The test was not sent. ' . admin_wa_next_step((string) $result['error']));
             return;
 
         case 'bc_confirm':

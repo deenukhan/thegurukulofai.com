@@ -30,9 +30,11 @@ return static function (array $d): array {
         $here = ['view' => 'inbox', 'c' => $c];
 
         // KPIs: the window, their messages, ours, and when they last read one of ours.
-        $count = row($pdo, "SELECT COALESCE(SUM(direction = 'in'), 0) AS i, COALESCE(SUM(direction = 'out'), 0) AS o,
+        // A message Meta never accepted (failed) is shown apart, not as one of ours.
+        $count = row($pdo, "SELECT COALESCE(SUM(direction = 'in'), 0) AS i, COALESCE(SUM(direction = 'out' AND status <> 'failed'), 0) AS o,
+                COALESCE(SUM(direction = 'out' AND status = 'failed'), 0) AS failed,
                 MAX(CASE WHEN direction = 'out' THEN read_at END) AS last_read,
-                COALESCE(SUM(direction = 'out' AND billable = 1), 0) AS paid
+                COALESCE(SUM(direction = 'out' AND billable = 1 AND status <> 'failed'), 0) AS paid
             FROM wa_messages WHERE wa_contact_id = ?", [$c]);
         $left = tg_wa_window_left($wc['last_in_at'], $now);
         $saidStop = admin_inbox_said_stop($pdo, $phone);
@@ -46,7 +48,8 @@ return static function (array $d): array {
             $windowKpi,
             ['label' => 'Their messages', 'value' => h(num((int) $count['i'])),
              'note' => $wc['last_in_at'] !== null ? 'Last ' . ago(tg_wa_ts($wc['last_in_at']), $now) : 'None yet'],
-            ['label' => 'Our messages', 'value' => h(num((int) $count['o'])), 'note' => num((int) $count['paid']) . ' charged by Meta'],
+            ['label' => 'Our messages', 'value' => h(num((int) $count['o'])), 'tone' => (int) $count['failed'] > 0 ? 'warn' : null,
+             'note' => num((int) $count['paid']) . ' charged by Meta' . ((int) $count['failed'] > 0 ? ' · ' . num((int) $count['failed']) . ' not sent' : '')],
             ['label' => 'Last read', 'value' => $count['last_read'] !== null ? h(ago(tg_wa_ts($count['last_read']), $now)) : '<span class="muted">—</span>',
              'note' => 'When they last read one of ours'],
         ]);

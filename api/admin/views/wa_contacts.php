@@ -3,7 +3,8 @@
  * WhatsApp > Contacts: everyone you can reach on WhatsApp, one row per number, with tags.
  * Buyers and leads come from the booking form; WhatsApp-only numbers from the inbox.
  * Search and chips narrow the list; 100 rows a page (&p=N). Tick rows to add or remove a
- * tag for them (one page at a time). "Download CSV" gives the current chip and search.
+ * tag for them (one page at a time). Tags added here never start a "tag is added" rule.
+ * "Download CSV" gives the current chip and search.
  */
 require_once dirname(__DIR__) . '/lib/wa_contacts.php';
 
@@ -59,10 +60,13 @@ return static function (array $d): array {
     $shown = $total === 0 ? 'Nobody matches.' : 'Showing ' . num($from) . ' to ' . num($from + count($slice) - 1) . ' of ' . num($total) . '.';
     $tableHtml = ui_table([['', 'tick-col'], ['Person', ''], ['Type', ''], ['Tags', ''], ['Last message', 'muted nowrap'], ['Consent', ''], ['STOP', '']],
         $table, ['empty' => 'Nobody matches.']);
+    $tagRules = admin_wac_tag_rules($pdo);
     $form = $slice
         ? ui_form('wac_tag', ['#' => 'contacts'], $tableHtml . '<div class="bulk">'
             . ui_field('Tag', 'tag', 'maxlength="30" required pattern="[A-Za-z0-9][A-Za-z0-9-]{0,29}" placeholder="for-example-vip" autocomplete="off"',
-                'Letters, numbers and hyphens. For the people you ticked on this page.') . '</div>',
+                'Letters, numbers and hyphens. For the people you ticked on this page. Tags added here never send a message: '
+                . ($tagRules !== [] ? 'the rule' . (count($tagRules) === 1 ? ' ' : 's ') . implode(', ', $tagRules) . ' start' . (count($tagRules) === 1 ? 's' : '')
+                    . ' only when you add the tag in someone\'s chat.' : '"tag is added" rules start only when you add the tag in someone\'s chat.')) . '</div>',
             [['Add tag to ticked', 'op', 'add', 'primary'], ['Remove tag from ticked', 'op', 'remove', 'quiet']], 'bulk-form')
         : $tableHtml;
 

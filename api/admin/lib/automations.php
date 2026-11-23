@@ -111,7 +111,7 @@ function admin_rule_builtin(PDO $pdo, array $config, int $now): string
     return ui_card('Built-in messages', ui_table([['Message', ''], ['Template', ''], ['Sent, 30 days', 'num'], ['Status', '']], $table)
         . '<p class="table-note">These are part of the booking flow and go while WhatsApp is on. Their wording stays in code. '
         . 'Pause everything in <a class="row-link" href="' . h(admin_url(['view' => 'settings'])) . '#whatsapp">Settings</a>.</p>',
-        ['size' => 'full', 'flush' => true, 'id' => 'builtin', 'sub' => 'Every buyer who agreed to booking updates gets these, as well as the emails.']);
+        ['size' => 'full', 'flush' => true, 'id' => 'builtin', 'sub' => 'Everyone who agreed to booking updates gets these when they apply, as well as the emails.']);
 }
 
 /** The template or reply of a rule, in a table cell. */
@@ -626,17 +626,18 @@ function admin_rule_action(PDO $pdo, array $config, string $action): void
                 $body = trim((string) $r['reply_text']);
                 $result = tg_wa_send_text_result($config, $to, $body);
             }
-            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at)
-                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
+            // Source 'test': never in the summary's counts, and a late failure from Meta never alerts.
+            $pdo->prepare("INSERT INTO outbox (dedupe_key, channel, template, booking_id, to_addr, due_at, expires_at, status, tries, last_error, sent_at, provider_id, alerted_at, source)
+                VALUES (?, 'whatsapp', ?, NULL, ?, ?, ?, ?, 1, ?, ?, ?, ?, 'test')")
                 ->execute(['wa:rtest:' . $id . ':' . bin2hex(random_bytes(6)), $t !== null ? 'c:' . $t['id'] : 'text', $to, $at, $at, $result['ok'] ? 'sent' : 'failed',
-                    $result['ok'] ? 'Rule test' : mb_substr((string) $result['error'], 0, 255), $result['ok'] ? $at : null, $result['id'], $result['ok'] ? null : $at]);
+                    $result['ok'] ? 'Rule test' : mb_substr((string) $result['error'], 0, 255), $result['ok'] ? $at : null, $result['id'], $at]);
             tg_wa_log_out($pdo, $to, ['kind' => $t !== null ? 'template' : 'text', 'body' => $body, 'template' => $t['name'] ?? null,
                 'category' => $t !== null ? tg_wat_category($t) : null, 'sent_by' => 'test', 'wa_id' => $result['id'], 'outbox_id' => (int) $pdo->lastInsertId(),
                 'status' => $result['ok'] ? 'sent' : 'failed', 'error' => $result['ok'] ? null : $result['error'], 'billable' => $t !== null ? null : false], $now);
             tg_audit($config, 'admin', 'rule_test', $label . ' to ' . tg_wa_pretty($to) . ': ' . ($result['ok'] ? 'sent' : $result['error']));
             admin_flash($result['ok'] ? 'good' : 'bad', $result['ok']
                 ? 'Test sent to ' . tg_wa_pretty($to) . ($who !== '' ? ', filled with ' . tg_first_name($who) . '\'s details' : '') . '. Check your phone.'
-                : 'The test was not sent. ' . $result['error']);
+                : 'The test was not sent. ' . admin_wa_next_step((string) $result['error']));
             return;
     }
 }

@@ -29,7 +29,7 @@ const TG_RULE_TRIGGERS = [
     'after_session'  => 'Some hours after the class ends',
     'joined'         => 'The class ends: people who opened their join link',
     'not_joined'     => 'The class ends: people who did not open their join link',
-    'tag_added'      => 'A tag is added to someone',
+    'tag_added'      => 'A tag is added to someone in the inbox',
     'keyword'        => 'Someone sends a message with a keyword',
 ];
 /** The class runs 3 hours: "after the class" counts from here. */
@@ -277,7 +277,7 @@ function tg_rule_trigger_text(array $r): string
         case 'not_joined':
             return ($delay > 0 ? tg_rule_span($delay) . ' after the class ends' : 'When the class ends') . ', to people who did not open their join link';
         case 'tag_added':
-            return $after('the tag ' . $v . ' is added');
+            return $after('the tag ' . $v . ' is added in the inbox');
         case 'keyword':
             return 'When a message has ' . implode(' or ', array_map(static fn($k) => '"' . $k . '"', tg_rule_keywords($v)));
     }
@@ -371,8 +371,11 @@ function tg_rule_subjects(PDO $pdo, array $config, array $r, int $lower, int $no
         $q->execute(array_merge([$product], $args));
         return $q->fetchAll();
     };
-    $add = static function (array $b, int $moment, ?int $until) use (&$out, $id): void {
-        $out[] = ['key' => 'wa:r' . $id . ':b' . $b['id'], 'phone' => (string) $b['phone'], 'moment' => $moment, 'until' => $until,
+    // The trigger is part of the key: after an edit to the trigger (say, 1 day before
+    // becomes 3 hours before) the rule keeps its id, and the new moment is a new message.
+    $trigger = $type . (string) $r['trigger_value'];
+    $add = static function (array $b, int $moment, ?int $until) use (&$out, $id, $trigger): void {
+        $out[] = ['key' => 'wa:r' . $id . ':' . $trigger . ':b' . $b['id'], 'phone' => (string) $b['phone'], 'moment' => $moment, 'until' => $until,
             'booking' => (int) $b['id'], 'session_at' => $b['session_at'], 'addon' => (int) $b['addon'] === 1, 'check' => 'paid'];
     };
     switch ($type) {
@@ -423,14 +426,17 @@ function tg_rule_subjects(PDO $pdo, array $config, array $r, int $lower, int $no
                     continue;
                 }
                 $session = $b['session_at'] !== null ? tg_wa_ts((string) $b['session_at']) : null;
-                $out[] = ['key' => 'wa:r' . $id . ':c' . $b['contact_id'] . ':' . ($session !== null ? gmdate('YmdHi', $session) : 'none'),
+                $out[] = ['key' => 'wa:r' . $id . ':' . $trigger . ':c' . $b['contact_id'] . ':' . ($session !== null ? gmdate('YmdHi', $session) : 'none'),
                     'phone' => (string) $b['phone'], 'moment' => tg_wa_ts((string) $b['created_at']) + $wait, 'until' => $session,
                     'booking' => (int) $b['id'], 'session_at' => null, 'addon' => null, 'check' => 'unpaid'];
             }
             break;
         case 'tag_added':
-            $q = $pdo->prepare('SELECT t.wa_contact_id, t.added_at, wc.phone FROM wa_tags t JOIN wa_contacts wc ON wc.id = t.wa_contact_id
-                WHERE t.tag = ? AND t.added_at > ? AND t.added_at <= ? ORDER BY t.added_at');
+            // Only a tag added to one person (from their chat). Tags added in bulk from the
+            // contact list (added_by 'list') never start a rule: that would message a whole
+            // page of people with no test and no typed confirmation, unlike a broadcast.
+            $q = $pdo->prepare("SELECT t.wa_contact_id, t.added_at, wc.phone FROM wa_tags t JOIN wa_contacts wc ON wc.id = t.wa_contact_id
+                WHERE t.tag = ? AND t.added_by <> 'list' AND t.added_at > ? AND t.added_at <= ? ORDER BY t.added_at");
             $q->execute([(string) $r['trigger_value'], tg_ist($lower), tg_ist($now)]);
             foreach ($q->fetchAll() as $t) {
                 $out[] = ['key' => 'wa:r' . $id . ':t' . $t['wa_contact_id'] . ':' . $r['trigger_value'], 'phone' => (string) $t['phone'],

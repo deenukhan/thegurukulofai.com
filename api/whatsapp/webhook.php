@@ -75,6 +75,7 @@ if ($pdo === null) {
 $later = [];   // replies and emails, done after Meta has its answer
 $notes = [];   // template news for Deenu
 $custom = false; // a note is about a template written on the dashboard
+$stopped = 0; // notes about a template that no longer sends (rejected, paused, disabled)
 $numberMail = null; // news about the number's quality or limit, for Deenu
 try {
     foreach ($event['entry'] ?? [] as $entry) {
@@ -104,6 +105,7 @@ try {
                 $mine = tg_wat_event($pdo, $config, $field, $v, rp_now($config));
                 tg_audit($config, 'system', 'whatsapp_template', $name . ': ' . $what);
                 if (!in_array($what, ['APPROVED', 'PENDING', 'IN_APPEAL', 'DELETED', 'PENDING_DELETION'], true)) {
+                    $stopped += in_array($what, ['REJECTED', 'PAUSED', 'DISABLED'], true) ? 1 : 0;
                     $notes[] = 'Template ' . $name . ' is now ' . strtolower($what)
                         . (!empty($v['reason']) && $v['reason'] !== 'NONE' ? ' (Meta says: ' . rp_clean($v['reason'], 200) . ')' : '') . '.';
                     $custom = $custom || $mine !== null;
@@ -171,8 +173,13 @@ foreach ($later as $r) {
     }
 }
 if ($notes) {
+    // Only a rejected, paused or disabled template stops sending. A low quality score or a
+    // move to marketing is a warning: the template still goes.
+    $effect = $stopped === count($notes) ? 'Until it is fixed, that message does not go out on WhatsApp.'
+        : ($stopped === 0 ? 'It still sends for now.'
+        : 'Until it is fixed, a rejected, paused or disabled template does not go out on WhatsApp. The others still send for now.');
     $body = implode("\r\n", array_merge($notes, ['',
-        'Until it is fixed, that message does not go out on WhatsApp. The email reminders are not affected.',
+        $effect . ' The email reminders are not affected.',
         'Open the dashboard: ' . tg_site($config) . '/api/admin/?view=' . ($custom ? 'wa_templates' : 'emails&tab=whatsapp')]));
     rp_mail($config, $config['mail_notify'], 'ACTION: a WhatsApp template needs you', $body);
 }
