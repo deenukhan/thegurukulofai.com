@@ -10,8 +10,12 @@
  * The login details live only in the private config's `db` block.
  */
 
-/** Which consent wording the pop-up showed. Bump it whenever that wording changes. */
-const TG_CONSENT_VERSIONS = ['v1'];
+/**
+ * Which consent wording the pop-up showed. Bump it whenever that wording changes.
+ * v1: launch wording. v2 (23 Nov 2026): the unticked offers box says "early-bird prices
+ * and new session dates"; the booking-updates wording is unchanged.
+ */
+const TG_CONSENT_VERSIONS = ['v1', 'v2'];
 
 /** Booking states, in order of strength. A weaker one never replaces a stronger one. */
 const TG_STATUS_RANK = ['order_failed' => 0, 'started' => 1, 'failed' => 2, 'paid' => 3];

@@ -57,7 +57,6 @@ return static function (array $d): array {
                 $confirm = ui_confirm('Delete the draft ' . $b['name'] . '?', '<p>Nothing was sent from it, so nothing else changes.</p>',
                     ui_post('bc_delete', ['b' => $b['id'], 'confirm' => '1'], '', 'Delete draft', 'primary'), admin_url($here));
             }
-            $offers = $plan !== null && $plan['category'] === 'MARKETING' ? admin_bc_offers_note($pdo) : null;
             return [
                 'title'   => $b['name'],
                 'intro'   => 'Draft · ' . $intro,
@@ -65,7 +64,6 @@ return static function (array $d): array {
                 'actions' => ui_button('Delete draft', admin_url($here + ['ask' => 'delete']) . '#confirm', 'quiet'),
                 'body'    => admin_bc_kpis($b, $plan, []) . ui_grid(...array_filter([
                     $confirm,
-                    $offers !== null ? ui_card('Before you send marketing', ui_checks([['level' => 'info', 'title' => 'The offers box', 'detail' => $offers]]), ['size' => 'full']) : '',
                     admin_bc_step_message($pdo, $b),
                     admin_bc_step_who($pdo, $config, $b),
                     admin_bc_preview($config, $b, $plan, $cap, $days),
@@ -113,7 +111,6 @@ return static function (array $d): array {
     }
 
     // ---------- Every broadcast ----------
-    $offers = admin_bc_offers_note($pdo);
     $cap = tg_wa_cap_state($pdo, $config, $now);
     $limit = ui_card('Daily limit', ui_facts([
         ['Limit', h(num($cap['cap'])) . ' people in any 24 hours <a class="row-link" href="' . h(admin_url(['view' => 'settings'])) . '#whatsapp">Change in Settings</a>'],
@@ -121,10 +118,9 @@ return static function (array $d): array {
         ['Kept for booking messages', h(num($cap['reserve']))],
         ['Room for broadcasts now', h(num($cap['room']))],
     ]) . '<p class="muted small">Every template counts, booking messages too. Booking messages always go; broadcasts wait for room. '
-        . 'Marketing never goes between 9 PM and 9 AM.</p>', ['size' => 'half', 'id' => 'limit']);
-    $note = $offers !== null ? ui_card('Before you send marketing', ui_checks([['level' => 'info', 'title' => 'The offers box', 'detail' => $offers]]), ['size' => 'half']) : '';
+        . 'Marketing never goes between 9 PM and 9 AM.</p>', ['size' => 'full', 'id' => 'limit']);
     return [
         'actions' => ui_button('New broadcast', admin_url(['view' => 'broadcasts', 'b' => 'new']), 'primary', 'send'),
-        'body'    => admin_bc_list_kpis($pdo, $now) . ui_grid(...array_filter([admin_bc_list($pdo, $now), $limit, $note])),
+        'body'    => admin_bc_list_kpis($pdo, $now) . ui_grid(...array_filter([admin_bc_list($pdo, $now), $limit])),
     ];
 };

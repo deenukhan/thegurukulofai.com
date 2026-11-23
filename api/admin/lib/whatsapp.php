@@ -194,14 +194,6 @@ function admin_wa_checks(PDO $pdo, array $config, int $now, callable $add): void
         $add('warn', 'WhatsApp', $failed . ' WhatsApp message' . ($failed === 1 ? '' : 's') . ' failed this week', 'See the send log for who and why.', 'emails');
     }
 
-    try {
-        $offers = function_exists('admin_bc_offers_note') ? admin_bc_offers_note($pdo) : null;
-    } catch (Throwable $e) {
-        $offers = null;
-    }
-    if ($offers !== null) {
-        $add('info', 'WhatsApp', 'Before your first marketing broadcast, settle the offers box', $offers, 'broadcasts');
-    }
     // Broadcast rows waiting for room for over a day: the daily limit may be too low.
     $held = (int) value($pdo, "SELECT COUNT(*) FROM outbox WHERE source IS NOT NULL AND status = 'queued' AND last_error = 'Waiting: daily limit reached' AND due_at < ?",
         [tg_ist($now - 86400)]);

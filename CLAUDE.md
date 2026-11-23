@@ -504,11 +504,11 @@ emptying `test_numbers`.
     everyone listed, "Cancel the rest" while sending, and "Resend to people who did not read" 12 hours after it
     finished (a new draft, with its own test and confirmation). A template used by a scheduled or sending broadcast
     can't be deleted. The global pause stops broadcasts too; they carry on when switched back on.
-  - **Before the first marketing broadcast, make the checkout pop-up and the privacy policy agree** (flagged for Deenu,
-    23 Nov 2026). The pop-up's consent covers booking updates only, and its separate offers box (`marketing_optin`) is
-    unticked by default, so many people chose not to get offers. Either send marketing only with "Only people who
-    ticked the offers box" on, or add a new `TG_CONSENT_VERSIONS` wording that mentions occasional WhatsApp offers. A
-    health info line and a note on the Broadcasts page repeat this until one of the two is done.
+  - **Marketing audience (Deenu's call, 23 Nov 2026):** marketing broadcasts may go to everyone who agreed to WhatsApp
+    booking updates or messaged us; no extra permission is required, so the dashboard shows no warning about it.
+    "Only people who ticked the offers box" stays as an optional filter. The pop-up's offers box stays **unticked**
+    (a pre-ticked box isn't valid consent under India's DPDP Act or Meta's opt-in rules); consent version `v2` gave it
+    friendlier wording: "Yes, send me early-bird prices and new session dates on WhatsApp and email."
 - **Automations** (dashboard > WhatsApp > Automations, `views/automations.php`, `lib/automations.php`; planning and
   keyword replies in `api/razorpay/wa_rules.php`; table `wa_rules`, schema 10): a rule is a trigger, a wait (0 minutes
   to 7 days), one approved template with what fills each variable (as broadcasts), and an optional filter (tag in, tag

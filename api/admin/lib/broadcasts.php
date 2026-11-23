@@ -119,28 +119,6 @@ function admin_bc_list(PDO $pdo, int $now): string
         ['size' => 'full', 'flush' => true, 'id' => 'broadcasts', 'sub' => 'One approved template to a group, always tested first.']);
 }
 
-/**
- * The note about the checkout pop-up's offers box, until it is settled: shown until you
- * have sent a marketing broadcast to box-tickers only, or a new pop-up wording exists.
- * Null once settled.
- */
-function admin_bc_offers_note(PDO $pdo): ?string
-{
-    if (count(TG_CONSENT_VERSIONS) > 1) {
-        return null;
-    }
-    foreach (rows($pdo, "SELECT b.audience, t.category, t.meta_category FROM wa_broadcasts b JOIN wa_templates t ON t.id = b.template_id
-        WHERE b.status IN ('scheduled', 'sending', 'done')") as $b) {
-        $aud = json_decode((string) $b['audience'], true);
-        if (tg_wat_category($b) === 'MARKETING' && !empty($aud['offers_box'])) {
-            return null;
-        }
-    }
-    return 'Before your first marketing broadcast, make the checkout pop-up and the privacy policy agree. The pop-up has a separate, unticked box for '
-        . 'offers, and many people left it empty. Either send marketing broadcasts only with "Only people who ticked the offers box" on, or ask Claude to add '
-        . 'a new pop-up wording that mentions occasional WhatsApp offers.';
-}
-
 /** Approved templates a broadcast can use: id => "name (marketing)". */
 function admin_bc_template_options(PDO $pdo): array
 {
@@ -270,10 +248,6 @@ function admin_bc_preview(array $config, array $b, ?array $plan, array $cap, arr
     $html .= ui_facts($facts);
     if (count($days) > TG_BC_MAX_DAYS) {
         $html .= '<p class="notice notice-bad">' . icon('alert') . 'That is more than 7 days of sends. Narrow the audience or raise the limit.</p>';
-    }
-    if ($category === 'MARKETING' && $plan['offers_box'] < $count) {
-        $html .= '<p class="notice notice-warn">' . icon('alert') . h(num($count - $plan['offers_box'])) . ' of these did not tick the offers box. '
-            . 'The others agreed to booking updates or messaged you, but did not tick the offers box.</p>';
     }
     if ($plan['skipped']) {
         $items = [];
