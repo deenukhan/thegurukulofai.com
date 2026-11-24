@@ -174,7 +174,7 @@ function admin_nudge_setting(array $config, callable $reset): string
     $on = (bool) $on;
     $off = (int) (TG_NUDGE_OFF_PAISE / 100);
     return '<h3 class="sub-head">Checkout coupon</h3>'
-        . '<p class="notice">' . icon('info') . 'When on, someone who filled the pop-up but has not paid 20 minutes later gets one WhatsApp with a personal '
+        . '<p class="notice">' . icon('info') . 'When on, someone who filled the pop-up but has not paid 10 minutes later gets one WhatsApp with a personal '
         . h('₹' . $off) . '-off coupon in their name (for example PRIYA' . $off . '), working for 2 hours. One per person per session. Marketing rate, about ₹0.86 each.</p>'
         . ui_post('setting_save', ['#' => 'whatsapp'],
             '<label class="field"><span>Checkout coupon</span><select name="values[whatsapp.checkout_coupon]">'

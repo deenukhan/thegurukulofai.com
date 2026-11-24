@@ -406,7 +406,7 @@ emptying `test_numbers`.
   The confirmation, day-before (`mc_reminder_day_before`) and 3-hour (`mc_reminder_3_hours`) messages say the
   joining link comes at 2:45 PM instead. The emails still carry the join link as before.
 - **Checkout coupon (template `nudge`, `mc_checkout_coupon`, marketing):** someone who filled the pop-up but hasn't paid
-  20 minutes after their **last** try gets one WhatsApp with a personal coupon named after them (PRIYA200; PRIYA200B if
+  10 minutes after their **last** try gets one WhatsApp with a personal coupon named after them (PRIYA200; PRIYA200B if
   taken; FRIEND200 without English letters): ₹200 off, 2 hours from sending, 3 uses (a failed retry takes a use),
   made at send time in coupon batch `c0c0c200`. One per person per session; never if they paid since (same email or
   phone), said STOP, or the try is over 3 hours old. Off until switched on in Settings (`whatsapp.checkout_coupon`).

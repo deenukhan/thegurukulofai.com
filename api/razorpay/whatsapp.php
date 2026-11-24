@@ -37,12 +37,12 @@ const TG_WA_FOOTER = 'Reply STOP to stop these messages';
 
 /**
  * Checkout coupon (Deenu, 23 Nov 2026): someone who filled the pop-up but has not paid
- * 20 minutes after their last try gets a personal ₹200-off coupon on WhatsApp, named
+ * 10 minutes after their last try gets a personal ₹200-off coupon on WhatsApp, named
  * after them (PRIYA200), working for 2 hours, with the link that applies it. One per
  * person per session. Switched on and off on the dashboard's Settings page.
  * The amount and hours are also written into the template's wording, so change both together.
  */
-const TG_NUDGE_AFTER = 1200;          // seconds after the last unpaid try
+const TG_NUDGE_AFTER = 600;           // seconds after the last unpaid try (10 minutes, Deenu 24 Nov 2026)
 const TG_NUDGE_LOOKBACK = 3 * 3600;   // tries older than this are left alone (and the row expires)
 const TG_NUDGE_VALID = 7200;          // the coupon works for this long after it is made
 const TG_NUDGE_OFF_PAISE = 20000;     // ₹200 off the seat
@@ -109,7 +109,7 @@ function tg_wa_templates(array $config): array
         'nudge' => [
             'name'     => 'mc_checkout_coupon',
             'label'    => 'Checkout coupon',
-            'when'     => '20 minutes after an unpaid checkout',
+            'when'     => '10 minutes after an unpaid checkout',
             'category' => 'MARKETING',
             'body'     => "Hi {{1}}, your booking for the {{2}} didn't go through, so here is a personal coupon for you: {{3}} for ₹200 off.\n\n"
                 . "It works for the next 2 hours, until {{4}}. Tap below and it is already applied.",

@@ -385,7 +385,7 @@ function admin_nudge_card(PDO $pdo, array $config, int $now): string
     }
     return ui_card('Checkout coupon', $facts . ui_table([['Person', ''], ['Coupon', ''], ['Result', '']], $rows,
         ['empty' => 'No checkout coupons sent yet.']), ['id' => 'wa-nudge', 'size' => 'full',
-        'sub' => 'A personal ₹' . (int) (TG_NUDGE_OFF_PAISE / 100) . '-off coupon on WhatsApp, 20 minutes after an unpaid checkout.']);
+        'sub' => 'A personal ₹' . (int) (TG_NUDGE_OFF_PAISE / 100) . '-off coupon on WhatsApp, 10 minutes after an unpaid checkout.']);
 }
 
 /**

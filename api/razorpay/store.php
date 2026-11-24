@@ -688,7 +688,7 @@ function tg_save_lead(array $config, array $lead): ?int
                 $lead['utm']['utm_medium'] ?? '',
                 $lead['utm']['utm_campaign'] ?? '',
                 $lead['utm']['utm_content'] ?? '',
-                // From PHP, not the database clock, so the test clock moves the checkout coupon's 20 minutes too.
+                // From PHP, not the database clock, so the test clock moves the checkout coupon's 10 minutes too.
                 tg_ist(rp_now($config) ?: time()),
             ]);
         $bookingId = (int) $pdo->lastInsertId();

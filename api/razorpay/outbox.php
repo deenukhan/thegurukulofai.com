@@ -24,7 +24,7 @@
  * days (tg_wa_retention in wa_store.php).
  *
  * The checkout coupon (template 'nudge') also rides along when switched on: someone who
- * filled the pop-up but hasn't paid 20 minutes after their last try gets one WhatsApp
+ * filled the pop-up but hasn't paid 10 minutes after their last try gets one WhatsApp
  * with a personal coupon, made at the moment it is sent. See TG_NUDGE_* in whatsapp.php.
  *
  * Broadcasts (wa_bulk.php) are "bulk rows": source set, no booking. They go after the
